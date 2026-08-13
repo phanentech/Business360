@@ -1,0 +1,3210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<base target="_top" />
+<title>BPA Business360</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js"></script>
+<style>
+  :root{
+    --ink:#0B1220; --ink-2:#1C2536; --paper:#F6F7FB; --card:#FFFFFF;
+    --line:#E4E7F0; --muted:#6B7280; --brand:#12406B; --brand-2:#1C5F9E;
+    --gold:#D9A441; --gold-2:#B9832A; --green:#1E8A5F; --red:#C4432B; --amber:#B8860B;
+    --sidebar:#0E1C33; --sidebar-hover:#16294A; --sidebar-text:#AEC0DA;
+    --radius:12px; --shadow:0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
+    --shadow-lg:0 8px 24px rgba(16,24,40,.10);
+    --input-bg:#FFFFFF; --skeleton-a:#EEF0F5; --skeleton-b:#F5F6F9; --hover-row:#FAFBFD;
+  }
+  body.theme-dark{
+    --ink:#EAEEF6; --ink-2:#D2D9E6; --paper:#0B121F; --card:#131C2E;
+    --line:#232E45; --muted:#8B96AC; --brand:#3E7FBF; --brand-2:#5B9AD8;
+    --gold:#E3B45C; --gold-2:#C99A44; --green:#3FBE85; --red:#E06A4E; --amber:#D9A441;
+    --sidebar:#080D18; --sidebar-hover:#141F35; --sidebar-text:#93A5C4;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.4);
+    --shadow-lg:0 8px 28px rgba(0,0,0,.5);
+    --input-bg:#0F1728; --skeleton-a:#1B2740; --skeleton-b:#212F4A; --hover-row:#17233A;
+  }
+  body.theme-dark .brand-mark{color:#1B1305;}
+  body.theme-dark ::-webkit-scrollbar-thumb{background:#26324B;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden;width:100%;max-width:100vw;}
+  #root{min-height:100vh;overflow-x:hidden;max-width:100vw;}
+  h1,h2,h3,.display{font-family:'Manrope',sans-serif;letter-spacing:-0.01em;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:#D3D9E6;border-radius:8px;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select,textarea{font-family:inherit;}
+  a{color:inherit;}
+
+  .app-shell{display:flex;min-height:100vh;max-width:100vw;overflow-x:hidden;}
+  .sidebar{width:248px;background:var(--sidebar);color:var(--sidebar-text);display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;bottom:0;left:0;transition:transform .2s ease;z-index:40;}
+  .sidebar-brand{padding:22px 20px 14px;display:flex;align-items:center;gap:10px;}
+  .brand-mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--gold),var(--gold-2));display:flex;align-items:center;justify-content:center;font-family:'Manrope';font-weight:800;color:#20140A;font-size:15px;flex-shrink:0;}
+  .brand-name{color:#fff;font-family:'Manrope';font-weight:700;font-size:15.5px;line-height:1.2;}
+  .brand-sub{font-size:10.5px;color:#6E85AA;letter-spacing:.06em;text-transform:uppercase;margin-top:1px;}
+  .nav-scroll{flex:1;overflow-y:auto;padding:6px 12px 12px;}
+  .nav-group-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:#5B7292;padding:16px 10px 6px;font-weight:600;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--sidebar-text);margin-bottom:2px;transition:background .12s;}
+  .nav-item:hover{background:var(--sidebar-hover);color:#fff;}
+  .nav-item.active{background:linear-gradient(90deg,rgba(217,164,65,.18),rgba(217,164,65,.03));color:#fff;box-shadow:inset 2px 0 0 var(--gold);}
+  .nav-item svg{flex-shrink:0;opacity:.9;}
+  .sidebar-foot{padding:14px;border-top:1px solid rgba(255,255,255,.08);}
+  .user-chip{display:flex;align-items:center;gap:9px;padding:8px;border-radius:10px;}
+  .user-chip:hover{background:var(--sidebar-hover);}
+  .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--brand-2),var(--brand));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12.5px;flex-shrink:0;}
+
+  .main{margin-left:248px;flex:1;min-width:0;max-width:100%;display:flex;flex-direction:column;overflow-x:hidden;}
+  .topbar{height:64px;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:30;}
+  .content{padding:24px 28px 60px;max-width:1440px;width:100%;margin:0 auto;box-sizing:border-box;min-width:0;}
+  .search-trigger{display:flex;align-items:center;gap:8px;background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:8px 12px;color:var(--muted);font-size:13px;width:280px;}
+  .kbd{font-size:11px;background:var(--card);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--muted);}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);min-width:0;max-width:100%;box-sizing:border-box;}
+  .btn{display:inline-flex;align-items:center;gap:7px;border-radius:9px;padding:9px 16px;font-size:13.5px;font-weight:600;border:1px solid transparent;transition:all .12s;white-space:nowrap;}
+  .btn-primary{background:var(--brand);color:#fff;}
+  .btn-primary:hover{background:var(--brand-2);}
+  .btn-gold{background:var(--gold);color:#241705;}
+  .btn-gold:hover{background:var(--gold-2);}
+  .btn-outline{background:var(--card);border-color:var(--line);color:var(--ink);}
+  .btn-outline:hover{border-color:#B9C2D4;background:var(--hover-row);}
+  .btn-ghost{background:transparent;color:var(--muted);}
+  .btn-ghost:hover{background:var(--paper);color:var(--ink);}
+  .btn-danger{background:#FCEBE7;color:var(--red);}
+  .btn-danger:hover{background:#F8DAD2;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-sm{padding:6px 11px;font-size:12.5px;}
+  .btn-icon{padding:8px;}
+
+  .input, select.input, textarea.input{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-size:13.5px;background:var(--input-bg);color:var(--ink);outline:none;transition:border-color .12s, box-shadow .12s;}
+  .input:focus{border-color:var(--brand-2);box-shadow:0 0 0 3px rgba(28,95,158,.12);}
+  .label{font-size:12.5px;font-weight:600;color:var(--ink-2);margin-bottom:5px;display:block;}
+  .field{margin-bottom:14px;}
+
+  .kpi-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;position:relative;overflow:hidden;}
+  .kpi-label{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em;}
+  .kpi-value{font-family:'Manrope';font-weight:800;font-size:24px;margin-top:6px;letter-spacing:-0.02em;}
+  .kpi-sub{font-size:11.5px;color:var(--muted);margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;}
+  thead th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700;padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  tbody td{padding:12px 14px;font-size:13.5px;border-bottom:1px solid #EEF0F5;vertical-align:middle;}
+  tbody tr:hover{background:var(--hover-row);}
+  tbody tr:last-child td{border-bottom:none;}
+
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:700;}
+  .badge-green{background:#E4F5EC;color:var(--green);}
+  .badge-amber{background:#FCF1DA;color:var(--amber);}
+  .badge-red{background:#FCE9E5;color:var(--red);}
+  .badge-slate{background:#EEF1F6;color:#4B5A70;}
+  .badge-blue{background:#E5EFF8;color:var(--brand-2);}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(11,18,32,.5);backdrop-filter:blur(2px);display:flex;align-items:flex-start;justify-content:center;z-index:100;padding:5vh 16px;overflow-y:auto;}
+  .modal{background:var(--card);border-radius:16px;width:100%;max-width:560px;box-shadow:var(--shadow-lg);animation:pop .15s ease;}
+  .modal.wide{max-width:820px;}
+  @keyframes pop{from{opacity:0;transform:translateY(6px) scale(.98);}to{opacity:1;transform:none;}}
+  .modal-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
+  .modal-body{padding:20px 22px;max-height:70vh;overflow-y:auto;}
+  .modal-foot{padding:16px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px;}
+
+  .empty-state{text-align:center;padding:56px 24px;color:var(--muted);}
+  .empty-state svg{opacity:.35;margin-bottom:12px;}
+  .empty-state h3{font-size:15px;color:var(--ink);margin:0 0 4px;}
+  .empty-state p{font-size:13px;margin:0 0 16px;}
+
+  .skeleton{background:linear-gradient(90deg,var(--skeleton-a) 25%,var(--skeleton-b) 37%,var(--skeleton-a) 63%);background-size:400% 100%;animation:sk 1.4s ease infinite;border-radius:8px;}
+  @keyframes sk{0%{background-position:100% 50%;}100%{background-position:0 50%;}}
+
+  .toast-wrap{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:200;}
+  .toast{background:var(--ink);color:#fff;padding:11px 16px;border-radius:10px;font-size:13px;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:9px;min-width:220px;animation:toastin .18s ease;}
+  .toast.success{background:#12352A;}
+  .toast.error{background:#3A1712;}
+  @keyframes toastin{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px;overflow-x:auto;}
+  .tab{padding:10px 16px;font-size:13px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;}
+  .tab.active{color:var(--brand);border-color:var(--gold);}
+
+  .auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 20% 20%, #0F2540, #0B1626 60%);padding:24px;}
+  .auth-card{width:100%;max-width:440px;background:var(--card);border-radius:18px;padding:36px 34px;box-shadow:0 20px 60px rgba(0,0,0,.35);}
+
+  .cmdk-overlay{position:fixed;inset:0;background:rgba(11,18,32,.55);z-index:150;display:flex;align-items:flex-start;justify-content:center;padding-top:12vh;}
+  .cmdk{width:100%;max-width:560px;background:var(--card);border-radius:14px;box-shadow:var(--shadow-lg);overflow:hidden;}
+  .cmdk-input{width:100%;border:none;padding:16px 18px;font-size:15px;outline:none;border-bottom:1px solid var(--line);}
+  .cmdk-item{padding:11px 18px;font-size:13.5px;display:flex;align-items:center;justify-content:space-between;}
+  .cmdk-item.active{background:var(--paper);}
+
+  .stat-pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:2px 8px;border-radius:20px;}
+  .grid{display:grid;gap:16px;}
+  .grid > *, .two-col-wide > *, .two-col-equal > *, .reports-layout > *{min-width:0;}
+  .g4{grid-template-columns:repeat(4,1fr);}
+  .g3{grid-template-columns:repeat(3,1fr);}
+  .g2{grid-template-columns:repeat(2,1fr);}
+  @media(max-width:1100px){.g4{grid-template-columns:repeat(2,1fr);} .g3{grid-template-columns:repeat(2,1fr);}}
+  .two-col-wide{display:grid; grid-template-columns:1.6fr 1fr; gap:16px;}
+  .two-col-equal{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .one-col{display:grid; grid-template-columns:1fr; gap:16px;}
+  .reports-layout{display:grid; grid-template-columns:220px 1fr; gap:16px; align-items:start;}
+  @media(max-width:800px){.two-col-wide,.two-col-equal,.reports-layout{grid-template-columns:1fr;}}
+  @media(max-width:720px){
+    .sidebar{transform:translateX(-100%);}
+    .sidebar.open{transform:none;}
+    .main{margin-left:0;}
+    .g4,.g3,.g2{grid-template-columns:1fr;}
+    .search-trigger{width:auto;flex:1;min-width:0;}
+    .search-trigger span:not(.kbd){overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .search-trigger .kbd{display:none;}
+    .topbar{padding:0 12px;gap:8px;}
+    .content{padding:16px 14px 60px;}
+  }
+  .mobile-menu-btn{display:none;}
+  @media(max-width:720px){.mobile-menu-btn{display:flex;}}
+
+  .section-title{font-size:19px;font-weight:800;font-family:'Manrope';letter-spacing:-.01em;}
+  .section-sub{font-size:13px;color:var(--muted);margin-top:2px;}
+  .divider{height:1px;background:var(--line);margin:18px 0;}
+  .icon-btn{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);background:var(--card);color:var(--muted);}
+  .icon-btn:hover{color:var(--ink);border-color:#B9C2D4;}
+  .fab{position:fixed;bottom:26px;right:26px;z-index:60;}
+
+  /* ============ LANDING PAGE ============ */
+  .landing{background:var(--paper); min-height:100vh;}
+  .landing-nav{position:sticky; top:0; z-index:50; background:rgba(246,247,251,.85); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; padding:14px 5vw;}
+  .landing-nav .navlinks{display:flex; gap:28px; font-size:13.5px; font-weight:600; color:var(--ink-2);}
+  .landing-nav .navlinks a{cursor:pointer;}
+  .landing-nav .navlinks a:hover{color:var(--brand);}
+  @media(max-width:760px){.landing-nav .navlinks{display:none;}}
+
+  .hero{position:relative; background:linear-gradient(160deg, var(--sidebar) 0%, #0A1830 62%, #0A1E3D 100%); color:#fff; overflow:hidden; padding:0 5vw;}
+  .ledger-rule{position:absolute; left:64px; top:0; bottom:0; width:1px; background:rgba(217,164,65,.32);}
+  .ledger-lines{position:absolute; inset:0; background-image:repeating-linear-gradient(to bottom, transparent, transparent 34px, rgba(255,255,255,.045) 35px); pointer-events:none;}
+  .hero-inner{position:relative; z-index:2; max-width:1320px; margin:0 auto; padding:76px 0 90px; display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:center;}
+  @media(max-width:980px){.hero-inner{grid-template-columns:1fr; padding:52px 0 60px;}}
+  .eyebrow{display:inline-flex; align-items:center; gap:8px; font-size:11.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--gold); background:rgba(217,164,65,.12); border:1px solid rgba(217,164,65,.3); padding:6px 13px; border-radius:20px; margin-bottom:22px;}
+  .hero h1{font-family:'Manrope'; font-weight:800; font-size:44px; line-height:1.08; letter-spacing:-0.02em; margin:0 0 18px; color:#fff;}
+  .hero h1 em{font-style:normal; color:var(--gold);}
+  @media(max-width:980px){.hero h1{font-size:32px;}}
+  .hero-sub{font-size:16px; line-height:1.6; color:#B7C4DA; max-width:480px; margin:0 0 30px;}
+  .hero-ctas{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:34px;}
+  .hero-ctas .btn{padding:13px 24px; font-size:14.5px;}
+  .hero-trust{display:flex; gap:26px; flex-wrap:wrap; font-size:12px; color:#8CA0BE;}
+  .hero-trust span{display:flex; align-items:center; gap:6px;}
+
+  .mock-wrap{position:relative; perspective:1400px;}
+  .mock-card{background:var(--card); border-radius:16px; box-shadow:0 30px 80px rgba(0,0,0,.45); padding:0; overflow:hidden; transform:rotateY(-9deg) rotateX(3deg) rotate(1deg); transition:transform .4s ease;}
+  .mock-wrap:hover .mock-card{transform:rotateY(-4deg) rotateX(1deg) rotate(0.5deg);}
+  .mock-topbar{display:flex; align-items:center; gap:6px; padding:11px 14px; border-bottom:1px solid var(--line); background:var(--hover-row);}
+  .mock-dot{width:8px; height:8px; border-radius:50%; background:#DADFE8;}
+  .mock-body{padding:18px;}
+  .mock-kpi{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 13px;}
+  .mock-badge{position:absolute; top:-14px; right:22px; background:var(--gold); color:#241705; font-size:11px; font-weight:800; padding:6px 13px; border-radius:20px; box-shadow:0 8px 20px rgba(217,164,65,.4); z-index:3;}
+  .float-chip{position:absolute; background:var(--card); border-radius:12px; box-shadow:0 16px 40px rgba(0,0,0,.25); padding:11px 14px; z-index:3; display:flex; align-items:center; gap:9px; font-size:12px; font-weight:700;}
+
+  .stats-strip{background:var(--ink); position:relative; overflow:hidden;}
+  .stats-strip .ledger-lines{opacity:.6;}
+  .stats-inner{position:relative; z-index:2; max-width:1200px; margin:0 auto; padding:30px 5vw; display:flex; justify-content:space-between; flex-wrap:wrap; gap:24px;}
+  .stat-num{font-family:'Manrope'; font-weight:800; font-size:26px; color:#fff;}
+  .stat-lbl{font-size:11.5px; color:#8CA0BE; text-transform:uppercase; letter-spacing:.05em; margin-top:2px;}
+
+  .section{max-width:1200px; margin:0 auto; padding:80px 5vw;}
+  .section-head{max-width:600px; margin:0 auto 44px; text-align:center;}
+  .section-head .eyebrow{background:rgba(18,64,107,.08); color:var(--brand); border-color:rgba(18,64,107,.18);}
+  .section-head h2{font-family:'Manrope'; font-weight:800; font-size:30px; letter-spacing:-0.01em; margin:0 0 12px; color:var(--ink);}
+  .section-head p{font-size:14.5px; color:var(--muted); line-height:1.6; margin:0;}
+
+  .feat-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:18px;}
+  @media(max-width:900px){.feat-grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:600px){.feat-grid{grid-template-columns:1fr;}}
+  .feat-card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:24px; transition:transform .15s, box-shadow .15s;}
+  .feat-card:hover{transform:translateY(-3px); box-shadow:var(--shadow-lg); border-color:#D7DEEA;}
+  .feat-icon{width:42px; height:42px; border-radius:11px; background:linear-gradient(135deg, var(--brand), var(--brand-2)); display:flex; align-items:center; justify-content:center; color:#fff; margin-bottom:16px;}
+  .feat-card h3{font-size:15px; margin:0 0 6px; font-family:'Manrope'; font-weight:700;}
+  .feat-card p{font-size:13px; color:var(--muted); margin:0; line-height:1.55;}
+
+  .cta-band{background:linear-gradient(135deg, var(--brand) 0%, #0E355A 100%); border-radius:24px; padding:56px 48px; text-align:center; position:relative; overflow:hidden; margin:0 5vw 0;}
+  @media(max-width:700px){.cta-band{padding:40px 24px;}}
+  .cta-band h2{color:#fff; font-family:'Manrope'; font-weight:800; font-size:27px; margin:0 0 10px;}
+  .cta-band p{color:#B7C4DA; font-size:14px; margin:0 0 26px;}
+
+  .landing-footer{border-top:1px solid var(--line); padding:34px 5vw; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; font-size:12.5px; color:var(--muted);}
+  @media(max-width:700px){.landing-footer{flex-direction:column; text-align:center;}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+
+const { useState, useEffect, useRef, useMemo, useCallback, createContext, useContext } = React;
+
+// ============================== ICONS (inline SVG, no external deps) ==============================
+const Icon = ({ path, size=17, strokeWidth=1.9, ...rest }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" {...rest}>
+    <path d={path} />
+  </svg>
+);
+const ICONS = {
+  dashboard: "M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z",
+  sales: "M3 3h2l.4 2M7 13h10l3-8H5.4M7 13L5.4 5M7 13l-2 8h13M9 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z",
+  products: "M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8",
+  inventory: "M3 7h18v13H3zM3 7l2-4h14l2 4M9 11h6",
+  customers: "M17 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75",
+  suppliers: "M3 3h18v18H3zM3 9h18M9 21V9",
+  purchases: "M6 2l1.5 4M18 2l-1.5 4M3 8h18l-2 12H5L3 8zM8 12v4M12 12v4M16 12v4",
+  expenses: "M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6",
+  bookkeeping: "M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z",
+  invoices: "M9 2h6l5 5v13a2 2 0 01-2 2H9a2 2 0 01-2-2V4a2 2 0 012-2zm6 0v5h5M9 13h6M9 17h6M9 9h1",
+  reports: "M18 20V10M12 20V4M6 20v-6",
+  settings: "M12 15a3 3 0 100-6 3 3 0 000 6z M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09A1.65 1.65 0 0015.4 4.6a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.2.44.6.75 1.09.83.14.02.28.09.51.17H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z",
+  users: "M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M8.5 11a4 4 0 100-8 4 4 0 000 8zM22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75",
+  audit: "M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11",
+  search: "M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.35-4.35",
+  bell: "M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9zM13.73 21a2 2 0 01-3.46 0",
+  chevronDown: "M6 9l6 6 6-6",
+  plus: "M12 5v14M5 12h14",
+  x: "M18 6L6 18M6 6l12 12",
+  trash: "M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z",
+  edit: "M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z",
+  arrowRight: "M5 12h14M12 5l7 7-7 7",
+  logout: "M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9",
+  menu: "M3 12h18M3 6h18M3 18h18",
+  chart: "M3 3v18h18M18 17V9M13 17V5M8 17v-3",
+  package: "M12 2l9 5v10l-9 5-9-5V7l9-5zM3.5 7l8.5 5 8.5-5M12 22V12",
+  wallet: "M21 12V7H5a2 2 0 010-4h14v4M3 5v14a2 2 0 002 2h16v-5M18 12a2 2 0 100 4 2 2 0 000-4z",
+  alert: "M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01",
+  check: "M20 6L9 17l-5-5",
+  cart: "M9 22a1 1 0 100-2 1 1 0 000 2zm10 0a1 1 0 100-2 1 1 0 000 2zM1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6",
+  building: "M3 21h18M5 21V7l7-4 7 4v14M9 9h1M14 9h1M9 13h1M14 13h1M9 17h1M14 17h1",
+  refund: "M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8M3 3v5h5",
+  filter: "M22 3H2l8 9.46V19l4 2v-8.54L22 3z",
+  download: "M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3",
+  sun: "M12 17a5 5 0 100-10 5 5 0 000 10zM12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42",
+  moon: "M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z",
+  palette: "M12 2a10 10 0 000 20 1.5 1.5 0 001.5-1.5c0-.4-.15-.75-.4-1.03-.24-.28-.4-.62-.4-1.03A1.5 1.5 0 0114.1 17H16a5 5 0 005-5c0-5.52-4.48-10-9-10zM6.5 12a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM9.5 7.5A1.5 1.5 0 118 6a1.5 1.5 0 011.5 1.5zM14.5 7.5A1.5 1.5 0 1113 6a1.5 1.5 0 011.5 1.5zM17.5 12a1.5 1.5 0 110-3 1.5 1.5 0 010 3z",
+  layers: "M12 2l9 5-9 5-9-5 9-5zM3 12l9 5 9-5M3 17l9 5 9-5",
+  shield: "M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z",
+};
+const I = ({ name, ...rest }) => <Icon path={ICONS[name] || ICONS.dashboard} {...rest} />;
+
+// ============================== BACKEND CONFIG ==============================
+// This file is designed to be pasted into the SAME Apps Script project as Code.gs and served via
+// doGet() -- in that setup (the default/recommended one) this section can stay exactly as-is,
+// because google.script.run talks to the backend automatically with no configuration needed.
+//
+// If you instead want to host this index.html file somewhere else (a static site, a subdomain,
+// etc.) and call a Code.gs backend deployed separately, deploy Code.gs as a Web App
+// (Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone), copy the
+// resulting URL (ends in /exec), and paste it below. The app will then talk to it over HTTPS
+// automatically whenever it detects it isn't running inside the Apps Script iframe.
+const APP_CONFIG = {
+  WEBAPP_URL: '' // e.g. 'https://script.google.com/macros/s/AKfycb.../exec' -- leave blank for the default setup
+};
+
+// ============================== API CLIENT ==============================
+function callServer(action, payload) {
+  const token = window.__platformToken || (window.__session ? window.__session.token : null);
+
+  if (window.google && window.google.script && window.google.script.run) {
+    // Default path: served directly by Apps Script's HtmlService.
+    return new Promise((resolve) => {
+      google.script.run
+        .withSuccessHandler((res) => resolve(res))
+        .withFailureHandler((err) => resolve({ success: false, message: (err && err.message) || 'Connection error. Please try again.' }))
+        .apiCall(action, payload || {}, token);
+    });
+  }
+
+  if (APP_CONFIG.WEBAPP_URL) {
+    // Hosted separately: call the deployed Web App's doPost() over HTTPS.
+    // text/plain avoids a CORS preflight request, which Apps Script Web Apps don't handle.
+    return fetch(APP_CONFIG.WEBAPP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action, payload: payload || {}, token })
+    })
+      .then((res) => res.json())
+      .catch(() => ({ success: false, message: 'Could not reach the backend. Check APP_CONFIG.WEBAPP_URL at the top of index.html.' }));
+  }
+
+  // Neither is available -- e.g. this file was opened directly as a local file.
+  return new Promise((resolve) => {
+    setTimeout(() => resolve({ success: false, message: 'Backend not connected. Deploy this as an Apps Script Web App, or set APP_CONFIG.WEBAPP_URL.' }), 300);
+  });
+}
+
+// ============================== FORMAT HELPERS ==============================
+function useCurrency() {
+  const { business } = useApp();
+  const symbol = (business && business.currencySymbol) || '\u20A6';
+  return useCallback((n) => {
+    const val = Number(n || 0);
+    return symbol + val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }, [symbol]);
+}
+function fmtDate(d) {
+  if (!d) return '\u2014';
+  const dt = new Date(d);
+  if (isNaN(dt)) return String(d);
+  return dt.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+}
+function fmtDateTime(d) {
+  if (!d) return '\u2014';
+  const dt = new Date(d);
+  if (isNaN(dt)) return String(d);
+  return dt.toLocaleDateString(undefined, { day:'2-digit', month:'short' }) + ' ' + dt.toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' });
+}
+function initials(name) {
+  if (!name) return '?';
+  const parts = String(name).trim().split(/\s+/);
+  return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+}
+
+// ============================== TOASTS ==============================
+const ToastCtx = createContext(null);
+function ToastProvider({ children }) {
+  const [toasts, setToasts] = useState([]);
+  const push = useCallback((message, type='success') => {
+    const id = Math.random().toString(36).slice(2);
+    setToasts(t => [...t, { id, message, type }]);
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3200);
+  }, []);
+  return (
+    <ToastCtx.Provider value={push}>
+      {children}
+      <div className="toast-wrap">
+        {toasts.map(t => (
+          <div key={t.id} className={"toast " + t.type}>
+            <I name={t.type==='error'?'alert':'check'} size={15} />
+            {t.message}
+          </div>
+        ))}
+      </div>
+    </ToastCtx.Provider>
+  );
+}
+function useToast() { return useContext(ToastCtx); }
+
+// ============================== APP CONTEXT ==============================
+const AppCtx = createContext(null);
+function useApp() { return useContext(AppCtx); }
+
+// ============================== SHARED UI ==============================
+function Skeleton({ h=16, w='100%', r=8 }) { return <div className="skeleton" style={{height:h, width:w, borderRadius:r}} />; }
+
+function EmptyState({ icon='package', title, subtitle, action }) {
+  return (
+    <div className="empty-state">
+      <I name={icon} size={40} strokeWidth={1.3} />
+      <h3>{title}</h3>
+      {subtitle && <p>{subtitle}</p>}
+      {action}
+    </div>
+  );
+}
+
+function StatusBadge({ status }) {
+  const map = {
+    'Paid':'green','Completed':'green','Active':'green','In Stock':'green','Current':'green','Received':'green',
+    'Partial':'amber','Low Stock':'amber','Due Soon':'amber','Draft':'slate','Pending':'amber','Trial':'amber',
+    'Unpaid':'red','Out of Stock':'red','Overdue':'red','Inactive':'red','Voided':'red','Deleted':'red',
+    'Ordered':'blue'
+  };
+  const cls = map[status] || 'slate';
+  return <span className={"badge badge-"+cls}>{status}</span>;
+}
+
+function Modal({ title, onClose, children, footer, wide }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+  return (
+    <div className="modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className={"modal" + (wide ? " wide" : "")}>
+        <div className="modal-head">
+          <h3 style={{margin:0, fontSize:16, fontWeight:800}}>{title}</h3>
+          <button className="icon-btn" onClick={onClose}><I name="x" size={16} /></button>
+        </div>
+        <div className="modal-body">{children}</div>
+        {footer && <div className="modal-foot">{footer}</div>}
+      </div>
+    </div>
+  );
+}
+
+function ConfirmDialog({ title, message, confirmLabel='Delete', danger=true, onConfirm, onClose }) {
+  return (
+    <Modal title={title} onClose={onClose} footer={
+      <React.Fragment>
+        <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+        <button className={"btn " + (danger ? "btn-danger" : "btn-primary")} onClick={() => { onConfirm(); onClose(); }}>{confirmLabel}</button>
+      </React.Fragment>
+    }>
+      <p style={{fontSize:13.5, color:'var(--muted)', margin:0}}>{message}</p>
+    </Modal>
+  );
+}
+
+/** Delete dialog that requires a typed reason before the delete action runs. Used everywhere records can be deleted. */
+function DeleteWithReasonDialog({ title, itemLabel, onConfirm, onClose }) {
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const submit = async () => {
+    if (!reason.trim()) return;
+    setBusy(true);
+    await onConfirm(reason.trim());
+    setBusy(false);
+    onClose();
+  };
+  return (
+    <Modal title={title || 'Delete record'} onClose={onClose} footer={
+      <React.Fragment>
+        <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+        <button className="btn btn-danger" disabled={!reason.trim() || busy} onClick={submit}>{busy ? 'Deleting\u2026' : 'Delete'}</button>
+      </React.Fragment>
+    }>
+      <p style={{fontSize:13.5, color:'var(--muted)', margin:'0 0 14px'}}>
+        {itemLabel ? <React.Fragment>Deleting <b>{itemLabel}</b>. </React.Fragment> : null}
+        This moves the record to the Recycle Bin, where it can be restored later. Please give a reason.
+      </p>
+      <Field label="Reason for deletion">
+        <textarea className="input" rows={3} autoFocus value={reason} onChange={e=>setReason(e.target.value)} placeholder="e.g. Duplicate entry, entered in error\u2026" />
+      </Field>
+    </Modal>
+  );
+}
+
+function Field({ label, children }) {
+  return <div className="field"><label className="label">{label}</label>{children}</div>;
+}
+
+function DataTable({ columns, rows, loading, emptyIcon, emptyTitle, emptySubtitle, emptyAction, rowKey, onRowClick }) {
+  if (loading) {
+    return (
+      <div className="card" style={{padding:20}}>
+        {[1,2,3,4,5].map(i => <div key={i} style={{marginBottom:12}}><Skeleton h={18} /></div>)}
+      </div>
+    );
+  }
+  if (!rows || rows.length === 0) {
+    return <div className="card"><EmptyState icon={emptyIcon} title={emptyTitle} subtitle={emptySubtitle} action={emptyAction} /></div>;
+  }
+  return (
+    <div className="card" style={{overflowX:'auto', width:'100%', maxWidth:'100%', WebkitOverflowScrolling:'touch'}}>
+      <table>
+        <thead><tr>{columns.map(c => <th key={c.key} style={c.style}>{c.header}</th>)}</tr></thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row[rowKey] || row.__row} onClick={() => onRowClick && onRowClick(row)} style={onRowClick ? {cursor:'pointer'} : {}}>
+              {columns.map(c => <td key={c.key} style={c.style}>{c.render ? c.render(row) : row[c.key]}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function KpiCard({ label, value, sub, accent }) {
+  return (
+    <div className="kpi-card">
+      <div style={{position:'absolute', top:0, left:0, right:0, height:3, background: accent || 'var(--brand)'}} />
+      <div className="kpi-label">{label}</div>
+      <div className="kpi-value">{value}</div>
+      {sub && <div className="kpi-sub">{sub}</div>}
+    </div>
+  );
+}
+
+// ---------- Lightweight SVG charts (no external chart lib needed) ----------
+function LineChartSvg({ data, xKey, yKey, color='#1C5F9E', height=200 }) {
+  const w = 640;
+  const pad = 30;
+  const values = data.map(d => Number(d[yKey]) || 0);
+  const max = Math.max(1, ...values);
+  const min = 0;
+  const stepX = (w - pad*2) / Math.max(1, data.length - 1);
+  const points = data.map((d, i) => {
+    const x = pad + i * stepX;
+    const y = height - pad - ((Number(d[yKey])||0) - min) / (max - min || 1) * (height - pad*2);
+    return [x, y];
+  });
+  const path = points.map((p, i) => (i===0?'M':'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+  const areaPath = path + ` L${points[points.length-1][0].toFixed(1)},${height-pad} L${points[0][0].toFixed(1)},${height-pad} Z`;
+  return (
+    <svg viewBox={`0 0 ${w} ${height}`} style={{width:'100%', height:'auto'}}>
+      <defs>
+        <linearGradient id="lcGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.22" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <line x1={pad} y1={height-pad} x2={w-pad} y2={height-pad} stroke="#E4E7F0" strokeWidth="1" />
+      <path d={areaPath} fill="url(#lcGrad)" />
+      <path d={path} fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+      {points.map((p, i) => (i % Math.ceil(points.length/7) === 0) && <circle key={i} cx={p[0]} cy={p[1]} r="2.6" fill={color} />)}
+      {data.map((d, i) => (i % Math.ceil(data.length/6) === 0) && (
+        <text key={i} x={pad + i*stepX} y={height-8} fontSize="9.5" fill="#9AA4B5" textAnchor="middle">{d[xKey]}</text>
+      ))}
+    </svg>
+  );
+}
+
+function DonutChartSvg({ data, size=180 }) {
+  const colors = ['#12406B','#D9A441','#1E8A5F','#C4432B','#6E5AA6','#1C5F9E','#B8860B','#4B5A70'];
+  const total = data.reduce((s,d) => s + Number(d.value||0), 0) || 1;
+  let acc = 0;
+  const r = size/2 - 14, cx = size/2, cy = size/2;
+  const circumference = 2 * Math.PI * r;
+  if (!data.length) return <EmptyState icon="chart" title="No sales yet" subtitle="Category breakdown appears once you record sales." />;
+  return (
+    <div style={{display:'flex', alignItems:'center', gap:20, flexWrap:'wrap'}}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <g transform={`rotate(-90 ${cx} ${cy})`}>
+          {data.map((d, i) => {
+            const frac = Number(d.value||0) / total;
+            const dash = frac * circumference;
+            const el = <circle key={i} cx={cx} cy={cy} r={r} fill="none" stroke={colors[i%colors.length]} strokeWidth="20"
+              strokeDasharray={`${dash} ${circumference-dash}`} strokeDashoffset={-acc} />;
+            acc += dash;
+            return el;
+          })}
+        </g>
+        <text x={cx} y={cy-2} textAnchor="middle" fontSize="15" fontWeight="800" fill="var(--ink)">{data.length}</text>
+        <text x={cx} y={cy+14} textAnchor="middle" fontSize="9.5" fill="var(--muted)">categories</text>
+      </svg>
+      <div style={{display:'flex', flexDirection:'column', gap:7, fontSize:12.5}}>
+        {data.slice(0,6).map((d,i) => (
+          <div key={i} style={{display:'flex', alignItems:'center', gap:7}}>
+            <span style={{width:9, height:9, borderRadius:3, background:colors[i%colors.length], display:'inline-block'}} />
+            <span style={{color:'var(--muted)'}}>{d.name}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BarListChart({ data, valueKey, labelKey }) {
+  const max = Math.max(1, ...data.map(d => Number(d[valueKey])||0));
+  return (
+    <div style={{display:'flex', flexDirection:'column', gap:12}}>
+      {data.map((d,i) => (
+        <div key={i}>
+          <div style={{display:'flex', justifyContent:'space-between', fontSize:12.5, marginBottom:4}}>
+            <span style={{fontWeight:600}}>{d[labelKey]}</span>
+            <span style={{color:'var(--muted)'}}>{d[valueKey]}</span>
+          </div>
+          <div style={{height:7, background:'#EEF0F5', borderRadius:6, overflow:'hidden'}}>
+            <div style={{height:'100%', width:(Number(d[valueKey])/max*100)+'%', background:'linear-gradient(90deg, var(--brand), var(--brand-2))', borderRadius:6}} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============================== NAV CONFIG ==============================
+const NAV = [
+  { group: 'Overview', items: [ { key:'dashboard', label:'Dashboard', icon:'dashboard' } ] },
+  { group: 'Operations', items: [
+    { key:'sales', label:'Sales / POS', icon:'sales' },
+    { key:'products', label:'Products', icon:'products' },
+    { key:'inventory', label:'Inventory', icon:'inventory' },
+    { key:'customers', label:'Customers', icon:'customers' },
+    { key:'suppliers', label:'Suppliers', icon:'suppliers' },
+    { key:'purchases', label:'Purchasing', icon:'purchases' },
+    { key:'returns', label:'Returns', icon:'refund' },
+  ]},
+  { group: 'Finance', items: [
+    { key:'invoices', label:'Invoices', icon:'invoices' },
+    { key:'expenses', label:'Expenses', icon:'expenses' },
+    { key:'income', label:'Income', icon:'wallet' },
+    { key:'bookkeeping', label:'Bookkeeping', icon:'bookkeeping' },
+    { key:'reports', label:'Reports', icon:'reports' },
+  ]},
+  { group: 'Admin', items: [
+    { key:'users', label:'Users', icon:'users' },
+    { key:'audit', label:'Audit Log', icon:'audit' },
+    { key:'recyclebin', label:'Recycle Bin', icon:'trash' },
+    { key:'settings', label:'Settings', icon:'settings' },
+  ]},
+];
+const ROLE_PAGES = {
+  'Owner': null, 'Administrator': null,
+  'Manager': ['dashboard','sales','products','inventory','customers','suppliers','purchases','returns','invoices','reports'],
+  'Sales Staff': ['dashboard','sales','customers','invoices','returns'],
+  'Inventory Staff': ['dashboard','products','inventory','purchases'],
+  'Accountant': ['dashboard','bookkeeping','expenses','income','invoices','reports'],
+  'Viewer': ['dashboard','reports'],
+};
+
+function Sidebar({ page, setPage, mobileOpen, setMobileOpen }) {
+  const { business, user, logout } = useApp();
+  const { platformTheme } = useAppTheme();
+  const allowed = ROLE_PAGES[user.role];
+  return (
+    <div className={"sidebar" + (mobileOpen ? " open" : "")}>
+      <div className="sidebar-brand">
+        <BrandMark size={34} fontSize={15} />
+        <div>
+          <div className="brand-name">{(platformTheme && platformTheme.appName) || 'Business360'}</div>
+          <div className="brand-sub" title={business.businessId}>{business.businessName}</div>
+        </div>
+      </div>
+      <div style={{padding:'0 20px 10px', fontSize:9.5, color:'#5B7292', fontFamily:'JetBrains Mono, monospace', userSelect:'all'}} title="Your current business ID \u2014 cross-check this against the spreadsheet if data looks missing">
+        {business.businessId} \u00b7 {user.email}
+      </div>
+      <div className="nav-scroll">
+        {NAV.map(group => {
+          const items = group.items.filter(it => !allowed || allowed.indexOf(it.key) !== -1);
+          if (!items.length) return null;
+          return (
+            <div key={group.group}>
+              <div className="nav-group-label">{group.group}</div>
+              {items.map(it => (
+                <div key={it.key} className={"nav-item" + (page===it.key ? " active" : "")}
+                  onClick={() => { setPage(it.key); setMobileOpen(false); }}>
+                  <I name={it.icon} size={16} />
+                  {it.label}
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+      <div className="sidebar-foot">
+        <div className="user-chip" onClick={logout} title="Log out" style={{cursor:'pointer'}}>
+          <div className="avatar">{initials(user.name)}</div>
+          <div style={{flex:1, minWidth:0}}>
+            <div style={{color:'#fff', fontSize:12.5, fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{user.name}</div>
+            <div style={{fontSize:11, color:'#7C90AE'}}>{user.role}</div>
+          </div>
+          <I name="logout" size={15} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const COMMANDS = [
+  { label:'New Sale', page:'sales', action:'newSale', icon:'sales' },
+  { label:'Add Product', page:'products', action:'new', icon:'products' },
+  { label:'Add Customer', page:'customers', action:'new', icon:'customers' },
+  { label:'Add Supplier', page:'suppliers', action:'new', icon:'suppliers' },
+  { label:'Record Expense', page:'expenses', action:'new', icon:'expenses' },
+  { label:'New Purchase Order', page:'purchases', action:'new', icon:'purchases' },
+  { label:'Record Payment', page:'invoices', action:'payment', icon:'wallet' },
+  { label:'Stock Adjustment', page:'inventory', action:'adjust', icon:'inventory' },
+  { label:'View Inventory', page:'inventory', icon:'inventory' },
+  { label:'Open Reports', page:'reports', icon:'reports' },
+  { label:'Outstanding Invoices', page:'bookkeeping', tab:'receivables', icon:'invoices' },
+  { label:'Low Stock', page:'inventory', filter:'low', icon:'alert' },
+  { label:'Dashboard', page:'dashboard', icon:'dashboard' },
+  { label:'Settings', page:'settings', icon:'settings' },
+];
+
+function CommandPalette({ onClose, dispatch }) {
+  const [q, setQ] = useState('');
+  const [idx, setIdx] = useState(0);
+  const filtered = COMMANDS.filter(c => c.label.toLowerCase().includes(q.toLowerCase()));
+  const inputRef = useRef(null);
+  useEffect(() => { inputRef.current && inputRef.current.focus(); }, []);
+  useEffect(() => setIdx(0), [q]);
+  const go = (cmd) => { dispatch(cmd); onClose(); };
+  const onKey = (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setIdx(i => Math.min(i+1, filtered.length-1)); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setIdx(i => Math.max(i-1, 0)); }
+    else if (e.key === 'Enter') { if (filtered[idx]) go(filtered[idx]); }
+    else if (e.key === 'Escape') onClose();
+  };
+  return (
+    <div className="cmdk-overlay" onMouseDown={(e) => { if (e.target===e.currentTarget) onClose(); }}>
+      <div className="cmdk">
+        <input ref={inputRef} className="cmdk-input" placeholder="Type a command or search\u2026" value={q}
+          onChange={e => setQ(e.target.value)} onKeyDown={onKey} />
+        <div style={{maxHeight:320, overflowY:'auto', padding:'6px 0'}}>
+          {filtered.length === 0 && <div style={{padding:'20px 18px', fontSize:13, color:'var(--muted)'}}>No matches.</div>}
+          {filtered.map((c,i) => (
+            <div key={c.label} className={"cmdk-item" + (i===idx?" active":"")} onMouseEnter={() => setIdx(i)} onClick={() => go(c)} style={{cursor:'pointer'}}>
+              <span style={{display:'flex', alignItems:'center', gap:10}}><I name={c.icon} size={15} style={{color:'var(--muted)'}} />{c.label}</span>
+              <I name="arrowRight" size={13} style={{color:'#C7CEDA'}} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Topbar({ onMenu, onSearch }) {
+  const { business } = useApp();
+  return (
+    <div className="topbar">
+      <div style={{display:'flex', alignItems:'center', gap:14}}>
+        <button className="icon-btn mobile-menu-btn" onClick={onMenu}><I name="menu" size={17} /></button>
+        <div className="search-trigger" onClick={onSearch} style={{cursor:'pointer'}}>
+          <I name="search" size={14} />
+          <span style={{flex:1}}>Search or run a command\u2026</span>
+          <span className="kbd">Ctrl K</span>
+        </div>
+      </div>
+      <div style={{display:'flex', alignItems:'center', gap:12}}>
+        <span className="badge badge-slate">{business.currency}</span>
+        {business.subscriptionPlan === 'Trial' && <span className="badge badge-amber">Trial</span>}
+        <ThemeToggle />
+      </div>
+    </div>
+  );
+}
+
+// ============================== AUTH SCREENS ==============================
+const DEMO_ROLE_META = {
+  'Owner':           { icon:'building',  blurb:'Full access to every module and setting.' },
+  'Administrator':   { icon:'settings',  blurb:'Almost full access, manages users & settings.' },
+  'Manager':         { icon:'dashboard', blurb:'Sales, inventory, customers, suppliers, reports.' },
+  'Sales Staff':     { icon:'sales',     blurb:'Point of sale, customers and invoices.' },
+  'Inventory Staff': { icon:'inventory', blurb:'Products, stock levels and purchasing.' },
+  'Accountant':      { icon:'bookkeeping', blurb:'Bookkeeping, expenses, income, VAT & reports.' },
+  'Viewer':          { icon:'reports',   blurb:'Read-only view of the dashboard and reports.' },
+};
+
+function DemoLoginPanel({ onLogin }) {
+  const [creds, setCreds] = useState(null);
+  const [loadingRole, setLoadingRole] = useState(null);
+  const [showCreds, setShowCreds] = useState(false);
+
+  useEffect(() => { callServer('auth.demoCredentials', {}).then(res => { if (res.success) setCreds(res.data); }); }, []);
+
+  const loginAs = async (role) => {
+    setLoadingRole(role);
+    const res = await callServer('auth.demoLogin', { role });
+    setLoadingRole(null);
+    if (res.success) onLogin(res.data);
+  };
+
+  if (!creds) return null;
+
+  return (
+    <div className="auth-card" style={{maxWidth:420, marginTop:16, padding:'22px 24px'}}>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4}}>
+        <h3 style={{margin:0, fontSize:14.5}}>Try it as a demo user</h3>
+        <span className="badge badge-amber">Demo</span>
+      </div>
+      <p style={{fontSize:12, color:'var(--muted)', margin:'0 0 14px'}}>One shared demo business, pre-loaded with data. Pick a role to see exactly what that user sees.</p>
+      <div style={{display:'flex', flexDirection:'column', gap:6}}>
+        {creds.users.map(u => (
+          <button key={u.role} className="btn btn-outline" style={{justifyContent:'flex-start', width:'100%', padding:'10px 12px'}} disabled={!!loadingRole} onClick={() => loginAs(u.role)}>
+            <I name={(DEMO_ROLE_META[u.role]||{}).icon || 'users'} size={15} />
+            <span style={{flex:1, textAlign:'left'}}>
+              <div style={{fontWeight:700, fontSize:12.5}}>{u.role}</div>
+              <div style={{fontSize:11, color:'var(--muted)', fontWeight:400}}>{(DEMO_ROLE_META[u.role]||{}).blurb}</div>
+            </span>
+            {loadingRole===u.role ? <span style={{fontSize:11, color:'var(--muted)'}}>Signing in\u2026</span> : <I name="arrowRight" size={14} style={{color:'#C7CEDA'}} />}
+          </button>
+        ))}
+      </div>
+      <div style={{textAlign:'center', marginTop:12}}>
+        <a onClick={() => setShowCreds(s=>!s)} style={{color:'var(--brand-2)', fontWeight:600, cursor:'pointer', fontSize:12}}>
+          {showCreds ? 'Hide' : 'Show'} credentials to log in manually
+        </a>
+      </div>
+      {showCreds && (
+        <div style={{marginTop:10, fontSize:11.5, background:'var(--paper)', borderRadius:9, padding:'10px 12px'}}>
+          <div style={{marginBottom:6}}>Password for all demo users: <span className="mono" style={{fontWeight:700}}>{creds.password}</span></div>
+          {creds.users.map(u => (
+            <div key={u.email} style={{display:'flex', justifyContent:'space-between', padding:'3px 0'}}>
+              <span style={{color:'var(--muted)'}}>{u.role}</span><span className="mono">{u.email}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================== LANDING PAGE ==============================
+const FEATURES = [
+  { icon:'sales', title:'Sales & POS', desc:'A fast checkout for the counter \u2014 barcode search, discounts, VAT and change, calculated automatically on every sale.' },
+  { icon:'inventory', title:'Multi-location Inventory', desc:'Stock levels across every branch or warehouse, with reorder alerts before you run out.' },
+  { icon:'bookkeeping', title:'Bookkeeping & VAT', desc:'Income, expenses, receivables and payables kept in one ledger \u2014 with VAT worked out for you, not a spreadsheet.' },
+  { icon:'purchases', title:'Purchasing & Suppliers', desc:'Raise a purchase order, receive stock, and watch inventory and payables update themselves.' },
+  { icon:'reports', title:'Reports that matter', desc:'Profit & loss, cash flow, stock valuation and aging receivables \u2014 filtered by date, exportable in one click.' },
+  { icon:'users', title:'Role-based access', desc:'Owners, accountants, sales staff and store managers each see exactly what their job needs \u2014 nothing more.' },
+];
+
+function LandingPage({ onGotoLogin, onGotoSignup, onGotoPlatformAdmin }) {
+  const { platformTheme } = useAppTheme();
+  const appName = (platformTheme && platformTheme.appName) || 'Business360';
+  return (
+    <div className="landing">
+      <div className="landing-nav">
+        <div style={{display:'flex', alignItems:'center', gap:10}}>
+          <BrandMark size={34} fontSize={15} />
+          <div>
+            <div style={{fontFamily:'Manrope', fontWeight:800, fontSize:15}}>{appName}</div>
+            <div style={{fontSize:9.5, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.07em'}}>by BPA Dynamics</div>
+          </div>
+        </div>
+        <div className="navlinks">
+          <a onClick={() => document.getElementById('lp-features').scrollIntoView({behavior:'smooth'})}>Features</a>
+          <a onClick={() => document.getElementById('lp-about').scrollIntoView({behavior:'smooth'})}>Why {appName}</a>
+        </div>
+        <div style={{display:'flex', gap:10, alignItems:'center'}}>
+          <ThemeToggle />
+          <button className="btn btn-outline btn-sm" onClick={onGotoLogin}><I name="logout" size={14} style={{transform:'scaleX(-1)'}} />Log In</button>
+          <button className="btn btn-gold btn-sm" onClick={onGotoSignup}>Get Started</button>
+        </div>
+      </div>
+
+      <div className="hero">
+        <div className="ledger-lines" />
+        <div className="ledger-rule" />
+        <div className="hero-inner">
+          <div>
+            <div className="eyebrow"><I name="check" size={12} />Built for African SMEs</div>
+            <h1>Run your sales, stock and books from <em>one ledger.</em></h1>
+            <p className="hero-sub">Business360 replaces the scattered notebooks and spreadsheets with one system for sales, inventory and bookkeeping \u2014 in your currency, at your VAT rate.</p>
+            <div className="hero-ctas">
+              <button className="btn btn-gold" onClick={onGotoLogin}><I name="logout" size={15} style={{transform:'scaleX(-1)'}} />Log In</button>
+              <button className="btn btn-outline" style={{background:'transparent', borderColor:'rgba(255,255,255,.28)', color:'#fff'}} onClick={onGotoSignup}>Create Your Business<I name="arrowRight" size={15} /></button>
+            </div>
+            <div className="hero-trust">
+              <span><I name="check" size={13} style={{color:'var(--gold)'}} />No card required</span>
+              <span><I name="check" size={13} style={{color:'var(--gold)'}} />Any currency, any VAT rate</span>
+              <span><I name="check" size={13} style={{color:'var(--gold)'}} />Try it with a demo login</span>
+            </div>
+          </div>
+
+          <div className="mock-wrap">
+            <div className="mock-badge">Live dashboard</div>
+            <div className="float-chip" style={{top:-18, left:-18}}>
+              <span style={{width:8, height:8, borderRadius:99, background:'var(--green)', display:'inline-block'}} />
+              Sale completed \u2014 \u20a648,000
+            </div>
+            <div className="float-chip" style={{bottom:-16, right:-14}}>
+              <I name="check" size={14} style={{color:'var(--green)'}} />
+              Invoice paid in full
+            </div>
+            <div className="mock-card">
+              <div className="mock-topbar"><span className="mock-dot"/><span className="mock-dot"/><span className="mock-dot"/>
+                <span style={{fontSize:11, color:'var(--muted)', marginLeft:8}}>business360.app/dashboard</span>
+              </div>
+              <div className="mock-body">
+                <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:14}}>
+                  <div className="mock-kpi"><div style={{fontSize:10, color:'var(--muted)', fontWeight:700, textTransform:'uppercase'}}>Today's Sales</div><div style={{fontFamily:'Manrope', fontWeight:800, fontSize:16, marginTop:4}}>\u20a6245,000</div></div>
+                  <div className="mock-kpi"><div style={{fontSize:10, color:'var(--muted)', fontWeight:700, textTransform:'uppercase'}}>Net Profit</div><div style={{fontFamily:'Manrope', fontWeight:800, fontSize:16, marginTop:4, color:'var(--green)'}}>\u20a672,500</div></div>
+                  <div className="mock-kpi"><div style={{fontSize:10, color:'var(--muted)', fontWeight:700, textTransform:'uppercase'}}>Low Stock</div><div style={{fontFamily:'Manrope', fontWeight:800, fontSize:16, marginTop:4, color:'var(--amber)'}}>3 items</div></div>
+                </div>
+                <div style={{border:'1px solid var(--line)', borderRadius:10, padding:'10px 12px 2px'}}>
+                  <div style={{fontSize:10.5, fontWeight:700, color:'var(--muted)', marginBottom:2}}>Sales trend</div>
+                  <LineChartSvg data={[{d:'1',sales:120},{d:'2',sales:180},{d:'3',sales:140},{d:'4',sales:220},{d:'5',sales:260},{d:'6',sales:210},{d:'7',sales:300}]} xKey="d" yKey="sales" height={90} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="stats-strip">
+        <div className="ledger-lines" />
+        <div className="stats-inner">
+          {[['22','Business modules'],['20+','Linked data tables'],['7','Role-based logins'],['\u2014','Fixed to one currency']].map(([n,l],i) => (
+            <div key={i}><div className="stat-num">{n}</div><div className="stat-lbl">{l}</div></div>
+          ))}
+        </div>
+      </div>
+
+      <div id="lp-features" className="section">
+        <div className="section-head">
+          <div className="eyebrow">Everything in one place</div>
+          <h2>Stop reconciling five different notebooks</h2>
+          <p>Sales, stock and money move together \u2014 so a sale here updates inventory there, and your books, automatically.</p>
+        </div>
+        <div className="feat-grid">
+          {FEATURES.map((f,i) => (
+            <div key={i} className="feat-card">
+              <div className="feat-icon"><I name={f.icon} size={20} /></div>
+              <h3>{f.title}</h3>
+              <p>{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div id="lp-about" className="section" style={{paddingTop:0}}>
+        <div className="cta-band">
+          <h2>See it running in under a minute</h2>
+          <p>Log in as an Owner, an Accountant, or a Sales Staff member on a shared demo business \u2014 no signup needed.</p>
+          <div style={{display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap'}}>
+            <button className="btn btn-gold" onClick={onGotoLogin}>Try the Demo</button>
+            <button className="btn btn-outline" style={{background:'transparent', borderColor:'rgba(255,255,255,.3)', color:'#fff'}} onClick={onGotoSignup}>Create Your Business</button>
+          </div>
+        </div>
+      </div>
+
+      <div className="landing-footer">
+        <div style={{display:'flex', alignItems:'center', gap:8}}>
+          <BrandMark size={26} fontSize={12} />
+          <span><b>{appName}</b> by BPA Dynamics</span>
+        </div>
+        <div style={{display:'flex', alignItems:'center', gap:16}}>
+          <span>bpadynamics@gmail.com</span>
+          <a onClick={onGotoPlatformAdmin} style={{cursor:'pointer', color:'var(--muted)'}}>Platform Admin</a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LoginPage({ onLogin, onGotoSignup }) {
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setLoading(true); setError('');
+    const res = await callServer('auth.login', { email, password });
+    setLoading(false);
+    if (res.success) onLogin(res.data);
+    else setError(res.message || 'Login failed.');
+  };
+
+  return (
+    <div className="auth-wrap">
+      <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
+      <div className="auth-card">
+        <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:22}}>
+          <div className="brand-mark" style={{width:40, height:40, fontSize:17}}>B</div>
+          <div>
+            <div style={{fontFamily:'Manrope', fontWeight:800, fontSize:17}}>Business360</div>
+            <div style={{fontSize:11, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.06em'}}>by BPA Dynamics</div>
+          </div>
+        </div>
+        <h2 style={{margin:'0 0 4px', fontSize:20}}>Welcome back</h2>
+        <p style={{margin:'0 0 22px', fontSize:13, color:'var(--muted)'}}>Sign in to your business workspace.</p>
+        <form onSubmit={submit}>
+          <Field label="Email address">
+            <input className="input" type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@business.com" />
+          </Field>
+          <Field label="Password">
+            <input className="input" type="password" required value={password} onChange={e=>setPassword(e.target.value)} placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" />
+          </Field>
+          {error && <div style={{background:'#FCEBE7', color:'var(--red)', fontSize:12.5, padding:'9px 12px', borderRadius:8, marginBottom:14}}>{error}</div>}
+          <button className="btn btn-primary" type="submit" style={{width:'100%', justifyContent:'center', padding:'11px'}} disabled={loading}>
+            {loading ? 'Signing in\u2026' : 'Sign In'}
+          </button>
+        </form>
+        <div style={{textAlign:'center', marginTop:18, fontSize:13, color:'var(--muted)'}}>
+          New to Business360? <a onClick={onGotoSignup} style={{color:'var(--brand-2)', fontWeight:600, cursor:'pointer'}}>Create your business</a>
+        </div>
+      </div>
+      <DemoLoginPanel onLogin={onLogin} />
+      </div>
+    </div>
+  );
+}
+
+const CURRENCIES = [
+  { code:'NGN', label:'Nigerian Naira (\u20A6)' }, { code:'GHS', label:'Ghanaian Cedi (\u20B5)' },
+  { code:'KES', label:'Kenyan Shilling (KSh)' }, { code:'ZAR', label:'South African Rand (R)' },
+  { code:'USD', label:'US Dollar ($)' }, { code:'GBP', label:'British Pound (\u00A3)' }, { code:'EUR', label:'Euro (\u20AC)' },
+];
+
+function SignupPage({ onSignup, onGotoLogin }) {
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [form, setForm] = useState({
+    businessName:'', businessType:'Retail', ownerName:'', email:'', phone:'', password:'',
+    currency:'NGN', vatRate:'7.5', locationName:'Main Store', seedDemo:true
+  });
+  const set = (k,v) => setForm(f => ({...f, [k]:v}));
+
+  const submit = async () => {
+    setLoading(true); setError('');
+    const res = await callServer('auth.signup', form);
+    setLoading(false);
+    if (res.success) onSignup(res.data);
+    else setError(res.message || 'Something went wrong.');
+  };
+
+  return (
+    <div className="auth-wrap">
+      <div className="auth-card" style={{maxWidth:480}}>
+        <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:18}}>
+          <div className="brand-mark" style={{width:40, height:40, fontSize:17}}>B</div>
+          <div>
+            <div style={{fontFamily:'Manrope', fontWeight:800, fontSize:17}}>Business360</div>
+            <div style={{fontSize:11, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.06em'}}>by BPA Dynamics</div>
+          </div>
+        </div>
+        <div style={{display:'flex', gap:6, marginBottom:20}}>
+          {[1,2,3].map(s => <div key={s} style={{flex:1, height:4, borderRadius:4, background: s<=step ? 'var(--gold)' : '#EEF0F5'}} />)}
+        </div>
+
+        {step === 1 && (
+          <React.Fragment>
+            <h2 style={{margin:'0 0 4px', fontSize:19}}>Tell us about your business</h2>
+            <p style={{margin:'0 0 18px', fontSize:13, color:'var(--muted)'}}>Step 1 of 3 \u2014 Business & owner details</p>
+            <Field label="Business name"><input className="input" value={form.businessName} onChange={e=>set('businessName', e.target.value)} placeholder="e.g. Ade General Stores" /></Field>
+            <Field label="Business type">
+              <select className="input" value={form.businessType} onChange={e=>set('businessType', e.target.value)}>
+                {['Retail','Wholesale','Pharmacy','Restaurant','Services','Manufacturing','Other'].map(t => <option key={t}>{t}</option>)}
+              </select>
+            </Field>
+            <Field label="Owner full name"><input className="input" value={form.ownerName} onChange={e=>set('ownerName', e.target.value)} placeholder="Your name" /></Field>
+            <Field label="Email address"><input className="input" type="email" value={form.email} onChange={e=>set('email', e.target.value)} placeholder="you@business.com" /></Field>
+            <Field label="Password"><input className="input" type="password" value={form.password} onChange={e=>set('password', e.target.value)} placeholder="Create a password" /></Field>
+            <button className="btn btn-primary" style={{width:'100%', justifyContent:'center', padding:11}}
+              disabled={!form.businessName || !form.ownerName || !form.email || !form.password}
+              onClick={() => setStep(2)}>Continue</button>
+          </React.Fragment>
+        )}
+
+        {step === 2 && (
+          <React.Fragment>
+            <h2 style={{margin:'0 0 4px', fontSize:19}}>Currency & tax</h2>
+            <p style={{margin:'0 0 18px', fontSize:13, color:'var(--muted)'}}>Step 2 of 3 \u2014 Configure your defaults</p>
+            <Field label="Currency">
+              <select className="input" value={form.currency} onChange={e=>set('currency', e.target.value)}>
+                {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
+              </select>
+            </Field>
+            <Field label="Default VAT rate (%)"><input className="input" type="number" step="0.1" value={form.vatRate} onChange={e=>set('vatRate', e.target.value)} /></Field>
+            <Field label="First location name"><input className="input" value={form.locationName} onChange={e=>set('locationName', e.target.value)} placeholder="e.g. Main Store" /></Field>
+            <div style={{display:'flex', gap:10}}>
+              <button className="btn btn-outline" onClick={() => setStep(1)}>Back</button>
+              <button className="btn btn-primary" style={{flex:1, justifyContent:'center'}} onClick={() => setStep(3)}>Continue</button>
+            </div>
+          </React.Fragment>
+        )}
+
+        {step === 3 && (
+          <React.Fragment>
+            <h2 style={{margin:'0 0 4px', fontSize:19}}>Ready to launch</h2>
+            <p style={{margin:'0 0 18px', fontSize:13, color:'var(--muted)'}}>Step 3 of 3 \u2014 Review & finish</p>
+            <div className="card" style={{padding:14, marginBottom:16, fontSize:13}}>
+              <div style={{display:'flex', justifyContent:'space-between', padding:'5px 0'}}><span style={{color:'var(--muted)'}}>Business</span><b>{form.businessName}</b></div>
+              <div style={{display:'flex', justifyContent:'space-between', padding:'5px 0'}}><span style={{color:'var(--muted)'}}>Owner</span><b>{form.ownerName}</b></div>
+              <div style={{display:'flex', justifyContent:'space-between', padding:'5px 0'}}><span style={{color:'var(--muted)'}}>Currency</span><b>{form.currency}</b></div>
+              <div style={{display:'flex', justifyContent:'space-between', padding:'5px 0'}}><span style={{color:'var(--muted)'}}>VAT rate</span><b>{form.vatRate}%</b></div>
+            </div>
+            <label style={{display:'flex', alignItems:'center', gap:8, fontSize:13, marginBottom:18, cursor:'pointer'}}>
+              <input type="checkbox" checked={form.seedDemo} onChange={e=>set('seedDemo', e.target.checked)} />
+              Add sample demo data so I can explore the app immediately
+            </label>
+            {error && <div style={{background:'#FCEBE7', color:'var(--red)', fontSize:12.5, padding:'9px 12px', borderRadius:8, marginBottom:14}}>{error}</div>}
+            <div style={{display:'flex', gap:10}}>
+              <button className="btn btn-outline" onClick={() => setStep(2)}>Back</button>
+              <button className="btn btn-gold" style={{flex:1, justifyContent:'center'}} disabled={loading} onClick={submit}>
+                {loading ? 'Creating your workspace\u2026' : 'Create Business'}
+              </button>
+            </div>
+          </React.Fragment>
+        )}
+
+        <div style={{textAlign:'center', marginTop:16, fontSize:13, color:'var(--muted)'}}>
+          Already have an account? <a onClick={onGotoLogin} style={{color:'var(--brand-2)', fontWeight:600, cursor:'pointer'}}>Sign in</a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================== DATA HOOK ==============================
+function useApiData(action, payload, deps=[]) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const toast = useToast();
+  const reload = useCallback(() => {
+    setLoading(true);
+    callServer(action, payload).then(res => {
+      setLoading(false);
+      if (res.success) setData(res.data);
+      else { setError(res.message); toast && toast(res.message, 'error'); }
+    });
+  }, deps); // eslint-disable-line
+  useEffect(() => { reload(); }, deps); // eslint-disable-line
+  return { data, loading, error, reload };
+}
+
+// ============================== DASHBOARD ==============================
+const KPI_DEFS = {
+  todayRevenue:       { label: "Today's Sales", accent: 'var(--gold)', sub: (k,fmt) => k.todayProfit>=0 ? `Profit today: ${fmt(k.todayProfit)}` : '' },
+  todayProfit:        { label: "Today's Profit", accent: 'var(--green)' },
+  netProfit:          { label: 'Net Profit (all time)', accent: 'var(--green)', sub: (k,fmt) => `Gross profit ${fmt(k.grossProfit)}` },
+  receivables:        { label: 'Accounts Receivable', accent: 'var(--amber)', sub: (k) => `${k.outstandingInvoices} unpaid invoice(s)` },
+  inventoryValue:     { label: 'Inventory Value', accent: 'var(--brand-2)', sub: (k) => `${k.productCount} products \u00b7 ${k.lowStockCount} low stock` },
+  totalSales:         { label: 'Total Sales' },
+  totalExpenses:      { label: 'Total Expenses', accent: 'var(--red)' },
+  cashBalance:        { label: 'Cash Balance' },
+  payables:           { label: 'Accounts Payable', accent: 'var(--red)' },
+  outstandingInvoices:{ label: 'Unpaid Invoices', isCount: true },
+  unitsSold:          { label: 'Units Sold', isCount: true },
+  productCount:        { label: 'Products', isCount: true },
+  lowStockCount:       { label: 'Low Stock Items', isCount: true, accent: 'var(--red)' },
+};
+
+function DashboardPage({ dispatch }) {
+  const { user } = useApp();
+  const fmt = useCurrency();
+  const { data, loading, reload } = useApiData('dashboard.get', {}, []);
+  const greeting = (() => {
+    const h = new Date().getHours();
+    return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  })();
+
+  if (loading || !data) {
+    return (
+      <div>
+        <Skeleton h={30} w={280} />
+        <div className="grid g4" style={{marginTop:20}}>
+          {[1,2,3,4].map(i => <div key={i} className="card" style={{padding:18}}><Skeleton h={60} /></div>)}
+        </div>
+      </div>
+    );
+  }
+  const k = data.kpis;
+  const view = data.roleView || { kpis: Object.keys(KPI_DEFS).slice(0,4), sections: ['trend','category','topProducts','lowStock','recent'] };
+  const has = (s) => view.sections.indexOf(s) !== -1;
+  const canSell = user.role !== 'Viewer' && user.role !== 'Accountant' && user.role !== 'Inventory Staff';
+
+  return (
+    <div>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-end', flexWrap:'wrap', gap:12, marginBottom:20}}>
+        <div>
+          <div className="section-title">{greeting}, {user.name.split(' ')[0]}.</div>
+          <div className="section-sub">Here's your {view.greeting || 'business'} view for today. <span className="badge badge-blue" style={{marginLeft:6}}>{user.role}</span></div>
+        </div>
+        <div style={{display:'flex', gap:10}}>
+          <button className="btn btn-outline btn-sm" onClick={reload}><I name="refund" size={14} />Refresh</button>
+          {canSell && <button className="btn btn-gold btn-sm" onClick={() => dispatch({page:'sales', action:'newSale'})}><I name="plus" size={14} />New Sale</button>}
+        </div>
+      </div>
+
+      <div className="grid g4">
+        {view.kpis.map(key => {
+          const def = KPI_DEFS[key];
+          if (!def) return null;
+          const raw = k[key];
+          const value = def.isCount ? String(raw) : fmt(raw);
+          const sub = typeof def.sub === 'function' ? def.sub(k, fmt) : def.sub;
+          return <KpiCard key={key} label={def.label} value={value} sub={sub} accent={def.accent} />;
+        })}
+      </div>
+
+      {(has('trend') || has('category')) && (
+        <div className={(has('trend') && has('category')) ? "two-col-wide" : "one-col"} style={{marginTop:16}}>
+          {has('trend') && (
+            <div className="card" style={{padding:20}}>
+              <h3 style={{margin:'0 0 10px', fontSize:14.5}}>Sales trend (last 14 days)</h3>
+              <LineChartSvg data={data.salesTrend} xKey="date" yKey="sales" />
+            </div>
+          )}
+          {has('category') && (
+            <div className="card" style={{padding:20}}>
+              <h3 style={{margin:'0 0 12px', fontSize:14.5}}>Sales by Category</h3>
+              <DonutChartSvg data={data.salesByCategory} size={150} />
+            </div>
+          )}
+        </div>
+      )}
+
+      {(has('topProducts') || has('lowStock')) && (
+        <div className={(has('topProducts') && has('lowStock')) ? "two-col-equal" : "one-col"} style={{marginTop:16}}>
+          {has('topProducts') && (
+            <div className="card" style={{padding:20}}>
+              <h3 style={{margin:'0 0 14px', fontSize:14.5}}>Top Products</h3>
+              {data.topProducts.length ? <BarListChart data={data.topProducts} valueKey="unitsSold" labelKey="productName" /> : <EmptyState icon="products" title="No sales yet" subtitle="Top products will appear here once you make sales." />}
+            </div>
+          )}
+          {has('lowStock') && (
+            <div className="card" style={{padding:20}}>
+              <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12}}>
+                <h3 style={{margin:0, fontSize:14.5}}>Low Stock Alerts</h3>
+                {data.lowStock.length > 0 && <span className="badge badge-red">{data.lowStock.length}</span>}
+              </div>
+              {data.lowStock.length === 0 ? <EmptyState icon="check" title="All stocked up" subtitle="No products are below their reorder level." /> : (
+                <div style={{display:'flex', flexDirection:'column', gap:10}}>
+                  {data.lowStock.map((p,i) => (
+                    <div key={i} style={{display:'flex', justifyContent:'space-between', alignItems:'center', fontSize:13}}>
+                      <span>{p.productName} <span style={{color:'var(--muted)'}}>@ {p.locationName}</span></span>
+                      <StatusBadge status={p.stockStatus} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {has('recent') && (
+        <div className="card" style={{padding:20, marginTop:16}}>
+          <h3 style={{margin:'0 0 12px', fontSize:14.5}}>Recent Transactions</h3>
+          {data.recentTransactions.length === 0 ? <EmptyState icon="sales" title="No transactions yet" subtitle="Sales, purchases and payments will show up here." /> : (
+            <table>
+              <thead><tr><th>Type</th><th>Reference</th><th>Amount</th><th>Date</th></tr></thead>
+              <tbody>
+                {data.recentTransactions.map((t,i) => (
+                  <tr key={i}><td><StatusBadge status={t.type==='Sale'?'Completed':t.type} /></td><td className="mono">{t.reference}</td><td>{fmt(t.amount)}</td><td>{fmtDateTime(t.date)}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================== PRODUCTS ==============================
+function ProductFormModal({ onClose, onSaved, categories, product }) {
+  const toast = useToast();
+  const [form, setForm] = useState(product || { productName:'', sku:'', categoryId: categories[0] ? categories[0].categoryId : '', costPrice:'', sellingPrice:'', unit:'unit', reorderLevel:10, openingStock:0, avgConsumptionDays:30 });
+  const [saving, setSaving] = useState(false);
+  const set = (k,v) => setForm(f => ({...f, [k]:v}));
+  const submit = async () => {
+    if (!form.productName || !form.sellingPrice) { toast('Product name and selling price are required.', 'error'); return; }
+    setSaving(true);
+    const res = product
+      ? await callServer('products.update', { id: product.productId, data: form })
+      : await callServer('products.create', form);
+    setSaving(false);
+    if (res.success) { toast(product ? 'Product updated.' : 'Product added.'); onSaved(); onClose(); }
+    else toast(res.message, 'error');
+  };
+  return (
+    <Modal title={product ? 'Edit Product' : 'Add Product'} onClose={onClose} footer={
+      <React.Fragment><button className="btn btn-outline" onClick={onClose}>Cancel</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving ? 'Saving\u2026' : 'Save Product'}</button></React.Fragment>
+    }>
+      <div className="grid g2">
+        <Field label="Product name"><input className="input" value={form.productName} onChange={e=>set('productName', e.target.value)} /></Field>
+        <Field label="SKU (auto if blank)"><input className="input" value={form.sku} onChange={e=>set('sku', e.target.value)} /></Field>
+      </div>
+      <div className="grid g2">
+        <Field label="Category">
+          <select className="input" value={form.categoryId} onChange={e=>set('categoryId', e.target.value)}>
+            {categories.map(c => <option key={c.categoryId} value={c.categoryId}>{c.categoryName}</option>)}
+          </select>
+        </Field>
+        <Field label="Unit"><input className="input" value={form.unit} onChange={e=>set('unit', e.target.value)} placeholder="e.g. carton, kg, unit" /></Field>
+      </div>
+      <div className="grid g3">
+        <Field label="Cost price"><input className="input" type="number" value={form.costPrice} onChange={e=>set('costPrice', e.target.value)} /></Field>
+        <Field label="Selling price"><input className="input" type="number" value={form.sellingPrice} onChange={e=>set('sellingPrice', e.target.value)} /></Field>
+        <Field label="Reorder level"><input className="input" type="number" value={form.reorderLevel} onChange={e=>set('reorderLevel', e.target.value)} /></Field>
+      </div>
+      {!product && <Field label="Opening stock (primary location)"><input className="input" type="number" value={form.openingStock} onChange={e=>set('openingStock', e.target.value)} /></Field>}
+      <Field label="Days 1 unit typically lasts a customer">
+        <input className="input" type="number" value={form.avgConsumptionDays} onChange={e=>set('avgConsumptionDays', e.target.value)} placeholder="30" />
+      </Field>
+      <p style={{fontSize:11.5, color:'var(--muted)', margin:'-8px 0 0'}}>Used to predict when a customer is about to run out, so we can email them a restock reminder.</p>
+    </Modal>
+  );
+}
+
+function ProductsPage({ command, clearCommand }) {
+  const fmt = useCurrency();
+  const toast = useToast();
+  const { data: products, loading, reload } = useApiData('products.list', {}, []);
+  const { data: categories } = useApiData('categories.list', {}, []);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [query, setQuery] = useState('');
+  const [delRow, setDelRow] = useState(null);
+
+  useEffect(() => { if (command === 'new') { setEditing(null); setShowForm(true); clearCommand(); } }, [command]);
+
+  const catMap = useMemo(() => { const m={}; (categories||[]).forEach(c=>m[c.categoryId]=c.categoryName); return m; }, [categories]);
+  const filtered = (products||[]).filter(p => !query || p.productName.toLowerCase().includes(query.toLowerCase()) || String(p.sku).toLowerCase().includes(query.toLowerCase()));
+
+  return (
+    <div>
+      <PageHeader title="Products" subtitle="Manage your product catalogue" action={
+        <button className="btn btn-primary" onClick={() => { setEditing(null); setShowForm(true); }}><I name="plus" size={15} />Add Product</button>
+      } />
+      <div style={{marginBottom:14, maxWidth:320}}>
+        <input className="input" placeholder="Search products or SKU\u2026" value={query} onChange={e=>setQuery(e.target.value)} />
+      </div>
+      <DataTable
+        loading={loading} rows={filtered} rowKey="productId"
+        emptyIcon="products" emptyTitle="Your product catalogue is empty."
+        emptySubtitle="Add your first product to start tracking inventory."
+        emptyAction={<button className="btn btn-primary" onClick={() => setShowForm(true)}><I name="plus" size={14}/>Add Product</button>}
+        columns={[
+          { key:'productName', header:'Product', render:r => <div><div style={{fontWeight:600}}>{r.productName}</div><div style={{fontSize:11.5, color:'var(--muted)'}} className="mono">{r.sku}</div></div> },
+          { key:'category', header:'Category', render:r => catMap[r.categoryId] || '\u2014' },
+          { key:'costPrice', header:'Cost', render:r => fmt(r.costPrice) },
+          { key:'sellingPrice', header:'Price', render:r => fmt(r.sellingPrice) },
+          { key:'status', header:'Status', render:r => <StatusBadge status={r.status} /> },
+          { key:'actions', header:'', render:r => (
+            <div style={{display:'flex', gap:6}} onClick={e=>e.stopPropagation()}>
+              <button className="icon-btn" onClick={() => { setEditing(r); setShowForm(true); }}><I name="edit" size={14} /></button>
+              <button className="icon-btn" onClick={() => setDelRow(r)}><I name="trash" size={14} /></button>
+            </div>
+          )}
+        ]}
+      />
+      {showForm && <ProductFormModal categories={categories||[]} product={editing} onClose={() => setShowForm(false)} onSaved={reload} />}
+      {delRow && <DeleteWithReasonDialog title="Delete product" itemLabel={delRow.productName} onClose={() => setDelRow(null)}
+        onConfirm={async (reason) => { const res = await callServer('products.delete', { id: delRow.productId, reason }); if (res.success) { toast('Product moved to recycle bin.'); reload(); } else toast(res.message, 'error'); }} />}
+    </div>
+  );
+}
+
+function PageHeader({ title, subtitle, action }) {
+  return (
+    <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-end', flexWrap:'wrap', gap:12, marginBottom:18}}>
+      <div><div className="section-title">{title}</div>{subtitle && <div className="section-sub">{subtitle}</div>}</div>
+      {action}
+    </div>
+  );
+}
+
+// ============================== INVENTORY ==============================
+function StockMovementModal({ direction, onClose, onSaved, products, locations }) {
+  const toast = useToast();
+  const isIn = direction === 'in';
+  const [form, setForm] = useState({ productId: products[0] ? products[0].productId : '', locationId: locations[0] ? locations[0].locationId : '', quantity:'', reason:'' });
+  const [saving, setSaving] = useState(false);
+  const set = (k,v) => setForm(f=>({...f,[k]:v}));
+  useEffect(() => {
+    setForm(f => ({
+      ...f,
+      productId: f.productId || (products[0] ? products[0].productId : ''),
+      locationId: f.locationId || (locations[0] ? locations[0].locationId : '')
+    }));
+  }, [products, locations]);
+  const submit = async () => {
+    if (!form.productId || !form.locationId) { toast('Select a product and location.', 'error'); return; }
+    const qty = Number(form.quantity);
+    if (!qty || qty <= 0) { toast('Enter a quantity greater than zero.', 'error'); return; }
+    if (!form.reason.trim()) { toast('A reason is required.', 'error'); return; }
+    setSaving(true);
+    const res = await callServer('inventory.adjust', { productId: form.productId, locationId: form.locationId, reason: form.reason, quantityChange: isIn ? qty : -qty });
+    setSaving(false);
+    if (res.success) { toast(isIn ? 'Stock added.' : 'Stock removed.'); onSaved(); onClose(); } else toast(res.message, 'error');
+  };
+  return (
+    <Modal title={isIn ? 'Stock In' : 'Stock Out'} onClose={onClose} footer={<React.Fragment>
+      <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+      <button className={isIn ? "btn btn-primary" : "btn btn-danger"} disabled={saving} onClick={submit}>{saving?'Saving\u2026':(isIn?'Add Stock':'Remove Stock')}</button>
+    </React.Fragment>}>
+      <Field label="Product"><select className="input" value={form.productId} onChange={e=>set('productId', e.target.value)}>{products.map(p=><option key={p.productId} value={p.productId}>{p.productName}</option>)}</select></Field>
+      <Field label="Location"><select className="input" value={form.locationId} onChange={e=>set('locationId', e.target.value)}>{locations.map(l=><option key={l.locationId} value={l.locationId}>{l.locationName}</option>)}</select></Field>
+      <Field label="Quantity"><input className="input" type="number" min="1" value={form.quantity} onChange={e=>set('quantity', e.target.value)} /></Field>
+      <Field label="Reason">
+        <input className="input" value={form.reason} onChange={e=>set('reason', e.target.value)}
+          placeholder={isIn ? 'e.g. New delivery received, stock count correction\u2026' : 'e.g. Damaged goods, expired, stock count correction\u2026'} />
+      </Field>
+    </Modal>
+  );
+}
+
+function AdjustStockModal({ onClose, onSaved, products, locations }) {
+  const toast = useToast();
+  const [form, setForm] = useState({ productId: products[0] ? products[0].productId : '', locationId: locations[0] ? locations[0].locationId : '', quantityChange:'', reason:'' });
+  const [saving, setSaving] = useState(false);
+  const set = (k,v) => setForm(f=>({...f,[k]:v}));
+  useEffect(() => {
+    setForm(f => ({
+      ...f,
+      productId: f.productId || (products[0] ? products[0].productId : ''),
+      locationId: f.locationId || (locations[0] ? locations[0].locationId : '')
+    }));
+  }, [products, locations]);
+  const submit = async () => {
+    if (!form.productId || !form.locationId) { toast('Select a product and location.', 'error'); return; }
+    setSaving(true);
+    const res = await callServer('inventory.adjust', { ...form, quantityChange: Number(form.quantityChange) });
+    setSaving(false);
+    if (res.success) { toast('Stock adjusted.'); onSaved(); onClose(); } else toast(res.message, 'error');
+  };
+  return (
+    <Modal title="Stock Adjustment" onClose={onClose} footer={<React.Fragment>
+      <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving\u2026':'Apply Adjustment'}</button>
+    </React.Fragment>}>
+      <Field label="Product"><select className="input" value={form.productId} onChange={e=>set('productId', e.target.value)}>{products.map(p=><option key={p.productId} value={p.productId}>{p.productName}</option>)}</select></Field>
+      <Field label="Location"><select className="input" value={form.locationId} onChange={e=>set('locationId', e.target.value)}>{locations.map(l=><option key={l.locationId} value={l.locationId}>{l.locationName}</option>)}</select></Field>
+      <Field label="Quantity change (use negative to reduce)"><input className="input" type="number" value={form.quantityChange} onChange={e=>set('quantityChange', e.target.value)} /></Field>
+      <Field label="Reason"><input className="input" value={form.reason} onChange={e=>set('reason', e.target.value)} placeholder="e.g. Stock count correction" /></Field>
+    </Modal>
+  );
+}
+
+function TransferStockModal({ onClose, onSaved, products, locations }) {
+  const toast = useToast();
+  const [form, setForm] = useState({ productId: products[0]?products[0].productId:'', fromLocationId: locations[0]?locations[0].locationId:'', toLocationId: locations[1]?locations[1].locationId:(locations[0]?locations[0].locationId:''), quantity:'' });
+  const [saving, setSaving] = useState(false);
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  useEffect(() => {
+    setForm(f => ({
+      ...f,
+      productId: f.productId || (products[0] ? products[0].productId : ''),
+      fromLocationId: f.fromLocationId || (locations[0] ? locations[0].locationId : ''),
+      toLocationId: f.toLocationId || (locations[1] ? locations[1].locationId : (locations[0] ? locations[0].locationId : ''))
+    }));
+  }, [products, locations]);
+  const submit = async () => {
+    if (!form.productId || !form.fromLocationId || !form.toLocationId) { toast('Select a product and both locations.', 'error'); return; }
+    setSaving(true);
+    const res = await callServer('inventory.transfer', { ...form, quantity: Number(form.quantity) });
+    setSaving(false);
+    if (res.success) { toast('Stock transferred.'); onSaved(); onClose(); } else toast(res.message, 'error');
+  };
+  return (
+    <Modal title="Transfer Stock" onClose={onClose} footer={<React.Fragment>
+      <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Transferring\u2026':'Transfer'}</button>
+    </React.Fragment>}>
+      <Field label="Product"><select className="input" value={form.productId} onChange={e=>set('productId', e.target.value)}>{products.map(p=><option key={p.productId} value={p.productId}>{p.productName}</option>)}</select></Field>
+      <div className="grid g2">
+        <Field label="From location"><select className="input" value={form.fromLocationId} onChange={e=>set('fromLocationId', e.target.value)}>{locations.map(l=><option key={l.locationId} value={l.locationId}>{l.locationName}</option>)}</select></Field>
+        <Field label="To location"><select className="input" value={form.toLocationId} onChange={e=>set('toLocationId', e.target.value)}>{locations.map(l=><option key={l.locationId} value={l.locationId}>{l.locationName}</option>)}</select></Field>
+      </div>
+      <Field label="Quantity"><input className="input" type="number" value={form.quantity} onChange={e=>set('quantity', e.target.value)} /></Field>
+    </Modal>
+  );
+}
+
+function InventoryPage({ command, clearCommand }) {
+  const fmt = useCurrency();
+  const { data: inv, loading, reload } = useApiData('inventory.list', {}, []);
+  const { data: products } = useApiData('products.list', {}, []);
+  const { data: locations } = useApiData('locations.list', {}, []);
+  const [showAdjust, setShowAdjust] = useState(false);
+  const [showTransfer, setShowTransfer] = useState(false);
+  const [showStockIn, setShowStockIn] = useState(false);
+  const [showStockOut, setShowStockOut] = useState(false);
+  const [filter, setFilter] = useState('all');
+
+  useEffect(() => { if (command === 'adjust') { setShowAdjust(true); clearCommand(); } }, [command]);
+
+  const rows = (inv||[]).filter(r => filter==='all' || r.stockStatus === (filter==='low'?'Low Stock':filter==='out'?'Out of Stock':'In Stock'));
+
+  return (
+    <div>
+      <PageHeader title="Inventory" subtitle="Stock levels across all locations" action={
+        <div style={{display:'flex', gap:10, flexWrap:'wrap'}}>
+          <button className="btn btn-outline" onClick={() => setShowStockIn(true)}><I name="plus" size={14} />Stock In</button>
+          <button className="btn btn-outline" onClick={() => setShowStockOut(true)}><I name="trash" size={14} />Stock Out</button>
+          <button className="btn btn-outline" onClick={() => setShowTransfer(true)}><I name="arrowRight" size={14} />Transfer</button>
+          <button className="btn btn-primary" onClick={() => setShowAdjust(true)}><I name="edit" size={14} />Adjust</button>
+        </div>
+      } />
+      <div className="tabs">
+        {[['all','All'],['ok','In Stock'],['low','Low Stock'],['out','Out of Stock']].map(([k,l]) => (
+          <div key={k} className={"tab"+(filter===k?" active":"")} onClick={()=>setFilter(k)} style={{cursor:'pointer'}}>{l}</div>
+        ))}
+      </div>
+      <DataTable loading={loading} rows={rows} rowKey="inventoryId"
+        emptyIcon="inventory" emptyTitle="No inventory records" emptySubtitle="Add products to start tracking stock."
+        columns={[
+          { key:'productName', header:'Product', render:r => <div><div style={{fontWeight:600}}>{r.productName}</div><div style={{fontSize:11.5, color:'var(--muted)'}} className="mono">{r.sku}</div></div> },
+          { key:'locationName', header:'Location' },
+          { key:'quantity', header:'Stock', render:r => r.quantity },
+          { key:'reorderLevel', header:'Reorder Level' },
+          { key:'stockValue', header:'Stock Value', render:r => fmt(r.stockValue) },
+          { key:'stockStatus', header:'Status', render:r => <StatusBadge status={r.stockStatus} /> },
+        ]}
+      />
+      {showAdjust && <AdjustStockModal products={products||[]} locations={locations||[]} onClose={()=>setShowAdjust(false)} onSaved={reload} />}
+      {showTransfer && <TransferStockModal products={products||[]} locations={locations||[]} onClose={()=>setShowTransfer(false)} onSaved={reload} />}
+      {showStockIn && <StockMovementModal direction="in" products={products||[]} locations={locations||[]} onClose={()=>setShowStockIn(false)} onSaved={reload} />}
+      {showStockOut && <StockMovementModal direction="out" products={products||[]} locations={locations||[]} onClose={()=>setShowStockOut(false)} onSaved={reload} />}
+    </div>
+  );
+}
+
+// ============================== CUSTOMERS ==============================
+function CustomerFormModal({ onClose, onSaved, customer }) {
+  const toast = useToast();
+  const [form, setForm] = useState(customer || { customerName:'', phone:'', email:'', address:'', customerType:'Retail', creditLimit:0, birthday:'' });
+  const [saving, setSaving] = useState(false);
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const submit = async () => {
+    if (!form.customerName) { toast('Customer name is required.', 'error'); return; }
+    setSaving(true);
+    const res = customer ? await callServer('customers.update', { id: customer.customerId, data: form }) : await callServer('customers.create', form);
+    setSaving(false);
+    if (res.success) { toast(customer?'Customer updated.':'Customer added.'); onSaved(); onClose(); } else toast(res.message, 'error');
+  };
+  return (
+    <Modal title={customer?'Edit Customer':'Add Customer'} onClose={onClose} footer={<React.Fragment>
+      <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving\u2026':'Save Customer'}</button>
+    </React.Fragment>}>
+      <Field label="Customer name"><input className="input" value={form.customerName} onChange={e=>set('customerName', e.target.value)} /></Field>
+      <div className="grid g2">
+        <Field label="Phone"><input className="input" value={form.phone} onChange={e=>set('phone', e.target.value)} /></Field>
+        <Field label="Email"><input className="input" value={form.email} onChange={e=>set('email', e.target.value)} /></Field>
+      </div>
+      <Field label="Address"><input className="input" value={form.address} onChange={e=>set('address', e.target.value)} /></Field>
+      <div className="grid g2">
+        <Field label="Customer type">
+          <select className="input" value={form.customerType} onChange={e=>set('customerType', e.target.value)}>
+            {['Retail','Wholesale','Corporate'].map(t=><option key={t}>{t}</option>)}
+          </select>
+        </Field>
+        <Field label="Credit limit"><input className="input" type="number" value={form.creditLimit} onChange={e=>set('creditLimit', e.target.value)} /></Field>
+      </div>
+      <Field label="Birthday (optional \u2014 sends an automatic birthday email)">
+        <input className="input" type="date" value={form.birthday} onChange={e=>set('birthday', e.target.value)} />
+      </Field>
+    </Modal>
+  );
+}
+
+function CustomersPage({ command, clearCommand }) {
+  const fmt = useCurrency();
+  const toast = useToast();
+  const { data: customers, loading, reload } = useApiData('customers.list', {}, []);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [detailId, setDetailId] = useState(null);
+  const [delRow, setDelRow] = useState(null);
+  useEffect(() => { if (command==='new') { setEditing(null); setShowForm(true); clearCommand(); } }, [command]);
+
+  return (
+    <div>
+      <PageHeader title="Customers" subtitle="Your customer relationships" action={
+        <button className="btn btn-primary" onClick={() => { setEditing(null); setShowForm(true); }}><I name="plus" size={15} />Add Customer</button>
+      } />
+      <DataTable loading={loading} rows={customers} rowKey="customerId" onRowClick={r => setDetailId(r.customerId)}
+        emptyIcon="customers" emptyTitle="No customers yet." emptySubtitle="Add your first customer to start building relationships."
+        emptyAction={<button className="btn btn-primary" onClick={()=>setShowForm(true)}><I name="plus" size={14}/>Add Customer</button>}
+        columns={[
+          { key:'customerName', header:'Name', render:r => <div style={{fontWeight:600}}>{r.customerName}</div> },
+          { key:'phone', header:'Phone' },
+          { key:'customerType', header:'Type', render:r => <StatusBadge status={r.customerType==='Retail'?'blue':'slate'} /> },
+          { key:'status', header:'Status', render:r => <StatusBadge status={r.status} /> },
+          { key:'actions', header:'', render:r => (
+            <div style={{display:'flex', gap:6}} onClick={e=>e.stopPropagation()}>
+              <button className="icon-btn" onClick={() => { setEditing(r); setShowForm(true); }}><I name="edit" size={14} /></button>
+              <button className="icon-btn" onClick={() => setDelRow(r)}><I name="trash" size={14} /></button>
+            </div>
+          )}
+        ]}
+      />
+      {showForm && <CustomerFormModal customer={editing} onClose={()=>setShowForm(false)} onSaved={reload} />}
+      {detailId && <CustomerDetailModal id={detailId} onClose={()=>setDetailId(null)} />}
+      {delRow && <DeleteWithReasonDialog title="Delete customer" itemLabel={delRow.customerName} onClose={() => setDelRow(null)}
+        onConfirm={async (reason) => { const res = await callServer('customers.delete', { id: delRow.customerId, reason }); if (res.success) { toast('Customer moved to recycle bin.'); reload(); } else toast(res.message, 'error'); }} />}
+    </div>
+  );
+}
+
+function CustomerDetailModal({ id, onClose }) {
+  const fmt = useCurrency();
+  const { data, loading } = useApiData('customers.detail', { id }, [id]);
+  return (
+    <Modal title="Customer Profile" onClose={onClose} wide>
+      {loading || !data ? <Skeleton h={200} /> : (
+        <div>
+          <h3 style={{margin:'0 0 4px'}}>{data.customer.customerName}</h3>
+          <p style={{margin:'0 0 16px', fontSize:13, color:'var(--muted)'}}>{data.customer.phone} {data.customer.email && '\u00b7 ' + data.customer.email}</p>
+          <div className="grid g3" style={{marginBottom:18}}>
+            <KpiCard label="Total Spend" value={fmt(data.totalSpend)} />
+            <KpiCard label="Outstanding" value={fmt(data.outstandingBalance)} accent="var(--red)" />
+            <KpiCard label="Avg Order Value" value={fmt(data.averageOrderValue)} />
+          </div>
+          <h4 style={{fontSize:13.5, margin:'0 0 8px'}}>Sales History</h4>
+          {data.sales.length===0 ? <p style={{fontSize:13, color:'var(--muted)'}}>No sales yet.</p> : (
+            <table><thead><tr><th>Invoice</th><th>Date</th><th>Total</th><th>Balance</th></tr></thead>
+            <tbody>{data.sales.map(s=><tr key={s.saleId}><td className="mono">{s.invoiceNumber}</td><td>{fmtDate(s.createdAt)}</td><td>{fmt(s.total)}</td><td>{fmt(s.balance)}</td></tr>)}</tbody></table>
+          )}
+        </div>
+      )}
+    </Modal>
+  );
+}
+
+// ============================== SUPPLIERS ==============================
+function SupplierFormModal({ onClose, onSaved, supplier }) {
+  const toast = useToast();
+  const [form, setForm] = useState(supplier || { supplierName:'', contactPerson:'', phone:'', email:'', address:'', taxNumber:'' });
+  const [saving, setSaving] = useState(false);
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const submit = async () => {
+    if (!form.supplierName) { toast('Supplier name is required.', 'error'); return; }
+    setSaving(true);
+    const res = supplier ? await callServer('suppliers.update', { id: supplier.supplierId, data: form }) : await callServer('suppliers.create', form);
+    setSaving(false);
+    if (res.success) { toast(supplier?'Supplier updated.':'Supplier added.'); onSaved(); onClose(); } else toast(res.message, 'error');
+  };
+  return (
+    <Modal title={supplier?'Edit Supplier':'Add Supplier'} onClose={onClose} footer={<React.Fragment>
+      <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving\u2026':'Save Supplier'}</button>
+    </React.Fragment>}>
+      <Field label="Supplier name"><input className="input" value={form.supplierName} onChange={e=>set('supplierName', e.target.value)} /></Field>
+      <Field label="Contact person"><input className="input" value={form.contactPerson} onChange={e=>set('contactPerson', e.target.value)} /></Field>
+      <div className="grid g2">
+        <Field label="Phone"><input className="input" value={form.phone} onChange={e=>set('phone', e.target.value)} /></Field>
+        <Field label="Email"><input className="input" value={form.email} onChange={e=>set('email', e.target.value)} /></Field>
+      </div>
+      <Field label="Tax number"><input className="input" value={form.taxNumber} onChange={e=>set('taxNumber', e.target.value)} /></Field>
+    </Modal>
+  );
+}
+
+function SuppliersPage({ command, clearCommand }) {
+  const toast = useToast();
+  const { data: suppliers, loading, reload } = useApiData('suppliers.list', {}, []);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [detailId, setDetailId] = useState(null);
+  const [delRow, setDelRow] = useState(null);
+  useEffect(() => { if (command==='new') { setEditing(null); setShowForm(true); clearCommand(); } }, [command]);
+  return (
+    <div>
+      <PageHeader title="Suppliers" subtitle="Vendors you purchase from" action={
+        <button className="btn btn-primary" onClick={() => { setEditing(null); setShowForm(true); }}><I name="plus" size={15} />Add Supplier</button>
+      } />
+      <DataTable loading={loading} rows={suppliers} rowKey="supplierId" onRowClick={r=>setDetailId(r.supplierId)}
+        emptyIcon="suppliers" emptyTitle="No suppliers yet." emptySubtitle="Add your first supplier to start recording purchases."
+        emptyAction={<button className="btn btn-primary" onClick={()=>setShowForm(true)}><I name="plus" size={14}/>Add Supplier</button>}
+        columns={[
+          { key:'supplierName', header:'Supplier', render:r=><div style={{fontWeight:600}}>{r.supplierName}</div> },
+          { key:'contactPerson', header:'Contact' }, { key:'phone', header:'Phone' },
+          { key:'status', header:'Status', render:r=><StatusBadge status={r.status} /> },
+          { key:'actions', header:'', render:r => (
+            <div style={{display:'flex', gap:6}} onClick={e=>e.stopPropagation()}>
+              <button className="icon-btn" onClick={()=>{setEditing(r); setShowForm(true);}}><I name="edit" size={14}/></button>
+              <button className="icon-btn" onClick={()=>setDelRow(r)}><I name="trash" size={14}/></button>
+            </div>
+          )}
+        ]}
+      />
+      {showForm && <SupplierFormModal supplier={editing} onClose={()=>setShowForm(false)} onSaved={reload} />}
+      {detailId && <SupplierDetailModal id={detailId} onClose={()=>setDetailId(null)} />}
+      {delRow && <DeleteWithReasonDialog title="Delete supplier" itemLabel={delRow.supplierName} onClose={() => setDelRow(null)}
+        onConfirm={async (reason) => { const res = await callServer('suppliers.delete', { id: delRow.supplierId, reason }); if (res.success) { toast('Supplier moved to recycle bin.'); reload(); } else toast(res.message, 'error'); }} />}
+    </div>
+  );
+}
+
+function SupplierDetailModal({ id, onClose }) {
+  const fmt = useCurrency();
+  const { data, loading } = useApiData('suppliers.detail', { id }, [id]);
+  return (
+    <Modal title="Supplier Profile" onClose={onClose} wide>
+      {loading || !data ? <Skeleton h={200} /> : (
+        <div>
+          <h3 style={{margin:'0 0 4px'}}>{data.supplier.supplierName}</h3>
+          <p style={{margin:'0 0 16px', fontSize:13, color:'var(--muted)'}}>{data.supplier.contactPerson} {data.supplier.phone && '\u00b7 ' + data.supplier.phone}</p>
+          <KpiCard label="Outstanding Payable" value={fmt(data.outstandingPayable)} accent="var(--red)" />
+          <h4 style={{fontSize:13.5, margin:'18px 0 8px'}}>Purchase History</h4>
+          {data.purchases.length===0 ? <p style={{fontSize:13, color:'var(--muted)'}}>No purchases yet.</p> : (
+            <table><thead><tr><th>PO Number</th><th>Date</th><th>Total</th><th>Balance</th></tr></thead>
+            <tbody>{data.purchases.map(p=><tr key={p.purchaseId}><td className="mono">{p.purchaseOrderNumber}</td><td>{fmtDate(p.createdAt)}</td><td>{fmt(p.total)}</td><td>{fmt(p.balance)}</td></tr>)}</tbody></table>
+          )}
+        </div>
+      )}
+    </Modal>
+  );
+}
+
+// ============================== SALES / POS ==============================
+function POSModal({ onClose, onSaved, products, customers, locations }) {
+  const fmt = useCurrency();
+  const toast = useToast();
+  const { business } = useApp();
+  const [cart, setCart] = useState([]);
+  const [search, setSearch] = useState('');
+  const [customerId, setCustomerId] = useState('');
+  const [locationId, setLocationId] = useState(locations[0] ? locations[0].locationId : '');
+  const [paymentMethod, setPaymentMethod] = useState('Cash');
+  const [amountPaid, setAmountPaid] = useState('');
+  const [discount, setDiscount] = useState(0);
+  const [applyVat, setApplyVat] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [result, setResult] = useState(null);
+
+  // locations often arrive after this modal's first render (async fetch) — sync the default once they load
+  useEffect(() => { if (!locationId && locations.length) setLocationId(locations[0].locationId); }, [locations]);
+
+  const filteredProducts = products.filter(p => !search || p.productName.toLowerCase().includes(search.toLowerCase()) || String(p.sku).toLowerCase().includes(search.toLowerCase()));
+
+  const addToCart = (p) => {
+    setCart(c => {
+      const existing = c.find(i => i.productId === p.productId);
+      if (existing) return c.map(i => i.productId===p.productId ? {...i, quantity:i.quantity+1} : i);
+      return [...c, { productId:p.productId, productName:p.productName, unitPrice:Number(p.sellingPrice), quantity:1, discount:0 }];
+    });
+  };
+  const updateQty = (pid, qty) => setCart(c => c.map(i => i.productId===pid ? {...i, quantity: Math.max(1, qty)} : i));
+  const removeItem = (pid) => setCart(c => c.filter(i => i.productId !== pid));
+
+  const vatRate = Number((business && business.vatRate) || 7.5);
+  function round2Local(n){ return Math.round(n*100)/100; }
+  const subtotal = cart.reduce((s,i) => s + i.quantity*i.unitPrice - (i.discount||0), 0);
+  const vatEstimate = applyVat ? round2Local(subtotal * (vatRate/100)) : 0;
+  const total = subtotal + vatEstimate;
+
+  const submit = async () => {
+    if (!cart.length) { toast('Add at least one product to the cart.', 'error'); return; }
+    if (!locationId) { toast('Select a location.', 'error'); return; }
+    setSaving(true);
+    const res = await callServer('sales.create', {
+      customerId, locationId, items: cart.map(i => ({ productId:i.productId, quantity:i.quantity, unitPrice:i.unitPrice, discount:i.discount||0 })),
+      discount: Number(discount||0), paymentMethod, amountPaid: amountPaid===''? total : Number(amountPaid), applyVat
+    });
+    setSaving(false);
+    if (res.success) { setResult(res.data); toast('Sale recorded.'); onSaved(); }
+    else toast(res.message, 'error');
+  };
+
+  if (result) {
+    return (
+      <Modal title="Sale Complete" onClose={() => { onClose(); }} footer={<button className="btn btn-primary" style={{width:'100%', justifyContent:'center'}} onClick={onClose}>Done</button>}>
+        <div style={{textAlign:'center', padding:'10px 0'}}>
+          <div style={{width:52, height:52, borderRadius:'50%', background:'#E4F5EC', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px'}}>
+            <I name="check" size={26} style={{color:'var(--green)'}} />
+          </div>
+          <h3 style={{margin:'0 0 4px'}}>Invoice {result.invoice.invoiceNumber}</h3>
+          <p style={{color:'var(--muted)', fontSize:13, margin:'0 0 16px'}}>Total {fmt(result.sale.total)} \u00b7 {result.sale.paymentStatus}</p>
+        </div>
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal title="New Sale" onClose={onClose} wide footer={<React.Fragment>
+      <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+      <button className="btn btn-gold" disabled={saving} onClick={submit}>{saving?'Processing\u2026':`Complete Sale \u2014 ${fmt(total)}`}</button>
+    </React.Fragment>}>
+      <div className="grid g2" style={{alignItems:'start'}}>
+        <div>
+          <input className="input" placeholder="Search product or SKU\u2026" value={search} onChange={e=>setSearch(e.target.value)} style={{marginBottom:10}} />
+          <div style={{maxHeight:280, overflowY:'auto', border:'1px solid var(--line)', borderRadius:9}}>
+            {filteredProducts.slice(0,40).map(p => (
+              <div key={p.productId} onClick={()=>addToCart(p)} style={{display:'flex', justifyContent:'space-between', padding:'9px 12px', borderBottom:'1px solid #EEF0F5', cursor:'pointer', fontSize:13}}>
+                <span>{p.productName}</span><span style={{color:'var(--muted)'}}>{fmt(p.sellingPrice)}</span>
+              </div>
+            ))}
+            {filteredProducts.length===0 && <div style={{padding:16, fontSize:13, color:'var(--muted)'}}>No products found.</div>}
+          </div>
+        </div>
+        <div>
+          <div style={{fontWeight:700, fontSize:13, marginBottom:8}}>Cart ({cart.length})</div>
+          <div style={{maxHeight:200, overflowY:'auto', marginBottom:10}}>
+            {cart.length===0 && <div style={{fontSize:12.5, color:'var(--muted)', padding:'12px 0'}}>Cart is empty. Click products to add.</div>}
+            {cart.map(i => (
+              <div key={i.productId} style={{display:'flex', alignItems:'center', gap:8, padding:'7px 0', borderBottom:'1px solid #EEF0F5'}}>
+                <div style={{flex:1, fontSize:12.5}}>{i.productName}</div>
+                <input className="input" type="number" min="1" value={i.quantity} onChange={e=>updateQty(i.productId, Number(e.target.value))} style={{width:56, padding:'5px 7px', fontSize:12.5}} />
+                <div style={{width:70, fontSize:12.5, textAlign:'right'}}>{fmt(i.quantity*i.unitPrice)}</div>
+                <button className="icon-btn" style={{width:26, height:26}} onClick={()=>removeItem(i.productId)}><I name="x" size={12} /></button>
+              </div>
+            ))}
+          </div>
+          <div className="grid g2">
+            <Field label="Customer">
+              <select className="input" value={customerId} onChange={e=>setCustomerId(e.target.value)}>
+                <option value="">Walk-in Customer</option>
+                {customers.map(c=><option key={c.customerId} value={c.customerId}>{c.customerName}</option>)}
+              </select>
+            </Field>
+            <Field label="Location">
+              <select className="input" value={locationId} onChange={e=>setLocationId(e.target.value)}>
+                {locations.map(l=><option key={l.locationId} value={l.locationId}>{l.locationName}</option>)}
+              </select>
+            </Field>
+          </div>
+          <div className="grid g2">
+            <Field label="Payment method">
+              <select className="input" value={paymentMethod} onChange={e=>setPaymentMethod(e.target.value)}>
+                {['Cash','Bank Transfer','POS','Card','Mobile Money','Other'].map(m=><option key={m}>{m}</option>)}
+              </select>
+            </Field>
+            <Field label="Amount paid (blank = full)"><input className="input" type="number" value={amountPaid} onChange={e=>setAmountPaid(e.target.value)} placeholder={total.toFixed(2)} /></Field>
+          </div>
+          <div className="divider" />
+          <div style={{fontSize:13}}>
+            <div style={{display:'flex', justifyContent:'space-between', padding:'3px 0'}}><span style={{color:'var(--muted)'}}>Subtotal</span><span>{fmt(subtotal)}</span></div>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'5px 0'}}>
+              <button type="button" onClick={()=>setApplyVat(v=>!v)}
+                style={{display:'flex', alignItems:'center', gap:7, background:'none', border:'none', padding:0, cursor:'pointer', color:'var(--muted)'}}>
+                <span style={{width:16, height:16, borderRadius:4, border:'1.5px solid ' + (applyVat?'var(--brand)':'#C7CEDA'), background:applyVat?'var(--brand)':'#fff', display:'flex', alignItems:'center', justifyContent:'center'}}>
+                  {applyVat && <I name="check" size={11} style={{color:'#fff'}} />}
+                </span>
+                VAT ({vatRate}%)
+              </button>
+              <span>{fmt(vatEstimate)}</span>
+            </div>
+            <div style={{display:'flex', justifyContent:'space-between', padding:'6px 0', fontWeight:800, fontSize:15}}><span>Total</span><span>{fmt(total)}</span></div>
+          </div>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function SalesPage({ command, clearCommand }) {
+  const fmt = useCurrency();
+  const { data: sales, loading, reload } = useApiData('sales.list', {}, []);
+  const { data: products } = useApiData('products.list', {}, []);
+  const { data: customers } = useApiData('customers.list', {}, []);
+  const { data: locations } = useApiData('locations.list', {}, []);
+  const [showPOS, setShowPOS] = useState(false);
+  const [detailId, setDetailId] = useState(null);
+  useEffect(() => { if (command==='newSale') { setShowPOS(true); clearCommand(); } }, [command]);
+
+  return (
+    <div>
+      <PageHeader title="Sales" subtitle="Point-of-sale and sales history" action={
+        <button className="btn btn-gold" onClick={()=>setShowPOS(true)}><I name="cart" size={15} />New Sale</button>
+      } />
+      <DataTable loading={loading} rows={sales} rowKey="saleId" onRowClick={r=>setDetailId(r.saleId)}
+        emptyIcon="sales" emptyTitle="No sales recorded yet." emptySubtitle="Start your first sale from the register."
+        emptyAction={<button className="btn btn-gold" onClick={()=>setShowPOS(true)}><I name="cart" size={14}/>New Sale</button>}
+        columns={[
+          { key:'invoiceNumber', header:'Invoice', render:r=><span className="mono">{r.invoiceNumber}</span> },
+          { key:'customerName', header:'Customer' }, { key:'saleDate', header:'Date', render:r=>fmtDate(r.createdAt) },
+          { key:'total', header:'Total', render:r=>fmt(r.total) }, { key:'balance', header:'Balance', render:r=>fmt(r.balance) },
+          { key:'paymentStatus', header:'Status', render:r=><StatusBadge status={r.paymentStatus} /> },
+        ]}
+      />
+      {showPOS && <POSModal products={products||[]} customers={customers||[]} locations={locations||[]} onClose={()=>setShowPOS(false)} onSaved={reload} />}
+      {detailId && <SaleDetailModal id={detailId} onClose={()=>setDetailId(null)} />}
+    </div>
+  );
+}
+
+function SaleDetailModal({ id, onClose }) {
+  const fmt = useCurrency();
+  const toast = useToast();
+  const { data, loading } = useApiData('sales.detail', { id }, [id]);
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [emailBusy, setEmailBusy] = useState(false);
+
+  const downloadPdf = async () => {
+    setPdfBusy(true);
+    const res = await callServer('invoices.generatePdf', { saleId: id });
+    setPdfBusy(false);
+    if (res.success) window.open(res.data.url, '_blank');
+    else toast(res.message, 'error');
+  };
+  const emailInvoice = async () => {
+    setEmailBusy(true);
+    const res = await callServer('invoices.email', { saleId: id });
+    setEmailBusy(false);
+    if (res.success) toast('Invoice emailed to ' + res.data.sentTo + '.');
+    else toast(res.message, 'error');
+  };
+
+  return (
+    <Modal title={loading || !data ? 'Sale' : data.sale.invoiceNumber} onClose={onClose} wide footer={
+      !loading && data && (
+        <React.Fragment>
+          <button className="btn btn-outline" disabled={pdfBusy} onClick={downloadPdf}><I name="download" size={14} />{pdfBusy ? 'Generating\u2026' : 'Download PDF'}</button>
+          <button className="btn btn-primary" disabled={emailBusy || !data.customer || !data.customer.email} onClick={emailInvoice}>
+            <I name="invoices" size={14} />{emailBusy ? 'Sending\u2026' : (data.customer && data.customer.email ? 'Email Invoice' : 'No customer email')}
+          </button>
+        </React.Fragment>
+      )
+    }>
+      {loading || !data ? <Skeleton h={160} /> : (
+        <div>
+          <div style={{display:'flex', justifyContent:'space-between', marginBottom:14, fontSize:13}}>
+            <span>{data.customer ? data.customer.customerName : 'Walk-in Customer'}</span>
+            <StatusBadge status={data.sale.paymentStatus} />
+          </div>
+          <table><thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>VAT</th><th>Total</th></tr></thead>
+          <tbody>{data.items.map(i=><tr key={i.saleItemId}><td>{i.productName}</td><td>{i.quantity}</td><td>{fmt(i.unitPrice)}</td><td>{fmt(i.vat)}</td><td>{fmt(i.total)}</td></tr>)}</tbody></table>
+          <div className="divider" />
+          <div style={{textAlign:'right', fontSize:13}}>
+            <div>Subtotal: {fmt(data.sale.subtotal)}</div><div>VAT: {fmt(data.sale.vat)}</div>
+            <div style={{fontWeight:800, fontSize:15}}>Total: {fmt(data.sale.total)}</div>
+            <div style={{color:'var(--muted)'}}>Paid: {fmt(data.sale.amountPaid)} \u00b7 Balance: {fmt(data.sale.balance)}</div>
+          </div>
+        </div>
+      )}
+    </Modal>
+  );
+}
+
+// ============================== RETURNS ==============================
+function ReturnFormModal({ onClose, onSaved, sales, products }) {
+  const toast = useToast();
+  const [form, setForm] = useState({ saleId:'', productId:'', quantity:1, returnReason:'' });
+  const [saving, setSaving] = useState(false);
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const submit = async () => {
+    if (!form.saleId || !form.productId) { toast('Select a sale and product.', 'error'); return; }
+    setSaving(true);
+    const res = await callServer('returns.create', { ...form, quantity: Number(form.quantity) });
+    setSaving(false);
+    if (res.success) { toast('Return processed.'); onSaved(); onClose(); } else toast(res.message, 'error');
+  };
+  return (
+    <Modal title="Process Return" onClose={onClose} footer={<React.Fragment>
+      <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Processing\u2026':'Process Return'}</button>
+    </React.Fragment>}>
+      <Field label="Original invoice">
+        <select className="input" value={form.saleId} onChange={e=>set('saleId', e.target.value)}>
+          <option value="">Select sale\u2026</option>
+          {sales.map(s=><option key={s.saleId} value={s.saleId}>{s.invoiceNumber} \u2014 {s.customerName}</option>)}
+        </select>
+      </Field>
+      <Field label="Product">
+        <select className="input" value={form.productId} onChange={e=>set('productId', e.target.value)}>
+          <option value="">Select product\u2026</option>
+          {products.map(p=><option key={p.productId} value={p.productId}>{p.productName}</option>)}
+        </select>
+      </Field>
+      <div className="grid g2">
+        <Field label="Quantity"><input className="input" type="number" min="1" value={form.quantity} onChange={e=>set('quantity', e.target.value)} /></Field>
+        <Field label="Reason"><input className="input" value={form.returnReason} onChange={e=>set('returnReason', e.target.value)} placeholder="e.g. Damaged item" /></Field>
+      </div>
+    </Modal>
+  );
+}
+
+function ReturnsPage() {
+  const fmt = useCurrency();
+  const { data: returns, loading, reload } = useApiData('returns.list', {}, []);
+  const { data: sales } = useApiData('sales.list', {}, []);
+  const { data: products } = useApiData('products.list', {}, []);
+  const [showForm, setShowForm] = useState(false);
+  return (
+    <div>
+      <PageHeader title="Sales Returns" subtitle="Process customer returns and refunds" action={
+        <button className="btn btn-primary" onClick={()=>setShowForm(true)}><I name="plus" size={15}/>New Return</button>
+      } />
+      <DataTable loading={loading} rows={returns} rowKey="returnId"
+        emptyIcon="refund" emptyTitle="No returns processed." emptySubtitle="Returns will appear here once processed."
+        columns={[
+          { key:'returnDate', header:'Date', render:r=>fmtDate(r.returnDate) }, { key:'productId', header:'Product' },
+          { key:'quantity', header:'Qty' }, { key:'returnReason', header:'Reason' },
+          { key:'refundAmount', header:'Refund', render:r=>fmt(r.refundAmount) },
+        ]}
+      />
+      {showForm && <ReturnFormModal sales={sales||[]} products={products||[]} onClose={()=>setShowForm(false)} onSaved={reload} />}
+    </div>
+  );
+}
+
+// ============================== PURCHASING ==============================
+function POFormModal({ onClose, onSaved, suppliers, products, locations }) {
+  const fmt = useCurrency();
+  const toast = useToast();
+  const [supplierId, setSupplierId] = useState(suppliers[0] ? suppliers[0].supplierId : '');
+  const [locationId, setLocationId] = useState(locations[0] ? locations[0].locationId : '');
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('');
+  const [items, setItems] = useState([{ productId:'', quantity:1, unitCost:0 }]);
+  const [saving, setSaving] = useState(false);
+  useEffect(() => { if (!supplierId && suppliers.length) setSupplierId(suppliers[0].supplierId); }, [suppliers]);
+  useEffect(() => { if (!locationId && locations.length) setLocationId(locations[0].locationId); }, [locations]);
+  const addLine = () => setItems(i => [...i, { productId:'', quantity:1, unitCost:0 }]);
+  const updateLine = (idx, patch) => setItems(i => i.map((it,ix) => ix===idx ? {...it, ...patch} : it));
+  const removeLine = (idx) => setItems(i => i.filter((_,ix)=>ix!==idx));
+  const total = items.reduce((s,i)=>s+Number(i.quantity||0)*Number(i.unitCost||0), 0);
+
+  const submit = async () => {
+    const valid = items.filter(i => i.productId && i.quantity > 0);
+    if (!valid.length || !supplierId || !locationId) { toast('Supplier, location and at least one item are required.', 'error'); return; }
+    setSaving(true);
+    const res = await callServer('purchaseOrders.create', { supplierId, locationId, expectedDeliveryDate, items: valid });
+    setSaving(false);
+    if (res.success) { toast('Purchase order created.'); onSaved(); onClose(); } else toast(res.message, 'error');
+  };
+
+  return (
+    <Modal title="New Purchase Order" onClose={onClose} wide footer={<React.Fragment>
+      <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Creating\u2026':`Create PO \u2014 ${fmt(total)}`}</button>
+    </React.Fragment>}>
+      <div className="grid g2">
+        <Field label="Supplier"><select className="input" value={supplierId} onChange={e=>setSupplierId(e.target.value)}>{suppliers.map(s=><option key={s.supplierId} value={s.supplierId}>{s.supplierName}</option>)}</select></Field>
+        <Field label="Delivery location"><select className="input" value={locationId} onChange={e=>setLocationId(e.target.value)}>{locations.map(l=><option key={l.locationId} value={l.locationId}>{l.locationName}</option>)}</select></Field>
+      </div>
+      <Field label="Expected delivery date"><input className="input" type="date" value={expectedDeliveryDate} onChange={e=>setExpectedDeliveryDate(e.target.value)} /></Field>
+      <div style={{fontWeight:700, fontSize:13, margin:'10px 0 8px'}}>Items</div>
+      {items.map((it, idx) => (
+        <div key={idx} style={{display:'flex', gap:8, marginBottom:8, alignItems:'center'}}>
+          <select className="input" value={it.productId} onChange={e=>updateLine(idx, { productId:e.target.value })} style={{flex:2}}>
+            <option value="">Select product\u2026</option>
+            {products.map(p=><option key={p.productId} value={p.productId}>{p.productName}</option>)}
+          </select>
+          <input className="input" type="number" min="1" value={it.quantity} onChange={e=>updateLine(idx, { quantity:Number(e.target.value) })} style={{width:80}} placeholder="Qty" />
+          <input className="input" type="number" value={it.unitCost} onChange={e=>updateLine(idx, { unitCost:Number(e.target.value) })} style={{width:110}} placeholder="Unit cost" />
+          <button className="icon-btn" onClick={()=>removeLine(idx)}><I name="x" size={13} /></button>
+        </div>
+      ))}
+      <button className="btn btn-ghost btn-sm" onClick={addLine}><I name="plus" size={13}/>Add line</button>
+    </Modal>
+  );
+}
+
+function PurchasesPage({ command, clearCommand }) {
+  const fmt = useCurrency();
+  const toast = useToast();
+  const { data: pos, loading, reload } = useApiData('purchaseOrders.list', {}, []);
+  const { data: purchases } = useApiData('purchases.list', {}, []);
+  const { data: suppliers } = useApiData('suppliers.list', {}, []);
+  const { data: products } = useApiData('products.list', {}, []);
+  const { data: locations } = useApiData('locations.list', {}, []);
+  const [showForm, setShowForm] = useState(false);
+  const [tab, setTab] = useState('orders');
+  const [delRow, setDelRow] = useState(null);
+  useEffect(() => { if (command==='new') { setShowForm(true); clearCommand(); } }, [command]);
+
+  const supplierMap = useMemo(()=>{ const m={}; (suppliers||[]).forEach(s=>m[s.supplierId]=s.supplierName); return m; }, [suppliers]);
+
+  const markStatus = async (id, status) => {
+    const res = await callServer('purchaseOrders.updateStatus', { id, status });
+    if (res.success) { toast('Purchase order ' + status.toLowerCase() + '.'); reload(); } else toast(res.message, 'error');
+  };
+
+  return (
+    <div>
+      <PageHeader title="Purchasing" subtitle="Purchase orders and supplier purchases" action={
+        <button className="btn btn-primary" onClick={()=>setShowForm(true)}><I name="plus" size={15}/>New Purchase Order</button>
+      } />
+      <div className="tabs">
+        <div className={"tab"+(tab==='orders'?" active":"")} onClick={()=>setTab('orders')} style={{cursor:'pointer'}}>Purchase Orders</div>
+        <div className={"tab"+(tab==='purchases'?" active":"")} onClick={()=>setTab('purchases')} style={{cursor:'pointer'}}>Purchase History</div>
+      </div>
+      {tab==='orders' ? (
+        <DataTable loading={loading} rows={pos} rowKey="purchaseOrderId"
+          emptyIcon="purchases" emptyTitle="No purchase orders yet." emptySubtitle="Create a PO to order stock from a supplier."
+          columns={[
+            { key:'purchaseOrderNumber', header:'PO Number', render:r=><span className="mono">{r.purchaseOrderNumber}</span> },
+            { key:'supplierId', header:'Supplier', render:r=>supplierMap[r.supplierId]||r.supplierId },
+            { key:'orderDate', header:'Date', render:r=>fmtDate(r.createdAt) }, { key:'total', header:'Total', render:r=>fmt(r.total) },
+            { key:'status', header:'Status', render:r=><StatusBadge status={r.status} /> },
+            { key:'actions', header:'', render:r => (
+              <div style={{display:'flex', gap:6}} onClick={e=>e.stopPropagation()}>
+                {r.status==='Draft' && <button className="btn btn-outline btn-sm" onClick={()=>markStatus(r.purchaseOrderId,'Ordered')}>Mark Ordered</button>}
+                {r.status==='Ordered' && <button className="btn btn-primary btn-sm" onClick={()=>markStatus(r.purchaseOrderId,'Received')}>Mark Received</button>}
+                {(r.status==='Draft'||r.status==='Ordered') && <button className="btn btn-danger btn-sm" onClick={()=>markStatus(r.purchaseOrderId,'Cancelled')}>Cancel</button>}
+                {r.status!=='Received' && <button className="icon-btn" onClick={()=>setDelRow(r)}><I name="trash" size={14}/></button>}
+              </div>
+            )}
+          ]}
+        />
+      ) : (
+        <DataTable loading={!purchases} rows={purchases} rowKey="purchaseId"
+          emptyIcon="purchases" emptyTitle="No purchases recorded yet." emptySubtitle="Received purchase orders will appear here."
+          columns={[
+            { key:'purchaseOrderNumber', header:'Reference', render:r=><span className="mono">{r.purchaseOrderNumber}</span> },
+            { key:'supplierId', header:'Supplier', render:r=>supplierMap[r.supplierId]||r.supplierId },
+            { key:'createdAt', header:'Date', render:r=>fmtDate(r.createdAt) }, { key:'total', header:'Total', render:r=>fmt(r.total) },
+            { key:'balance', header:'Balance', render:r=>fmt(r.balance) }, { key:'paymentStatus', header:'Status', render:r=><StatusBadge status={r.paymentStatus} /> },
+          ]}
+        />
+      )}
+      {showForm && <POFormModal suppliers={suppliers||[]} products={products||[]} locations={locations||[]} onClose={()=>setShowForm(false)} onSaved={reload} />}
+      {delRow && <DeleteWithReasonDialog title="Delete purchase order" itemLabel={delRow.purchaseOrderNumber} onClose={() => setDelRow(null)}
+        onConfirm={async (reason) => { const res = await callServer('purchaseOrders.delete', { id: delRow.purchaseOrderId, reason }); if (res.success) { toast('Purchase order moved to recycle bin.'); reload(); } else toast(res.message, 'error'); }} />}
+    </div>
+  );
+}
+
+// ============================== EXPENSES / INCOME ==============================
+const EXPENSE_CATEGORIES_CLIENT = ['Rent','Salaries','Utilities','Transportation','Fuel','Marketing','Repairs','Maintenance','Office Supplies','Internet','Insurance','Bank Charges','Professional Fees','Taxes','Logistics','Packaging','Other'];
+
+function ExpenseFormModal({ onClose, onSaved, expense }) {
+  const toast = useToast();
+  const [form, setForm] = useState(expense || { expenseDate: new Date().toISOString().slice(0,10), category:'Rent', description:'', amount:'', paymentMethod:'Cash', reference:'' });
+  const [saving, setSaving] = useState(false);
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const submit = async () => {
+    if (!form.amount) { toast('Amount is required.', 'error'); return; }
+    setSaving(true);
+    const res = expense ? await callServer('expenses.update', { id: expense.expenseId, data: form }) : await callServer('expenses.create', form);
+    setSaving(false);
+    if (res.success) { toast(expense ? 'Expense updated.' : 'Expense recorded.'); onSaved(); onClose(); } else toast(res.message, 'error');
+  };
+  return (
+    <Modal title={expense ? 'Edit Expense' : 'Record Expense'} onClose={onClose} footer={<React.Fragment>
+      <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving\u2026':'Save Expense'}</button>
+    </React.Fragment>}>
+      <div className="grid g2">
+        <Field label="Date"><input className="input" type="date" value={String(form.expenseDate).slice(0,10)} onChange={e=>set('expenseDate', e.target.value)} /></Field>
+        <Field label="Category"><select className="input" value={form.category} onChange={e=>set('category', e.target.value)}>{EXPENSE_CATEGORIES_CLIENT.map(c=><option key={c}>{c}</option>)}</select></Field>
+      </div>
+      <Field label="Description"><input className="input" value={form.description} onChange={e=>set('description', e.target.value)} /></Field>
+      <div className="grid g2">
+        <Field label="Amount"><input className="input" type="number" value={form.amount} onChange={e=>set('amount', e.target.value)} /></Field>
+        <Field label="Payment method"><select className="input" value={form.paymentMethod} onChange={e=>set('paymentMethod', e.target.value)}>{['Cash','Bank Transfer','POS','Card','Mobile Money','Other'].map(m=><option key={m}>{m}</option>)}</select></Field>
+      </div>
+      <Field label="Reference"><input className="input" value={form.reference} onChange={e=>set('reference', e.target.value)} /></Field>
+    </Modal>
+  );
+}
+
+function ExpensesPage({ command, clearCommand }) {
+  const fmt = useCurrency();
+  const toast = useToast();
+  const { data: expenses, loading, reload } = useApiData('expenses.list', {}, []);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [delRow, setDelRow] = useState(null);
+  useEffect(() => { if (command==='new') { setEditing(null); setShowForm(true); clearCommand(); } }, [command]);
+  return (
+    <div>
+      <PageHeader title="Expenses" subtitle="Track all business expenses" action={<button className="btn btn-primary" onClick={()=>{setEditing(null); setShowForm(true);}}><I name="plus" size={15}/>Record Expense</button>} />
+      <DataTable loading={loading} rows={expenses} rowKey="expenseId"
+        emptyIcon="expenses" emptyTitle="No expenses recorded." emptySubtitle="Track rent, salaries, utilities and more."
+        columns={[
+          { key:'expenseDate', header:'Date', render:r=>fmtDate(r.expenseDate) }, { key:'category', header:'Category', render:r=><StatusBadge status="slate" /> },
+          { key:'description', header:'Description' }, { key:'amount', header:'Amount', render:r=>fmt(r.amount) }, { key:'paymentMethod', header:'Method' },
+          { key:'actions', header:'', render:r => (
+            <div style={{display:'flex', gap:6}}>
+              <button className="icon-btn" onClick={()=>{setEditing(r); setShowForm(true);}}><I name="edit" size={14}/></button>
+              <button className="icon-btn" onClick={()=>setDelRow(r)}><I name="trash" size={14}/></button>
+            </div>
+          )}
+        ]}
+      />
+      {showForm && <ExpenseFormModal expense={editing} onClose={()=>setShowForm(false)} onSaved={reload} />}
+      {delRow && <DeleteWithReasonDialog title="Delete expense" itemLabel={delRow.description || delRow.category} onClose={() => setDelRow(null)}
+        onConfirm={async (reason) => { const res = await callServer('expenses.delete', { id: delRow.expenseId, reason }); if (res.success) { toast('Expense moved to recycle bin.'); reload(); } else toast(res.message, 'error'); }} />}
+    </div>
+  );
+}
+
+function IncomeFormModal({ onClose, onSaved, income }) {
+  const toast = useToast();
+  const [form, setForm] = useState(income || { incomeDate: new Date().toISOString().slice(0,10), category:'Other Income', description:'', amount:'', paymentMethod:'Cash', reference:'' });
+  const [saving, setSaving] = useState(false);
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const submit = async () => {
+    if (!form.amount) { toast('Amount is required.', 'error'); return; }
+    setSaving(true);
+    const res = income ? await callServer('income.update', { id: income.incomeId, data: form }) : await callServer('income.create', form);
+    setSaving(false);
+    if (res.success) { toast(income ? 'Income updated.' : 'Income recorded.'); onSaved(); onClose(); } else toast(res.message, 'error');
+  };
+  return (
+    <Modal title={income ? 'Edit Income' : 'Record Income'} onClose={onClose} footer={<React.Fragment>
+      <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving\u2026':'Save Income'}</button>
+    </React.Fragment>}>
+      <div className="grid g2">
+        <Field label="Date"><input className="input" type="date" value={String(form.incomeDate).slice(0,10)} onChange={e=>set('incomeDate', e.target.value)} /></Field>
+        <Field label="Category"><input className="input" value={form.category} onChange={e=>set('category', e.target.value)} /></Field>
+      </div>
+      <Field label="Description"><input className="input" value={form.description} onChange={e=>set('description', e.target.value)} /></Field>
+      <div className="grid g2">
+        <Field label="Amount"><input className="input" type="number" value={form.amount} onChange={e=>set('amount', e.target.value)} /></Field>
+        <Field label="Payment method"><select className="input" value={form.paymentMethod} onChange={e=>set('paymentMethod', e.target.value)}>{['Cash','Bank Transfer','POS','Card','Mobile Money','Other'].map(m=><option key={m}>{m}</option>)}</select></Field>
+      </div>
+    </Modal>
+  );
+}
+
+function IncomePage({ command, clearCommand }) {
+  const fmt = useCurrency();
+  const toast = useToast();
+  const { data: income, loading, reload } = useApiData('income.list', {}, []);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [delRow, setDelRow] = useState(null);
+  useEffect(() => { if (command==='new') { setEditing(null); setShowForm(true); clearCommand(); } }, [command]);
+  return (
+    <div>
+      <PageHeader title="Income" subtitle="Track non-sales business income" action={<button className="btn btn-primary" onClick={()=>{setEditing(null); setShowForm(true);}}><I name="plus" size={15}/>Record Income</button>} />
+      <DataTable loading={loading} rows={income} rowKey="incomeId"
+        emptyIcon="wallet" emptyTitle="No income recorded." emptySubtitle="Record income outside of regular sales here."
+        columns={[
+          { key:'incomeDate', header:'Date', render:r=>fmtDate(r.incomeDate) }, { key:'category', header:'Category' },
+          { key:'description', header:'Description' }, { key:'amount', header:'Amount', render:r=>fmt(r.amount) },
+          { key:'actions', header:'', render:r => (
+            <div style={{display:'flex', gap:6}}>
+              <button className="icon-btn" onClick={()=>{setEditing(r); setShowForm(true);}}><I name="edit" size={14}/></button>
+              <button className="icon-btn" onClick={()=>setDelRow(r)}><I name="trash" size={14}/></button>
+            </div>
+          )}
+        ]}
+      />
+      {showForm && <IncomeFormModal income={editing} onClose={()=>setShowForm(false)} onSaved={reload} />}
+      {delRow && <DeleteWithReasonDialog title="Delete income" itemLabel={delRow.description || delRow.category} onClose={() => setDelRow(null)}
+        onConfirm={async (reason) => { const res = await callServer('income.delete', { id: delRow.incomeId, reason }); if (res.success) { toast('Income moved to recycle bin.'); reload(); } else toast(res.message, 'error'); }} />}
+    </div>
+  );
+}
+
+// ============================== BOOKKEEPING ==============================
+function DateRangeBar({ from, to, setFrom, setTo, onApply }) {
+  return (
+    <div style={{display:'flex', gap:10, alignItems:'flex-end', marginBottom:16, flexWrap:'wrap'}}>
+      <Field label="From"><input className="input" type="date" value={from} onChange={e=>setFrom(e.target.value)} /></Field>
+      <Field label="To"><input className="input" type="date" value={to} onChange={e=>setTo(e.target.value)} /></Field>
+      <button className="btn btn-outline" style={{marginBottom:14}} onClick={onApply}><I name="filter" size={14} />Apply</button>
+    </div>
+  );
+}
+
+function PaymentFormModal({ onClose, onSaved, sales, purchases }) {
+  const toast = useToast();
+  const [form, setForm] = useState({ transactionType:'Sale', transactionId:'', amount:'', paymentMethod:'Cash', reference:'', notes:'' });
+  const [saving, setSaving] = useState(false);
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const options = form.transactionType==='Sale' ? sales : purchases;
+  const submit = async () => {
+    if (!form.amount || !form.transactionId) { toast('Select a transaction and enter an amount.', 'error'); return; }
+    setSaving(true);
+    const res = await callServer('payments.create', { ...form, amount:Number(form.amount) });
+    setSaving(false);
+    if (res.success) { toast('Payment recorded.'); onSaved(); onClose(); } else toast(res.message, 'error');
+  };
+  return (
+    <Modal title="Record Payment" onClose={onClose} footer={<React.Fragment>
+      <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving\u2026':'Record Payment'}</button>
+    </React.Fragment>}>
+      <Field label="Payment against">
+        <select className="input" value={form.transactionType} onChange={e=>set('transactionType', e.target.value)}>
+          <option value="Sale">Customer Invoice (Sale)</option>
+          <option value="Purchase">Supplier Bill (Purchase)</option>
+        </select>
+      </Field>
+      <Field label="Transaction">
+        <select className="input" value={form.transactionId} onChange={e=>set('transactionId', e.target.value)}>
+          <option value="">Select\u2026</option>
+          {(options||[]).filter(o => Number(o.balance) > 0).map(o => (
+            <option key={o.saleId||o.purchaseId} value={o.saleId||o.purchaseId}>
+              {(o.invoiceNumber||o.purchaseOrderNumber)} \u2014 balance {o.balance}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <div className="grid g2">
+        <Field label="Amount"><input className="input" type="number" value={form.amount} onChange={e=>set('amount', e.target.value)} /></Field>
+        <Field label="Payment method"><select className="input" value={form.paymentMethod} onChange={e=>set('paymentMethod', e.target.value)}>{['Cash','Bank Transfer','POS','Card','Mobile Money','Other'].map(m=><option key={m}>{m}</option>)}</select></Field>
+      </div>
+      <Field label="Reference"><input className="input" value={form.reference} onChange={e=>set('reference', e.target.value)} /></Field>
+    </Modal>
+  );
+}
+
+function BookkeepingPage({ command, clearCommand }) {
+  const fmt = useCurrency();
+  const [tab, setTab] = useState('pnl');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [key, setKey] = useState(0);
+  useEffect(() => { if (command==='receivables' || command==='payables') { setTab(command); clearCommand(); } }, [command]);
+
+  const pnl = useApiData('reports.profit', { from, to }, [key]);
+  const cashflow = useApiData('reports.cashflow', { from, to }, [key]);
+  const vat = useApiData('reports.vat', { from, to }, [key]);
+  const receivables = useApiData('reports.receivables', {}, []);
+  const payables = useApiData('reports.payables', {}, []);
+  const { data: sales } = useApiData('sales.list', {}, []);
+  const { data: purchases } = useApiData('purchases.list', {}, []);
+  const [showPayment, setShowPayment] = useState(false);
+
+  return (
+    <div>
+      <PageHeader title="Bookkeeping" subtitle="Income, expenses, receivables, payables & cash flow" action={
+        <button className="btn btn-primary" onClick={()=>setShowPayment(true)}><I name="wallet" size={15}/>Record Payment</button>
+      } />
+      <div className="tabs">
+        {[['pnl','Profit & Loss'],['cashflow','Cash Flow'],['vat','VAT'],['receivables','Receivables'],['payables','Payables']].map(([k,l]) => (
+          <div key={k} className={"tab"+(tab===k?" active":"")} onClick={()=>setTab(k)} style={{cursor:'pointer'}}>{l}</div>
+        ))}
+      </div>
+
+      {(tab==='pnl'||tab==='cashflow'||tab==='vat') && <DateRangeBar from={from} to={to} setFrom={setFrom} setTo={setTo} onApply={()=>setKey(k=>k+1)} />}
+
+      {tab==='pnl' && (pnl.loading || !pnl.data ? <Skeleton h={200} /> : (
+        <div className="card" style={{padding:24, maxWidth:520}}>
+          <Row label="Revenue" value={fmt(pnl.data.revenue)} />
+          <Row label="Cost of Goods Sold" value={'\u2212 ' + fmt(pnl.data.cogs)} />
+          <div className="divider" /><Row bold label="Gross Profit" value={fmt(pnl.data.grossProfit)} />
+          <Row label="Operating Expenses" value={'\u2212 ' + fmt(pnl.data.operatingExpenses)} />
+          <div className="divider" /><Row bold big label="Net Profit" value={fmt(pnl.data.netProfit)} accent={pnl.data.netProfit>=0?'var(--green)':'var(--red)'} />
+        </div>
+      ))}
+
+      {tab==='cashflow' && (cashflow.loading || !cashflow.data ? <Skeleton h={200} /> : (
+        <React.Fragment>
+          <div className="grid g3" style={{marginBottom:16}}>
+            <KpiCard label="Cash Inflows" value={fmt(cashflow.data.inflow)} accent="var(--green)" />
+            <KpiCard label="Cash Outflows" value={fmt(cashflow.data.outflow)} accent="var(--red)" />
+            <KpiCard label="Net Cash Flow" value={fmt(cashflow.data.net)} />
+          </div>
+          <DataTable rows={cashflow.data.rows} rowKey="transactionId" emptyIcon="wallet" emptyTitle="No cash transactions in this period."
+            columns={[
+              { key:'transactionDate', header:'Date', render:r=>fmtDate(r.transactionDate) }, { key:'transactionType', header:'Type', render:r=><StatusBadge status={r.transactionType==='Inflow'?'green':'red'} /> },
+              { key:'category', header:'Category' }, { key:'description', header:'Description' }, { key:'amount', header:'Amount', render:r=>fmt(r.amount) },
+            ]}
+          />
+        </React.Fragment>
+      ))}
+
+      {tab==='vat' && (vat.loading || !vat.data ? <Skeleton h={200} /> : (
+        <div className="grid g3">
+          <KpiCard label="VAT Collected" value={fmt(vat.data.vatCollected)} accent="var(--green)" />
+          <KpiCard label="VAT Paid" value={fmt(vat.data.vatPaid)} accent="var(--red)" />
+          <KpiCard label="Net VAT Payable" value={fmt(vat.data.netVatPayable)} accent="var(--gold)" />
+        </div>
+      ))}
+
+      {tab==='receivables' && (receivables.loading || !receivables.data ? <Skeleton h={200} /> : (
+        <React.Fragment>
+          <KpiCard label="Total Outstanding" value={fmt(receivables.data.totalOutstanding)} accent="var(--red)" />
+          <div style={{height:14}} />
+          <DataTable rows={receivables.data.rows} rowKey="invoiceNumber" emptyIcon="check" emptyTitle="No outstanding receivables." emptySubtitle="All customer invoices are settled."
+            columns={[
+              { key:'invoiceNumber', header:'Invoice', render:r=><span className="mono">{r.invoiceNumber}</span> }, { key:'customerName', header:'Customer' },
+              { key:'total', header:'Total', render:r=>fmt(r.total) }, { key:'balance', header:'Balance', render:r=>fmt(r.balance) },
+              { key:'daysOverdue', header:'Days', render:r=>r.daysOverdue }, { key:'agingStatus', header:'Status', render:r=><StatusBadge status={r.agingStatus} /> },
+            ]}
+          />
+        </React.Fragment>
+      ))}
+
+      {tab==='payables' && (payables.loading || !payables.data ? <Skeleton h={200} /> : (
+        <React.Fragment>
+          <KpiCard label="Total Outstanding" value={fmt(payables.data.totalOutstanding)} accent="var(--red)" />
+          <div style={{height:14}} />
+          <DataTable rows={payables.data.rows} rowKey="purchaseOrderNumber" emptyIcon="check" emptyTitle="No outstanding payables." emptySubtitle="All supplier bills are settled."
+            columns={[
+              { key:'purchaseOrderNumber', header:'Bill', render:r=><span className="mono">{r.purchaseOrderNumber}</span> }, { key:'supplierName', header:'Supplier' },
+              { key:'total', header:'Total', render:r=>fmt(r.total) }, { key:'balance', header:'Balance', render:r=>fmt(r.balance) }, { key:'daysOutstanding', header:'Days' },
+            ]}
+          />
+        </React.Fragment>
+      ))}
+
+      {showPayment && <PaymentFormModal sales={sales||[]} purchases={purchases||[]} onClose={()=>setShowPayment(false)} onSaved={() => { setKey(k=>k+1); receivables.reload(); payables.reload(); }} />}
+    </div>
+  );
+}
+function Row({ label, value, bold, big, accent }) {
+  return <div style={{display:'flex', justifyContent:'space-between', padding: big?'10px 0':'7px 0', fontWeight: bold?800:500, fontSize: big?17:13.5, color: accent}}>
+    <span style={{color: bold ? 'inherit' : 'var(--muted)'}}>{label}</span><span>{value}</span>
+  </div>;
+}
+
+// ============================== INVOICES ==============================
+function InvoicesPage() {
+  const fmt = useCurrency();
+  const toast = useToast();
+  const { data: invoices, loading } = useApiData('invoices.list', {}, []);
+  const [detailId, setDetailId] = useState(null);
+  const [busyId, setBusyId] = useState(null);
+
+  const downloadPdf = async (r) => {
+    setBusyId(r.invoiceId);
+    const res = await callServer('invoices.generatePdf', { saleId: r.saleId });
+    setBusyId(null);
+    if (res.success) window.open(res.data.url, '_blank');
+    else toast(res.message, 'error');
+  };
+
+  return (
+    <div>
+      <PageHeader title="Invoices" subtitle="All invoices issued to customers" />
+      <DataTable loading={loading} rows={invoices} rowKey="invoiceId" onRowClick={r=>setDetailId(r.saleId)}
+        emptyIcon="invoices" emptyTitle="No invoices yet." emptySubtitle="Invoices are generated automatically when you record a sale."
+        columns={[
+          { key:'invoiceNumber', header:'Invoice', render:r=><span className="mono">{r.invoiceNumber}</span> }, { key:'customerName', header:'Customer' },
+          { key:'issueDate', header:'Issued', render:r=>fmtDate(r.issueDate) }, { key:'total', header:'Total', render:r=>fmt(r.total) },
+          { key:'status', header:'Status', render:r=><StatusBadge status={r.status} /> },
+          { key:'actions', header:'', render:r => (
+            <button className="btn btn-outline btn-sm" disabled={busyId===r.invoiceId} onClick={e=>{e.stopPropagation(); downloadPdf(r);}}>
+              <I name="download" size={13} />{busyId===r.invoiceId ? '\u2026' : 'PDF'}
+            </button>
+          )}
+        ]}
+      />
+      {detailId && <SaleDetailModal id={detailId} onClose={()=>setDetailId(null)} />}
+    </div>
+  );
+}
+
+// ============================== REPORTS ==============================
+const REPORT_LIST = [
+  { key:'sales', label:'Sales Report', icon:'sales' }, { key:'profit', label:'Profit Report', icon:'wallet' },
+  { key:'inventory', label:'Inventory / Stock Valuation', icon:'inventory' }, { key:'cashflow', label:'Cash Flow Report', icon:'bookkeeping' },
+  { key:'vat', label:'VAT Report', icon:'reports' }, { key:'receivables', label:'Accounts Receivable', icon:'invoices' },
+  { key:'payables', label:'Accounts Payable', icon:'suppliers' },
+];
+
+function exportCsv(filename, rows) {
+  if (!rows || !rows.length) return;
+  const headers = Object.keys(rows[0]);
+  const csv = [headers.join(',')].concat(rows.map(r => headers.map(h => JSON.stringify(r[h] != null ? r[h] : '')).join(','))).join('\n');
+  const blob = new Blob([csv], { type:'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function ReportsPage() {
+  const fmt = useCurrency();
+  const toast = useToast();
+  const [active, setActive] = useState('sales');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [key, setKey] = useState(0);
+  const [exporting, setExporting] = useState('');
+
+  const action = active==='sales' ? 'reports.sales' : active==='profit' ? 'reports.profit' : active==='inventory' ? 'reports.inventory'
+    : active==='cashflow' ? 'reports.cashflow' : active==='vat' ? 'reports.vat' : active==='receivables' ? 'reports.receivables' : 'reports.payables';
+  const { data, loading } = useApiData(action, { from, to }, [active, key]);
+
+  const rows = data ? (data.rows || (Array.isArray(data) ? data : [])) : [];
+
+  const exportAs = async (format) => {
+    setExporting(format);
+    const res = await callServer('reports.export', { reportType: active, filters: { from, to }, format });
+    setExporting('');
+    if (res.success) window.open(res.data.url, '_blank');
+    else toast(res.message, 'error');
+  };
+
+  return (
+    <div>
+      <PageHeader title="Reports Centre" subtitle="Business reports with date filtering and export" />
+      <div className="reports-layout">
+        <div className="card" style={{padding:10}}>
+          {REPORT_LIST.map(r => (
+            <div key={r.key} className={"nav-item"} style={{color: active===r.key?'var(--brand)':'#4B5A70', background: active===r.key?'#EEF3FA':'transparent', cursor:'pointer'}} onClick={()=>setActive(r.key)}>
+              <I name={r.icon} size={15} />{r.label}
+            </div>
+          ))}
+        </div>
+        <div>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-end', flexWrap:'wrap', gap:10}}>
+            <DateRangeBar from={from} to={to} setFrom={setFrom} setTo={setTo} onApply={()=>setKey(k=>k+1)} />
+            <div style={{display:'flex', gap:8, marginBottom:14}}>
+              <button className="btn btn-outline btn-sm" disabled={!!exporting} onClick={()=>exportAs('csv')}><I name="download" size={13}/>{exporting==='csv'?'\u2026':'CSV'}</button>
+              <button className="btn btn-outline btn-sm" disabled={!!exporting} onClick={()=>exportAs('excel')}><I name="download" size={13}/>{exporting==='excel'?'\u2026':'Excel'}</button>
+              <button className="btn btn-outline btn-sm" disabled={!!exporting} onClick={()=>exportAs('pdf')}><I name="download" size={13}/>{exporting==='pdf'?'\u2026':'PDF'}</button>
+            </div>
+          </div>
+          {loading || !data ? <Skeleton h={200} /> : rows.length === 0 ? (
+            <div className="card"><EmptyState icon="reports" title="No data for this period" subtitle="Try widening your date range or check back after recording transactions." /></div>
+          ) : (
+            <div className="card" style={{overflowX:'auto', width:'100%', maxWidth:'100%', WebkitOverflowScrolling:'touch'}}>
+              <table>
+                <thead><tr>{Object.keys(rows[0]).filter(k=>k!=='__row' && k!=='businessId').slice(0,8).map(k => <th key={k}>{k}</th>)}</tr></thead>
+                <tbody>{rows.slice(0,200).map((r,i) => <tr key={i}>{Object.keys(rows[0]).filter(k=>k!=='__row' && k!=='businessId').slice(0,8).map(k => <td key={k}>{String(r[k])}</td>)}</tr>)}</tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================== SETTINGS ==============================
+function SettingsPage() {
+  const { business, setBusiness, user } = useApp();
+  const toast = useToast();
+  const [form, setForm] = useState({ businessName: business.businessName, phone: business.phone, address: business.address, currency: business.currency, vatRate: business.vatRate, taxNumber: business.taxNumber });
+  const [saving, setSaving] = useState(false);
+  const set = (k,v) => setForm(f=>({...f,[k]:v}));
+  const canEdit = user.role === 'Owner' || user.role === 'Administrator';
+  const submit = async () => {
+    setSaving(true);
+    const res = await callServer('settings.update', form);
+    setSaving(false);
+    if (res.success) { toast('Settings updated.'); setBusiness(res.data.business); } else toast(res.message, 'error');
+  };
+  return (
+    <div>
+      <PageHeader title="Business Settings" subtitle="Branding, currency and tax configuration" />
+      <div className="card" style={{padding:'14px 24px', maxWidth:600, marginBottom:16, background:'var(--paper)'}}>
+        <div style={{fontSize:11.5, color:'var(--muted)', fontWeight:600, textTransform:'uppercase', letterSpacing:'.03em'}}>Business ID (for cross-checking against the spreadsheet)</div>
+        <div className="mono" style={{fontSize:13, marginTop:3, userSelect:'all'}}>{business.businessId}</div>
+      </div>
+      <div className="card" style={{padding:24, maxWidth:600}}>
+        <Field label="Business name"><input className="input" disabled={!canEdit} value={form.businessName} onChange={e=>set('businessName', e.target.value)} /></Field>
+        <div className="grid g2">
+          <Field label="Phone"><input className="input" disabled={!canEdit} value={form.phone} onChange={e=>set('phone', e.target.value)} /></Field>
+          <Field label="Tax number"><input className="input" disabled={!canEdit} value={form.taxNumber} onChange={e=>set('taxNumber', e.target.value)} /></Field>
+        </div>
+        <Field label="Address"><input className="input" disabled={!canEdit} value={form.address} onChange={e=>set('address', e.target.value)} /></Field>
+        <div className="grid g2">
+          <Field label="Currency">
+            <select className="input" disabled={!canEdit} value={form.currency} onChange={e=>set('currency', e.target.value)}>
+              {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
+            </select>
+          </Field>
+          <Field label="VAT rate (%)"><input className="input" type="number" step="0.1" disabled={!canEdit} value={form.vatRate} onChange={e=>set('vatRate', e.target.value)} /></Field>
+        </div>
+        {canEdit && <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving\u2026':'Save Settings'}</button>}
+        {!canEdit && <p style={{fontSize:12.5, color:'var(--muted)'}}>Only Owners and Administrators can edit business settings.</p>}
+      </div>
+      {canEdit && (
+        <div className="card" style={{padding:24, maxWidth:600, marginTop:16}}>
+          <h3 style={{margin:'0 0 4px', fontSize:14.5}}>Demo Data</h3>
+          <p style={{fontSize:12.5, color:'var(--muted)', margin:'0 0 14px'}}>
+            Populate this business with sample products, customers, suppliers, sales, purchases and expenses so you can explore the app. Safe to run alongside real data \u2014 it only adds records, it never deletes anything.
+          </p>
+          <SeedDemoButton />
+        </div>
+      )}
+      {canEdit && <CategoriesLocationsPanel />}
+    </div>
+  );
+}
+
+function CategoriesLocationsPanel() {
+  const toast = useToast();
+  const [tab, setTab] = useState('categories');
+  const cats = useApiData('categories.list', {}, []);
+  const locs = useApiData('locations.list', {}, []);
+  const [editing, setEditing] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [delRow, setDelRow] = useState(null);
+  const [name, setName] = useState('');
+
+  const items = tab === 'categories' ? (cats.data || []) : (locs.data || []);
+  const reload = tab === 'categories' ? cats.reload : locs.reload;
+
+  const openNew = () => { setEditing(null); setName(''); setShowForm(true); };
+  const openEdit = (r) => { setEditing(r); setName(tab==='categories' ? r.categoryName : r.locationName); setShowForm(true); };
+
+  const submit = async () => {
+    if (!name.trim()) return;
+    const isCategory = tab === 'categories';
+    const idField = isCategory ? 'categoryId' : 'locationId';
+    const dataObj = isCategory ? { categoryName: name } : { locationName: name };
+    const res = editing
+      ? await callServer((isCategory?'categories':'locations') + '.update', { id: editing[idField], data: dataObj })
+      : await callServer((isCategory?'categories':'locations') + '.create', dataObj);
+    if (res.success) { toast(editing ? 'Updated.' : 'Added.'); setShowForm(false); reload(); } else toast(res.message, 'error');
+  };
+  const remove = async (reason) => {
+    const isCategory = tab === 'categories';
+    const idField = isCategory ? 'categoryId' : 'locationId';
+    const res = await callServer((isCategory?'categories':'locations') + '.delete', { id: delRow[idField], reason });
+    if (res.success) { toast('Moved to recycle bin.'); reload(); } else toast(res.message, 'error');
+  };
+
+  return (
+    <div className="card" style={{padding:24, maxWidth:600, marginTop:16}}>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14}}>
+        <h3 style={{margin:0, fontSize:14.5}}>Categories & Locations</h3>
+        <button className="btn btn-outline btn-sm" onClick={openNew}><I name="plus" size={13}/>Add</button>
+      </div>
+      <div className="tabs">
+        <div className={"tab"+(tab==='categories'?" active":"")} onClick={()=>setTab('categories')} style={{cursor:'pointer'}}>Categories</div>
+        <div className={"tab"+(tab==='locations'?" active":"")} onClick={()=>setTab('locations')} style={{cursor:'pointer'}}>Locations</div>
+      </div>
+      <div style={{display:'flex', flexDirection:'column', gap:6}}>
+        {items.length === 0 && <p style={{fontSize:13, color:'var(--muted)'}}>None yet.</p>}
+        {items.map(r => (
+          <div key={r.categoryId || r.locationId} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 10px', border:'1px solid var(--line)', borderRadius:8}}>
+            <span style={{fontSize:13}}>{tab==='categories' ? r.categoryName : r.locationName}</span>
+            <div style={{display:'flex', gap:6}}>
+              <button className="icon-btn" onClick={()=>openEdit(r)}><I name="edit" size={13}/></button>
+              <button className="icon-btn" onClick={()=>setDelRow(r)}><I name="trash" size={13}/></button>
+            </div>
+          </div>
+        ))}
+      </div>
+      {showForm && (
+        <Modal title={(editing?'Edit ':'Add ') + (tab==='categories'?'Category':'Location')} onClose={()=>setShowForm(false)} footer={<React.Fragment>
+          <button className="btn btn-outline" onClick={()=>setShowForm(false)}>Cancel</button>
+          <button className="btn btn-primary" onClick={submit}>Save</button>
+        </React.Fragment>}>
+          <Field label="Name"><input className="input" value={name} onChange={e=>setName(e.target.value)} autoFocus /></Field>
+        </Modal>
+      )}
+      {delRow && <DeleteWithReasonDialog title={"Delete " + (tab==='categories'?'category':'location')} itemLabel={tab==='categories'?delRow.categoryName:delRow.locationName} onClose={()=>setDelRow(null)} onConfirm={remove} />}
+    </div>
+  );
+}
+
+function SeedDemoButton() {
+  const toast = useToast();
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+  const run = async () => {
+    setSeeding(true);
+    const res = await callServer('settings.seedDemo', {});
+    setSeeding(false);
+    if (res.success) toast('Demo data added. Visit the Dashboard to see it.');
+    else toast(res.message, 'error');
+  };
+  return (
+    <React.Fragment>
+      <button className="btn btn-gold" disabled={seeding} onClick={() => setShowConfirm(true)}>
+        <I name="refund" size={14} />{seeding ? 'Populating\u2026' : 'Populate Demo Data'}
+      </button>
+      {showConfirm && <ConfirmDialog title="Populate demo data" danger={false} confirmLabel="Populate"
+        message="This will add ~20 sample products, 10 customers, 5 suppliers, 30 sales, 20 purchases and 20 expenses to this business. Continue?"
+        onClose={() => setShowConfirm(false)} onConfirm={run} />}
+    </React.Fragment>
+  );
+}
+
+// ============================== USERS ==============================
+function UserFormModal({ onClose, onSaved }) {
+  const toast = useToast();
+  const [form, setForm] = useState({ name:'', email:'', phone:'', role:'Sales Staff', password:'' });
+  const [saving, setSaving] = useState(false);
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const submit = async () => {
+    if (!form.name || !form.email || !form.password) { toast('Name, email and password are required.', 'error'); return; }
+    setSaving(true);
+    const res = await callServer('users.create', form);
+    setSaving(false);
+    if (res.success) { toast('User invited.'); onSaved(); onClose(); } else toast(res.message, 'error');
+  };
+  return (
+    <Modal title="Invite User" onClose={onClose} footer={<React.Fragment>
+      <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Inviting\u2026':'Invite User'}</button>
+    </React.Fragment>}>
+      <Field label="Full name"><input className="input" value={form.name} onChange={e=>set('name', e.target.value)} /></Field>
+      <Field label="Email"><input className="input" type="email" value={form.email} onChange={e=>set('email', e.target.value)} /></Field>
+      <div className="grid g2">
+        <Field label="Role">
+          <select className="input" value={form.role} onChange={e=>set('role', e.target.value)}>
+            {ROLES.filter(r=>r!=='Owner').map(r=><option key={r}>{r}</option>)}
+          </select>
+        </Field>
+        <Field label="Temporary password"><input className="input" type="password" value={form.password} onChange={e=>set('password', e.target.value)} /></Field>
+      </div>
+    </Modal>
+  );
+}
+const ROLES = ['Owner','Administrator','Manager','Sales Staff','Inventory Staff','Accountant','Viewer'];
+
+function UsersPage() {
+  const { data: users, loading, reload } = useApiData('users.list', {}, []);
+  const toast = useToast();
+  const [showForm, setShowForm] = useState(false);
+  const [delRow, setDelRow] = useState(null);
+  const toggle = async (u) => {
+    const res = await callServer('users.updateStatus', { id: u.userId, status: u.status==='Active'?'Inactive':'Active' });
+    if (res.success) { toast('User updated.'); reload(); } else toast(res.message, 'error');
+  };
+  return (
+    <div>
+      <PageHeader title="Users" subtitle="Team members and roles" action={<button className="btn btn-primary" onClick={()=>setShowForm(true)}><I name="plus" size={15}/>Invite User</button>} />
+      <DataTable loading={loading} rows={users} rowKey="userId"
+        emptyIcon="users" emptyTitle="No team members yet." emptySubtitle="Invite your team to collaborate."
+        columns={[
+          { key:'name', header:'Name', render:r=><div style={{fontWeight:600}}>{r.name}</div> }, { key:'email', header:'Email' },
+          { key:'role', header:'Role', render:r=><StatusBadge status="blue" /> }, { key:'status', header:'Status', render:r=><StatusBadge status={r.status} /> },
+          { key:'lastLogin', header:'Last Login', render:r=>fmtDateTime(r.lastLogin) },
+          { key:'actions', header:'', render:r => r.role!=='Owner' && (
+            <div style={{display:'flex', gap:6}}>
+              <button className="btn btn-outline btn-sm" onClick={()=>toggle(r)}>{r.status==='Active'?'Deactivate':'Activate'}</button>
+              <button className="icon-btn" onClick={()=>setDelRow(r)}><I name="trash" size={14}/></button>
+            </div>
+          )}
+        ]}
+      />
+      {showForm && <UserFormModal onClose={()=>setShowForm(false)} onSaved={reload} />}
+      {delRow && <DeleteWithReasonDialog title="Delete user" itemLabel={delRow.name} onClose={() => setDelRow(null)}
+        onConfirm={async (reason) => { const res = await callServer('users.delete', { id: delRow.userId, reason }); if (res.success) { toast('User moved to recycle bin.'); reload(); } else toast(res.message, 'error'); }} />}
+    </div>
+  );
+}
+
+// ============================== AUDIT LOG ==============================
+function AuditLogPage() {
+  const { data: logs, loading } = useApiData('auditlogs.list', {}, []);
+  return (
+    <div>
+      <PageHeader title="Audit Log" subtitle="A record of important actions across your business" />
+      <DataTable loading={loading} rows={logs} rowKey="logId"
+        emptyIcon="audit" emptyTitle="No activity recorded yet." emptySubtitle="Actions like sales, edits and deletions will show up here."
+        columns={[
+          { key:'timestamp', header:'When', render:r=>fmtDateTime(r.timestamp) }, { key:'action', header:'Action', render:r=><div style={{fontWeight:600}}>{r.action}</div> },
+          { key:'module', header:'Module', render:r=><StatusBadge status="slate" /> }, { key:'description', header:'Details' },
+        ]}
+      />
+    </div>
+  );
+}
+
+// ============================== RECYCLE BIN ==============================
+function RecycleBinPage() {
+  const toast = useToast();
+  const { data: items, loading, reload } = useApiData('recyclebin.list', {}, []);
+  const [purgeRow, setPurgeRow] = useState(null);
+
+  const restore = async (r) => {
+    const res = await callServer('recyclebin.restore', { id: r.recordId });
+    if (res.success) { toast(r.recordLabel + ' restored.'); reload(); } else toast(res.message, 'error');
+  };
+  const purge = async (r) => {
+    const res = await callServer('recyclebin.purge', { id: r.recordId });
+    if (res.success) { toast('Permanently deleted.'); reload(); } else toast(res.message, 'error');
+  };
+
+  return (
+    <div>
+      <PageHeader title="Recycle Bin" subtitle="Deleted records from across the business \u2014 restore or permanently remove them" />
+      <DataTable loading={loading} rows={items} rowKey="recordId"
+        emptyIcon="trash" emptyTitle="Recycle bin is empty." emptySubtitle="Anything deleted from Products, Customers, Suppliers and more will show up here."
+        columns={[
+          { key:'recordLabel', header:'Record', render:r=><div style={{fontWeight:600}}>{r.recordLabel}</div> },
+          { key:'sourceSheet', header:'Table', render:r=><StatusBadge status="slate" /> },
+          { key:'reason', header:'Reason for deletion' },
+          { key:'deletedByName', header:'Deleted by' },
+          { key:'deletedAt', header:'Deleted', render:r=>fmtDateTime(r.deletedAt) },
+          { key:'actions', header:'', render:r => (
+            <div style={{display:'flex', gap:6}}>
+              <button className="btn btn-outline btn-sm" onClick={()=>restore(r)}><I name="refund" size={13}/>Restore</button>
+              <button className="btn btn-danger btn-sm" onClick={()=>setPurgeRow(r)}>Delete Forever</button>
+            </div>
+          )}
+        ]}
+      />
+      {purgeRow && <ConfirmDialog title="Permanently delete" confirmLabel="Delete Forever"
+        message={"This will permanently remove \"" + purgeRow.recordLabel + "\" \u2014 it cannot be restored after this."}
+        onClose={()=>setPurgeRow(null)} onConfirm={()=>purge(purgeRow)} />}
+    </div>
+  );
+}
+
+// ============================== PAGE ROUTER ==============================
+const PAGES = {
+  dashboard: DashboardPage, sales: SalesPage, products: ProductsPage, inventory: InventoryPage,
+  customers: CustomersPage, suppliers: SuppliersPage, purchases: PurchasesPage, returns: ReturnsPage,
+  invoices: InvoicesPage, expenses: ExpensesPage, income: IncomePage, bookkeeping: BookkeepingPage,
+  reports: ReportsPage, users: UsersPage, audit: AuditLogPage, settings: SettingsPage, recyclebin: RecycleBinPage,
+};
+
+// ============================== APP ROOT ==============================
+function Workspace({ session, onLogout, setSession }) {
+  const [page, setPage] = useState('dashboard');
+  const [command, setCommand] = useState(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [cmdkOpen, setCmdkOpen] = useState(false);
+  const [business, setBusinessState] = useState(session.business);
+  const [tabCommand, setTabCommand] = useState(null);
+
+  const setBusiness = (b) => { setBusinessState(b); window.__session.business = b; };
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setCmdkOpen(true); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const allowed = ROLE_PAGES[session.user.role];
+  const effectivePage = (!allowed || allowed.indexOf(page) !== -1) ? page : 'dashboard';
+
+  const dispatchCommand = (cmd) => {
+    setPage(cmd.page);
+    if (cmd.action) setCommand(cmd.action);
+    if (cmd.tab) setTabCommand(cmd.tab);
+  };
+
+  const Page = PAGES[effectivePage] || DashboardPage;
+  const pageCommand = effectivePage === (command && page) ? command : null;
+
+  return (
+    <AppCtx.Provider value={{ business, setBusiness, user: session.user, logout: onLogout }}>
+      <div className="app-shell">
+        <Sidebar page={effectivePage} setPage={(p) => { setPage(p); setCommand(null); }} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
+        {mobileOpen && <div onClick={()=>setMobileOpen(false)} style={{position:'fixed', inset:0, background:'rgba(0,0,0,.3)', zIndex:35}} />}
+        <div className="main">
+          <Topbar onMenu={() => setMobileOpen(true)} onSearch={() => setCmdkOpen(true)} />
+          <div className="content">
+            <Page command={effectivePage==='bookkeeping' ? tabCommand : command} clearCommand={() => { setCommand(null); setTabCommand(null); }} dispatch={dispatchCommand} />
+          </div>
+        </div>
+        <button className="btn btn-gold fab" style={{borderRadius:28, padding:'13px 20px', boxShadow:'var(--shadow-lg)'}} onClick={() => setCmdkOpen(true)}>
+          <I name="plus" size={16} />Quick Action
+        </button>
+        {cmdkOpen && <CommandPalette onClose={() => setCmdkOpen(false)} dispatch={dispatchCommand} />}
+      </div>
+    </AppCtx.Provider>
+  );
+}
+
+// ============================== APP THEME (dark/light + platform branding) ==============================
+const ThemeCtx = createContext(null);
+function useAppTheme() { return useContext(ThemeCtx); }
+
+function applyBrandColors_(theme) {
+  if (!theme) return;
+  var root = document.documentElement;
+  if (theme.primaryColor) root.style.setProperty('--brand', theme.primaryColor);
+  if (theme.secondaryColor) root.style.setProperty('--brand-2', theme.secondaryColor);
+  if (theme.accentColor) { root.style.setProperty('--gold', theme.accentColor); root.style.setProperty('--amber', theme.accentColor); }
+}
+
+function ThemeToggle({ className }) {
+  const { dark, toggleDark } = useAppTheme();
+  return (
+    <button className={className || "icon-btn"} onClick={toggleDark} title={dark ? 'Switch to light mode' : 'Switch to dark mode'}>
+      <I name={dark ? 'sun' : 'moon'} size={15} />
+    </button>
+  );
+}
+
+function BrandMark({ size=34, fontSize=15 }) {
+  const { platformTheme } = useAppTheme();
+  if (platformTheme && platformTheme.logoUrl) {
+    return <img src={platformTheme.logoUrl} alt="logo" style={{width:size, height:size, borderRadius:9, objectFit:'cover', flexShrink:0}} />;
+  }
+  return <div className="brand-mark" style={{width:size, height:size, fontSize:fontSize}}>{((platformTheme && platformTheme.appName) || 'Business360').charAt(0)}</div>;
+}
+
+// ============================== PLATFORM ADMIN (super admin) ==============================
+
+function PlatformLoginPage({ onLogin, onBack }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const submit = async (e) => {
+    e.preventDefault();
+    setLoading(true); setError('');
+    const res = await callServer('platform.login', { email, password });
+    setLoading(false);
+    if (res.success) onLogin(res.data);
+    else setError(res.message || 'Login failed.');
+  };
+  return (
+    <div className="auth-wrap">
+      <div className="auth-card">
+        <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:22}}>
+          <div className="brand-mark" style={{width:40, height:40, fontSize:17, background:'linear-gradient(135deg,#4B5A70,#1C2536)'}}><I name="shield" size={18} /></div>
+          <div>
+            <div style={{fontFamily:'Manrope', fontWeight:800, fontSize:17}}>Platform Admin</div>
+            <div style={{fontSize:11, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.06em'}}>Business360 Super Admin</div>
+          </div>
+        </div>
+        <form onSubmit={submit}>
+          <Field label="Admin email"><input className="input" type="email" required value={email} onChange={e=>setEmail(e.target.value)} /></Field>
+          <Field label="Password"><input className="input" type="password" required value={password} onChange={e=>setPassword(e.target.value)} /></Field>
+          {error && <div style={{background:'#FCEBE7', color:'var(--red)', fontSize:12.5, padding:'9px 12px', borderRadius:8, marginBottom:14}}>{error}</div>}
+          <button className="btn btn-primary" type="submit" style={{width:'100%', justifyContent:'center', padding:'11px'}} disabled={loading}>{loading?'Signing in\u2026':'Sign In'}</button>
+        </form>
+        <div style={{textAlign:'center', marginTop:18, fontSize:13, color:'var(--muted)'}}>
+          <a onClick={onBack} style={{color:'var(--brand-2)', fontWeight:600, cursor:'pointer'}}>\u2190 Back to Business360</a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const PLATFORM_NAV = [
+  { key:'dashboard', label:'Overview', icon:'dashboard' },
+  { key:'businesses', label:'Businesses', icon:'building' },
+  { key:'tiers', label:'Subscription Tiers', icon:'layers' },
+  { key:'appearance', label:'Appearance', icon:'palette' },
+];
+
+function PlatformAdminWorkspace({ session, onLogout }) {
+  const [page, setPage] = useState('dashboard');
+  const { dark, toggleDark } = useAppTheme();
+  return (
+    <div className="app-shell">
+      <div className="sidebar">
+        <div className="sidebar-brand">
+          <div className="brand-mark" style={{background:'linear-gradient(135deg,#4B5A70,#1C2536)'}}><I name="shield" size={16} /></div>
+          <div>
+            <div className="brand-name">Platform Admin</div>
+            <div className="brand-sub">{session.admin.name}</div>
+          </div>
+        </div>
+        <div className="nav-scroll">
+          <div className="nav-group-label">Platform</div>
+          {PLATFORM_NAV.map(it => (
+            <div key={it.key} className={"nav-item" + (page===it.key?" active":"")} onClick={()=>setPage(it.key)}>
+              <I name={it.icon} size={16} />{it.label}
+            </div>
+          ))}
+        </div>
+        <div className="sidebar-foot">
+          <div className="user-chip" onClick={onLogout} title="Log out" style={{cursor:'pointer'}}>
+            <div className="avatar">{initials(session.admin.name)}</div>
+            <div style={{flex:1, minWidth:0}}>
+              <div style={{color:'#fff', fontSize:12.5, fontWeight:600}}>{session.admin.name}</div>
+              <div style={{fontSize:11, color:'#7C90AE'}}>Super Admin</div>
+            </div>
+            <I name="logout" size={15} />
+          </div>
+        </div>
+      </div>
+      <div className="main">
+        <div className="topbar">
+          <div style={{fontWeight:700, fontSize:14}}>Platform Administration</div>
+          <ThemeToggle />
+        </div>
+        <div className="content">
+          {page === 'dashboard' && <PlatformDashboardPage />}
+          {page === 'businesses' && <PlatformBusinessesPage />}
+          {page === 'tiers' && <PlatformTiersPage />}
+          {page === 'appearance' && <PlatformAppearancePage />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function usePlatformData(action, payload, deps) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const toast = useToast();
+  const reload = useCallback(() => {
+    setLoading(true);
+    callServer(action, payload).then(res => {
+      setLoading(false);
+      if (res.success) setData(res.data);
+      else toast && toast(res.message, 'error');
+    });
+  }, deps || []); // eslint-disable-line
+  useEffect(() => { reload(); }, deps || []); // eslint-disable-line
+  return { data, loading, reload };
+}
+
+function PlatformDashboardPage() {
+  const { data, loading } = usePlatformData('platform.dashboard', {}, []);
+  if (loading || !data) return <Skeleton h={140} />;
+  return (
+    <div>
+      <PageHeader title="Overview" subtitle="Business360 platform-wide stats" />
+      <div className="grid g4">
+        <KpiCard label="Total Businesses" value={String(data.totalBusinesses)} />
+        <KpiCard label="Active Businesses" value={String(data.activeBusinesses)} accent="var(--green)" />
+        <KpiCard label="Total Users" value={String(data.totalUsers)} />
+        <KpiCard label="Plans in use" value={String(Object.keys(data.byPlan||{}).length)} />
+      </div>
+      <div className="card" style={{padding:20, marginTop:16}}>
+        <h3 style={{margin:'0 0 12px', fontSize:14.5}}>Businesses by Plan</h3>
+        <BarListChart data={Object.keys(data.byPlan||{}).map(k=>({name:k, count:data.byPlan[k]}))} valueKey="count" labelKey="name" />
+      </div>
+    </div>
+  );
+}
+
+function PlatformBusinessesPage() {
+  const toast = useToast();
+  const { data: businesses, loading, reload } = usePlatformData('platform.listBusinesses', {}, []);
+  const { data: tiers } = usePlatformData('platform.listTiers', {}, []);
+  const changeTier = async (b, tier) => {
+    const res = await callServer('platform.updateBusinessTier', { businessId: b.businessId, tier });
+    if (res.success) { toast('Plan updated.'); reload(); } else toast(res.message, 'error');
+  };
+  const toggleStatus = async (b) => {
+    const res = await callServer('platform.updateBusinessStatus', { businessId: b.businessId, status: b.status==='Active'?'Suspended':'Active' });
+    if (res.success) { toast('Business updated.'); reload(); } else toast(res.message, 'error');
+  };
+  return (
+    <div>
+      <PageHeader title="Businesses" subtitle="Every business on the platform" />
+      <DataTable loading={loading} rows={businesses} rowKey="businessId"
+        emptyIcon="building" emptyTitle="No businesses yet."
+        columns={[
+          { key:'businessName', header:'Business', render:r=><div style={{fontWeight:600}}>{r.businessName}</div> },
+          { key:'email', header:'Owner Email' },
+          { key:'userCount', header:'Users' },
+          { key:'subscriptionPlan', header:'Plan', render:r => (
+            <select className="input" style={{padding:'5px 8px', fontSize:12}} value={r.subscriptionPlan} onChange={e=>changeTier(r, e.target.value)}>
+              {(tiers||[]).map(t=><option key={t.tierId} value={t.tierName}>{t.tierName}</option>)}
+              {!(tiers||[]).some(t=>t.tierName===r.subscriptionPlan) && <option value={r.subscriptionPlan}>{r.subscriptionPlan}</option>}
+            </select>
+          )},
+          { key:'status', header:'Status', render:r=><StatusBadge status={r.status} /> },
+          { key:'actions', header:'', render:r => <button className="btn btn-outline btn-sm" onClick={()=>toggleStatus(r)}>{r.status==='Active'?'Suspend':'Reactivate'}</button> }
+        ]}
+      />
+    </div>
+  );
+}
+
+function TierFormModal({ onClose, onSaved, tier }) {
+  const toast = useToast();
+  const [form, setForm] = useState(tier || { tierName:'', price:0, billingCycle:'Monthly', maxUsers:5, maxProducts:500, maxLocations:1, features:'' });
+  const [saving, setSaving] = useState(false);
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const submit = async () => {
+    if (!form.tierName) { toast('Tier name is required.', 'error'); return; }
+    setSaving(true);
+    const res = tier ? await callServer('platform.updateTier', { id: tier.tierId, data: form }) : await callServer('platform.createTier', form);
+    setSaving(false);
+    if (res.success) { toast(tier?'Tier updated.':'Tier created.'); onSaved(); onClose(); } else toast(res.message, 'error');
+  };
+  return (
+    <Modal title={tier?'Edit Tier':'New Subscription Tier'} onClose={onClose} footer={<React.Fragment>
+      <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving\u2026':'Save Tier'}</button>
+    </React.Fragment>}>
+      <div className="grid g2">
+        <Field label="Tier name"><input className="input" value={form.tierName} onChange={e=>set('tierName', e.target.value)} placeholder="e.g. Premium" /></Field>
+        <Field label="Price"><input className="input" type="number" value={form.price} onChange={e=>set('price', e.target.value)} /></Field>
+      </div>
+      <div className="grid g2">
+        <Field label="Billing cycle">
+          <select className="input" value={form.billingCycle} onChange={e=>set('billingCycle', e.target.value)}>
+            {['Monthly','Yearly'].map(c=><option key={c}>{c}</option>)}
+          </select>
+        </Field>
+        <Field label="Max users (-1 = unlimited)"><input className="input" type="number" value={form.maxUsers} onChange={e=>set('maxUsers', e.target.value)} /></Field>
+      </div>
+      <div className="grid g2">
+        <Field label="Max products (-1 = unlimited)"><input className="input" type="number" value={form.maxProducts} onChange={e=>set('maxProducts', e.target.value)} /></Field>
+        <Field label="Max locations (-1 = unlimited)"><input className="input" type="number" value={form.maxLocations} onChange={e=>set('maxLocations', e.target.value)} /></Field>
+      </div>
+      <Field label="Features (comma-separated)"><textarea className="input" rows={3} value={form.features} onChange={e=>set('features', e.target.value)} /></Field>
+    </Modal>
+  );
+}
+
+function PlatformTiersPage() {
+  const toast = useToast();
+  const { data: tiers, loading, reload } = usePlatformData('platform.listTiers', {}, []);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [delId, setDelId] = useState(null);
+  return (
+    <div>
+      <PageHeader title="Subscription Tiers" subtitle="Plans businesses can be assigned to" action={
+        <button className="btn btn-primary" onClick={()=>{setEditing(null); setShowForm(true);}}><I name="plus" size={15}/>New Tier</button>
+      } />
+      <div className="grid g3">
+        {(tiers||[]).map(t => (
+          <div key={t.tierId} className="card" style={{padding:20}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+              <div>
+                <div style={{fontWeight:800, fontFamily:'Manrope', fontSize:16}}>{t.tierName}</div>
+                <div style={{fontSize:20, fontWeight:800, marginTop:4}}>{Number(t.price)===0?'Free':('\u20A6'+Number(t.price).toLocaleString())}<span style={{fontSize:11, color:'var(--muted)', fontWeight:500}}>/{t.billingCycle}</span></div>
+              </div>
+              <div style={{display:'flex', gap:6}}>
+                <button className="icon-btn" onClick={()=>{setEditing(t); setShowForm(true);}}><I name="edit" size={13}/></button>
+                <button className="icon-btn" onClick={()=>setDelId(t.tierId)}><I name="trash" size={13}/></button>
+              </div>
+            </div>
+            <div style={{fontSize:12, color:'var(--muted)', margin:'12px 0 8px'}}>
+              {t.maxUsers==-1?'Unlimited':t.maxUsers} users \u00b7 {t.maxProducts==-1?'Unlimited':t.maxProducts} products \u00b7 {t.maxLocations==-1?'Unlimited':t.maxLocations} location(s)
+            </div>
+            <div style={{fontSize:12.5, color:'var(--ink-2)'}}>{t.features}</div>
+          </div>
+        ))}
+      </div>
+      {showForm && <TierFormModal tier={editing} onClose={()=>setShowForm(false)} onSaved={reload} />}
+      {delId && <ConfirmDialog title="Delete tier" message="This tier will no longer be assignable to businesses." onClose={()=>setDelId(null)}
+        onConfirm={async ()=>{ const res = await callServer('platform.deleteTier', { id: delId }); if (res.success) { toast('Tier deleted.'); reload(); } else toast(res.message,'error'); }} />}
+    </div>
+  );
+}
+
+function PlatformAppearancePage() {
+  const toast = useToast();
+  const { platformTheme, setPlatformTheme } = useAppTheme();
+  const { data, loading, reload } = usePlatformData('platform.getSettings', {}, []);
+  const [form, setForm] = useState(null);
+  const [saving, setSaving] = useState(false);
+  useEffect(() => { if (data && !form) setForm(data); }, [data]);
+  if (loading || !form) return <Skeleton h={200} />;
+  const set = (k,v) => setForm(f=>({...f,[k]:v}));
+  const submit = async () => {
+    setSaving(true);
+    const res = await callServer('platform.updateSettings', form);
+    setSaving(false);
+    if (res.success) { toast('Appearance updated for all users.'); setPlatformTheme(res.data); applyBrandColors_(res.data); reload(); }
+    else toast(res.message, 'error');
+  };
+  return (
+    <div>
+      <PageHeader title="Appearance" subtitle="Global branding \u2014 applies across every business on the platform" />
+      <div className="card" style={{padding:24, maxWidth:560}}>
+        <Field label="App name"><input className="input" value={form.appName} onChange={e=>set('appName', e.target.value)} /></Field>
+        <Field label="Logo URL (leave blank to use the default letter mark)"><input className="input" value={form.logoUrl} onChange={e=>set('logoUrl', e.target.value)} placeholder="https://\u2026" /></Field>
+        <div className="grid g3">
+          <Field label="Primary color"><input className="input" type="color" value={form.primaryColor} onChange={e=>set('primaryColor', e.target.value)} style={{padding:4, height:40}} /></Field>
+          <Field label="Secondary color"><input className="input" type="color" value={form.secondaryColor} onChange={e=>set('secondaryColor', e.target.value)} style={{padding:4, height:40}} /></Field>
+          <Field label="Accent color"><input className="input" type="color" value={form.accentColor} onChange={e=>set('accentColor', e.target.value)} style={{padding:4, height:40}} /></Field>
+        </div>
+        <div style={{display:'flex', gap:10, alignItems:'center', margin:'10px 0 18px'}}>
+          <span style={{fontSize:12, color:'var(--muted)'}}>Live preview:</span>
+          <button className="btn btn-primary btn-sm" style={{background:form.primaryColor}}>Primary</button>
+          <button className="btn btn-primary btn-sm" style={{background:form.secondaryColor}}>Secondary</button>
+          <button className="btn btn-gold btn-sm" style={{background:form.accentColor, color:'#241705'}}>Accent</button>
+        </div>
+        <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving\u2026':'Save & Apply to All Users'}</button>
+      </div>
+    </div>
+  );
+}
+
+
+function App() {
+  const [session, setSession] = useState(null);
+  const [screen, setScreen] = useState('landing'); // landing | login | signup | platformLogin
+  const [platformSession, setPlatformSession] = useState(null);
+  const [dark, setDark] = useState(false);
+  const [platformTheme, setPlatformTheme] = useState(null);
+
+  useEffect(() => {
+    callServer('platform.publicTheme', {}).then(res => {
+      if (res.success) { setPlatformTheme(res.data); applyBrandColors_(res.data); }
+    });
+  }, []);
+  useEffect(() => { document.body.classList.toggle('theme-dark', dark); }, [dark]);
+
+  const themeValue = { dark, toggleDark: () => setDark(d => !d), platformTheme, setPlatformTheme };
+
+  const handleAuthed = (data) => {
+    window.__session = data;
+    setSession(data);
+  };
+  const logout = () => { window.__session = null; setSession(null); setScreen('landing'); };
+  const platformLogout = () => { window.__platformToken = null; setPlatformSession(null); setScreen('landing'); };
+  const handlePlatformAuthed = (data) => { window.__platformToken = data.token; setPlatformSession(data); };
+
+  if (platformSession) {
+    return (
+      <ThemeCtx.Provider value={themeValue}>
+        <ToastProvider>
+          <PlatformAdminWorkspace session={platformSession} onLogout={platformLogout} />
+        </ToastProvider>
+      </ThemeCtx.Provider>
+    );
+  }
+
+  if (!session) {
+    return (
+      <ThemeCtx.Provider value={themeValue}>
+        <ToastProvider>
+          {screen === 'landing' && <LandingPage onGotoLogin={() => setScreen('login')} onGotoSignup={() => setScreen('signup')} onGotoPlatformAdmin={() => setScreen('platformLogin')} />}
+          {screen === 'login' && <LoginPage onLogin={handleAuthed} onGotoSignup={() => setScreen('signup')} />}
+          {screen === 'signup' && <SignupPage onSignup={handleAuthed} onGotoLogin={() => setScreen('login')} />}
+          {screen === 'platformLogin' && <PlatformLoginPage onLogin={handlePlatformAuthed} onBack={() => setScreen('landing')} />}
+        </ToastProvider>
+      </ThemeCtx.Provider>
+    );
+  }
+
+  return (
+    <ThemeCtx.Provider value={themeValue}>
+      <ToastProvider>
+        <Workspace session={session} onLogout={logout} setSession={setSession} />
+      </ToastProvider>
+    </ThemeCtx.Provider>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

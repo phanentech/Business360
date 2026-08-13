@@ -721,8 +721,60 @@ const ROLE_PAGES = {
   'Viewer': ['dashboard','reports'],
 };
 
+// Must match GATED_FEATURES in Code.gs
+const GATED_FEATURES = ['sales','products','inventory','customers','suppliers','purchases','returns','invoices','expenses','income','bookkeeping','reports','users','audit','recyclebin'];
+const FEATURE_LABELS = {};
+NAV.forEach(g => g.items.forEach(it => { FEATURE_LABELS[it.key] = it.label; }));
+
+const UPGRADE_WHATSAPP_NUMBER = '2348108076212'; // international format, no leading +
+const UPGRADE_EMAIL = 'bpadynamics@gmail.com';
+
+function UpgradeModal({ featureKey, onClose }) {
+  const { business, plan } = useApp();
+  const toast = useToast();
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const featureLabel = FEATURE_LABELS[featureKey] || 'this feature';
+
+  const waMessage = encodeURIComponent(
+    `Hi BPA Dynamics, I'd like to upgrade "${business.businessName}" (currently on the ${plan ? plan.planName : business.subscriptionPlan} plan) to unlock ${featureLabel}.`
+  );
+  const waLink = `https://wa.me/${UPGRADE_WHATSAPP_NUMBER}?text=${waMessage}`;
+
+  const sendEmail = async () => {
+    setSending(true);
+    const res = await callServer('support.requestUpgrade', { feature: featureLabel });
+    setSending(false);
+    if (res.success) { setSent(true); toast('Upgrade request sent \u2014 we\'ll be in touch shortly.'); }
+    else toast(res.message, 'error');
+  };
+
+  return (
+    <Modal title="Upgrade to unlock this feature" onClose={onClose}>
+      <div style={{textAlign:'center', padding:'6px 0 18px'}}>
+        <div style={{width:52, height:52, borderRadius:'50%', background:'#FCF1DA', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px'}}>
+          <I name="shield" size={24} style={{color:'var(--amber)'}} />
+        </div>
+        <h3 style={{margin:'0 0 6px'}}>{featureLabel} isn't on your plan</h3>
+        <p style={{fontSize:13, color:'var(--muted)', margin:0}}>
+          You're currently on <b>{plan ? plan.planName : business.subscriptionPlan}</b>. Reach out to BPA Dynamics to upgrade and unlock {featureLabel.toLowerCase()}.
+        </p>
+      </div>
+      <div style={{display:'flex', flexDirection:'column', gap:10}}>
+        <a href={waLink} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{justifyContent:'center', background:'#25D366', textDecoration:'none'}}>
+          <I name="sales" size={15} />Message us on WhatsApp
+        </a>
+        <button className="btn btn-gold" disabled={sending || sent} onClick={sendEmail}>
+          <I name="invoices" size={15} />{sent ? 'Email Sent' : (sending ? 'Sending\u2026' : 'Send Email to ' + UPGRADE_EMAIL)}
+        </button>
+      </div>
+      <p style={{fontSize:11, color:'var(--muted)', textAlign:'center', margin:'14px 0 0'}}>The email button sends automatically \u2014 no need to type anything.</p>
+    </Modal>
+  );
+}
+
 function Sidebar({ page, setPage, mobileOpen, setMobileOpen }) {
-  const { business, user, logout } = useApp();
+  const { business, user, logout, isLocked } = useApp();
   const { platformTheme } = useAppTheme();
   const allowed = ROLE_PAGES[user.role];
   const [showProfile, setShowProfile] = useState(false);
@@ -745,13 +797,17 @@ function Sidebar({ page, setPage, mobileOpen, setMobileOpen }) {
           return (
             <div key={group.group}>
               <div className="nav-group-label">{group.group}</div>
-              {items.map(it => (
-                <div key={it.key} className={"nav-item" + (page===it.key ? " active" : "")}
-                  onClick={() => { setPage(it.key); setMobileOpen(false); }}>
-                  <I name={it.icon} size={16} />
-                  {it.label}
-                </div>
-              ))}
+              {items.map(it => {
+                const locked = isLocked && isLocked(it.key);
+                return (
+                  <div key={it.key} className={"nav-item" + (page===it.key ? " active" : "")} style={locked ? {opacity:.6} : {}}
+                    onClick={() => { setPage(it.key); setMobileOpen(false); }}>
+                    <I name={it.icon} size={16} />
+                    <span style={{flex:1}}>{it.label}</span>
+                    {locked && <I name="shield" size={12} style={{opacity:.8}} />}
+                  </div>
+                );
+              })}
             </div>
           );
         })}
@@ -822,7 +878,8 @@ function CommandPalette({ onClose, dispatch }) {
 }
 
 function Topbar({ onMenu, onSearch }) {
-  const { business } = useApp();
+  const { business, plan } = useApp();
+  const planName = (plan && plan.planName) || business.subscriptionPlan;
   return (
     <div className="topbar">
       <div style={{display:'flex', alignItems:'center', gap:14}}>
@@ -835,7 +892,7 @@ function Topbar({ onMenu, onSearch }) {
       </div>
       <div style={{display:'flex', alignItems:'center', gap:12}}>
         <span className="badge badge-slate">{business.currency}</span>
-        {business.subscriptionPlan === 'Trial' && <span className="badge badge-amber">Trial</span>}
+        <span className="badge badge-amber" title="Your current subscription plan">{planName}</span>
         <ThemeToggle />
       </div>
     </div>
@@ -1098,17 +1155,61 @@ const CURRENCIES = [
   { code:'USD', label:'US Dollar ($)' }, { code:'GBP', label:'British Pound (\u00A3)' }, { code:'EUR', label:'Euro (\u20AC)' },
 ];
 
+function TermsModal({ onClose }) {
+  return (
+    <Modal title="Terms & Conditions" onClose={onClose} wide footer={
+      <button className="btn btn-primary" style={{width:'100%', justifyContent:'center'}} onClick={onClose}>Close</button>
+    }>
+      <div style={{fontSize:12.5, lineHeight:1.7, color:'var(--ink-2)'}}>
+        <p style={{color:'var(--muted)', fontSize:11.5}}>Last updated: {new Date().getFullYear()}</p>
+
+        <h4 style={{fontSize:13, margin:'16px 0 6px'}}>1. Acceptance of Terms</h4>
+        <p>By creating a business account on Business360 ("the Service"), operated by BPA Dynamics, you agree to be bound by these Terms & Conditions. If you do not agree, do not create an account or use the Service.</p>
+
+        <h4 style={{fontSize:13, margin:'16px 0 6px'}}>2. The Service</h4>
+        <p>Business360 provides sales, inventory, and bookkeeping tools for small and medium businesses. Features, storage limits, and available modules depend on your subscription plan and may change from time to time.</p>
+
+        <h4 style={{fontSize:13, margin:'16px 0 6px'}}>3. Your Account & Data</h4>
+        <p>You are responsible for the accuracy of the business, product, customer, and financial data you enter, for keeping your login credentials confidential, and for all activity carried out under your account by users you invite. You retain ownership of your business data at all times.</p>
+
+        <h4 style={{fontSize:13, margin:'16px 0 6px'}}>4. Acceptable Use</h4>
+        <p>You agree not to use the Service for unlawful purposes, to store or transmit fraudulent, harmful, or infringing content, to attempt to bypass usage limits or security controls, or to resell access to the Service without written permission from BPA Dynamics.</p>
+
+        <h4 style={{fontSize:13, margin:'16px 0 6px'}}>5. Subscriptions, Plans & Payment</h4>
+        <p>Certain features are gated by subscription tier. Upgrading, downgrading, billing terms, and pricing are arranged directly with BPA Dynamics. Accounts may be suspended for non-payment or other reasons described in these Terms, with notice sent to the business's registered email.</p>
+
+        <h4 style={{fontSize:13, margin:'16px 0 6px'}}>6. Suspension & Termination</h4>
+        <p>BPA Dynamics may suspend or terminate an account for violations of these Terms, non-payment, fraudulent or suspicious activity, abuse of platform resources, or at the business owner's request. Where reasonably possible, the business will be notified of the reason by email.</p>
+
+        <h4 style={{fontSize:13, margin:'16px 0 6px'}}>7. Data Deletion</h4>
+        <p>Deleted records are retained in the Recycle Bin for recovery until permanently purged by an authorized user. BPA Dynamics is not responsible for data loss resulting from actions taken within your own account.</p>
+
+        <h4 style={{fontSize:13, margin:'16px 0 6px'}}>8. Limitation of Liability</h4>
+        <p>The Service is provided "as is" without warranties of any kind. BPA Dynamics is not liable for indirect, incidental, or consequential damages arising from use of the Service, including business decisions made based on data or reports generated within it.</p>
+
+        <h4 style={{fontSize:13, margin:'16px 0 6px'}}>9. Changes to These Terms</h4>
+        <p>These Terms may be updated from time to time. Continued use of the Service after changes take effect constitutes acceptance of the revised Terms.</p>
+
+        <h4 style={{fontSize:13, margin:'16px 0 6px'}}>10. Contact</h4>
+        <p>Questions about these Terms can be sent to bpadynamics@gmail.com.</p>
+      </div>
+    </Modal>
+  );
+}
+
 function SignupPage({ onSignup, onGotoLogin }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showTerms, setShowTerms] = useState(false);
   const [form, setForm] = useState({
     businessName:'', businessType:'Retail', ownerName:'', email:'', phone:'', password:'',
-    currency:'NGN', vatRate:'7.5', locationName:'Main Store', seedDemo:true
+    currency:'NGN', vatRate:'7.5', locationName:'Main Store', seedDemo:true, acceptedTerms:false
   });
   const set = (k,v) => setForm(f => ({...f, [k]:v}));
 
   const submit = async () => {
+    if (!form.acceptedTerms) { setError('You must accept the Terms & Conditions to create a business.'); return; }
     setLoading(true); setError('');
     const res = await callServer('auth.signup', form);
     setLoading(false);
@@ -1177,19 +1278,25 @@ function SignupPage({ onSignup, onGotoLogin }) {
               <div style={{display:'flex', justifyContent:'space-between', padding:'5px 0'}}><span style={{color:'var(--muted)'}}>Currency</span><b>{form.currency}</b></div>
               <div style={{display:'flex', justifyContent:'space-between', padding:'5px 0'}}><span style={{color:'var(--muted)'}}>VAT rate</span><b>{form.vatRate}%</b></div>
             </div>
-            <label style={{display:'flex', alignItems:'center', gap:8, fontSize:13, marginBottom:18, cursor:'pointer'}}>
+            <label style={{display:'flex', alignItems:'center', gap:8, fontSize:13, marginBottom:12, cursor:'pointer'}}>
               <input type="checkbox" checked={form.seedDemo} onChange={e=>set('seedDemo', e.target.checked)} />
               Add sample demo data so I can explore the app immediately
+            </label>
+            <label style={{display:'flex', alignItems:'flex-start', gap:8, fontSize:13, marginBottom:18, cursor:'pointer'}}>
+              <input type="checkbox" style={{marginTop:2}} checked={form.acceptedTerms} onChange={e=>set('acceptedTerms', e.target.checked)} />
+              <span>I agree to the <a onClick={(e)=>{e.preventDefault(); setShowTerms(true);}} style={{color:'var(--brand-2)', fontWeight:600, cursor:'pointer'}}>Terms & Conditions</a></span>
             </label>
             {error && <div style={{background:'#FCEBE7', color:'var(--red)', fontSize:12.5, padding:'9px 12px', borderRadius:8, marginBottom:14}}>{error}</div>}
             <div style={{display:'flex', gap:10}}>
               <button className="btn btn-outline" onClick={() => setStep(2)}>Back</button>
-              <button className="btn btn-gold" style={{flex:1, justifyContent:'center'}} disabled={loading} onClick={submit}>
+              <button className="btn btn-gold" style={{flex:1, justifyContent:'center'}} disabled={loading || !form.acceptedTerms} onClick={submit}>
                 {loading ? 'Creating your workspace\u2026' : 'Create Business'}
               </button>
             </div>
           </React.Fragment>
         )}
+
+        {showTerms && <TermsModal onClose={() => setShowTerms(false)} />}
 
         <div style={{textAlign:'center', marginTop:16, fontSize:13, color:'var(--muted)'}}>
           Already have an account? <a onClick={onGotoLogin} style={{color:'var(--brand-2)', fontWeight:600, cursor:'pointer'}}>Sign in</a>
@@ -1967,9 +2074,10 @@ function SalesPage({ command, clearCommand }) {
 function SaleDetailModal({ id, onClose }) {
   const fmt = useCurrency();
   const toast = useToast();
-  const { data, loading } = useApiData('sales.detail', { id }, [id]);
+  const { data, loading, reload } = useApiData('sales.detail', { id }, [id]);
   const [pdfBusy, setPdfBusy] = useState(false);
   const [emailBusy, setEmailBusy] = useState(false);
+  const [emailInput, setEmailInput] = useState('');
 
   const downloadPdf = async () => {
     setPdfBusy(true);
@@ -1985,15 +2093,27 @@ function SaleDetailModal({ id, onClose }) {
     if (res.success) toast('Invoice emailed to ' + res.data.sentTo + '.');
     else toast(res.message, 'error');
   };
+  const sendToTypedEmail = async () => {
+    if (!emailInput.trim()) { toast('Enter an email address first.', 'error'); return; }
+    setEmailBusy(true);
+    const res = await callServer('invoices.emailTo', { saleId: id, email: emailInput.trim() });
+    setEmailBusy(false);
+    if (res.success) { toast('Invoice sent to ' + res.data.sentTo + ' to pay.'); setEmailInput(''); reload(); }
+    else toast(res.message, 'error');
+  };
+
+  const hasCustomerEmail = data && data.customer && data.customer.email;
 
   return (
     <Modal title={loading || !data ? 'Sale' : data.sale.invoiceNumber} onClose={onClose} wide footer={
       !loading && data && (
         <React.Fragment>
           <button className="btn btn-outline" disabled={pdfBusy} onClick={downloadPdf}><I name="download" size={14} />{pdfBusy ? 'Generating\u2026' : 'Download PDF'}</button>
-          <button className="btn btn-primary" disabled={emailBusy || !data.customer || !data.customer.email} onClick={emailInvoice}>
-            <I name="invoices" size={14} />{emailBusy ? 'Sending\u2026' : (data.customer && data.customer.email ? 'Email Invoice' : 'No customer email')}
-          </button>
+          {hasCustomerEmail && (
+            <button className="btn btn-primary" disabled={emailBusy} onClick={emailInvoice}>
+              <I name="invoices" size={14} />{emailBusy ? 'Sending\u2026' : 'Email Invoice'}
+            </button>
+          )}
         </React.Fragment>
       )
     }>
@@ -2011,6 +2131,21 @@ function SaleDetailModal({ id, onClose }) {
             <div style={{fontWeight:800, fontSize:15}}>Total: {fmt(data.sale.total)}</div>
             <div style={{color:'var(--muted)'}}>Paid: {fmt(data.sale.amountPaid)} \u00b7 Balance: {fmt(data.sale.balance)}</div>
           </div>
+          {!hasCustomerEmail && (
+            <React.Fragment>
+              <div className="divider" />
+              <div style={{fontWeight:700, fontSize:13, marginBottom:8}}>Send this invoice to be paid</div>
+              <p style={{fontSize:12, color:'var(--muted)', margin:'0 0 10px'}}>
+                No email on file for this customer yet. Enter one below to send them the invoice as a PDF \u2014 it'll also be saved to their customer record for next time.
+              </p>
+              <div style={{display:'flex', gap:8}}>
+                <input className="input" type="email" placeholder="customer@email.com" value={emailInput} onChange={e=>setEmailInput(e.target.value)} />
+                <button className="btn btn-gold" style={{whiteSpace:'nowrap'}} disabled={emailBusy} onClick={sendToTypedEmail}>
+                  <I name="invoices" size={14} />{emailBusy ? 'Sending\u2026' : 'Send to Pay'}
+                </button>
+              </div>
+            </React.Fragment>
+          )}
         </div>
       )}
     </Modal>
@@ -2877,6 +3012,8 @@ function Workspace({ session, onLogout, setSession }) {
   const [user, setUserState] = useState(session.user);
   const [tabCommand, setTabCommand] = useState(null);
   const [showForcedPasswordChange, setShowForcedPasswordChange] = useState(!!session.user.mustChangePassword);
+  const [plan, setPlan] = useState(null); // { planName, tier, includedFeatures } -- includedFeatures null = unrestricted
+  const [upgradeFeature, setUpgradeFeature] = useState(null);
 
   const setBusiness = (b) => { setBusinessState(b); window.__session.business = b; };
   const setUser = (updater) => {
@@ -2888,6 +3025,10 @@ function Workspace({ session, onLogout, setSession }) {
   };
 
   useEffect(() => {
+    callServer('billing.getPlan', {}).then(res => { if (res.success) setPlan(res.data); });
+  }, []);
+
+  useEffect(() => {
     const onKey = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setCmdkOpen(true); }
     };
@@ -2895,22 +3036,29 @@ function Workspace({ session, onLogout, setSession }) {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  const isLocked = (key) => plan && plan.includedFeatures && GATED_FEATURES.indexOf(key) !== -1 && plan.includedFeatures.indexOf(key) === -1;
+
   const allowed = ROLE_PAGES[user.role];
   const effectivePage = (!allowed || allowed.indexOf(page) !== -1) ? page : 'dashboard';
 
   const dispatchCommand = (cmd) => {
+    if (isLocked(cmd.page)) { setUpgradeFeature(cmd.page); return; }
     setPage(cmd.page);
     if (cmd.action) setCommand(cmd.action);
     if (cmd.tab) setTabCommand(cmd.tab);
+  };
+  const goToPage = (p) => {
+    if (isLocked(p)) { setUpgradeFeature(p); return; }
+    setPage(p); setCommand(null);
   };
 
   const Page = PAGES[effectivePage] || DashboardPage;
   const pageCommand = effectivePage === (command && page) ? command : null;
 
   return (
-    <AppCtx.Provider value={{ business, setBusiness, user, setUser, logout: onLogout }}>
+    <AppCtx.Provider value={{ business, setBusiness, user, setUser, logout: onLogout, plan, isLocked, requestUpgrade: setUpgradeFeature }}>
       <div className="app-shell">
-        <Sidebar page={effectivePage} setPage={(p) => { setPage(p); setCommand(null); }} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
+        <Sidebar page={effectivePage} setPage={goToPage} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
         {mobileOpen && <div onClick={()=>setMobileOpen(false)} style={{position:'fixed', inset:0, background:'rgba(0,0,0,.3)', zIndex:35}} />}
         <div className="main">
           <Topbar onMenu={() => setMobileOpen(true)} onSearch={() => setCmdkOpen(true)} />
@@ -2923,6 +3071,7 @@ function Workspace({ session, onLogout, setSession }) {
         </button>
         {cmdkOpen && <CommandPalette onClose={() => setCmdkOpen(false)} dispatch={dispatchCommand} />}
         {showForcedPasswordChange && <ProfileModal forceChange onClose={() => setShowForcedPasswordChange(false)} onLogout={onLogout} />}
+        {upgradeFeature && <UpgradeModal featureKey={upgradeFeature} onClose={() => setUpgradeFeature(null)} />}
       </div>
     </AppCtx.Provider>
   );
@@ -3087,17 +3236,65 @@ function PlatformDashboardPage() {
   );
 }
 
+function SuspendBusinessModal({ business, onClose, onSuspended }) {
+  const toast = useToast();
+  const { data: reasons } = usePlatformData('platform.suspensionReasons', {}, []);
+  const [selected, setSelected] = useState([]);
+  const [note, setNote] = useState('');
+  const [saving, setSaving] = useState(false);
+  const toggle = (r) => setSelected(s => s.indexOf(r)!==-1 ? s.filter(x=>x!==r) : [...s, r]);
+  const submit = async () => {
+    if (!selected.length) { toast('Select at least one reason.', 'error'); return; }
+    setSaving(true);
+    const res = await callServer('platform.updateBusinessStatus', { businessId: business.businessId, status: 'Suspended', reasons: selected, note });
+    setSaving(false);
+    if (res.success) { toast(business.businessName + ' has been suspended \u2014 they\u2019ve been emailed the reason.'); onSuspended(); onClose(); }
+    else toast(res.message, 'error');
+  };
+  return (
+    <Modal title={`Suspend ${business.businessName}`} onClose={onClose} footer={<React.Fragment>
+      <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+      <button className="btn btn-danger" disabled={saving} onClick={submit}>{saving?'Suspending\u2026':'Suspend & Notify Business'}</button>
+    </React.Fragment>}>
+      <p style={{fontSize:12.5, color:'var(--muted)', margin:'0 0 14px'}}>
+        Select every reason that applies. The business owner will receive an email explaining why their account was suspended.
+      </p>
+      <div style={{display:'flex', flexDirection:'column', gap:8, marginBottom:14}}>
+        {(reasons||[]).map(r => (
+          <label key={r} style={{display:'flex', alignItems:'center', gap:9, fontSize:13, cursor:'pointer', padding:'7px 10px', border:'1px solid var(--line)', borderRadius:8, background: selected.indexOf(r)!==-1 ? 'var(--paper)' : 'transparent'}}>
+            <input type="checkbox" checked={selected.indexOf(r)!==-1} onChange={()=>toggle(r)} />
+            {r}
+          </label>
+        ))}
+      </div>
+      <Field label="Additional note (optional, included in the email)">
+        <textarea className="input" rows={3} value={note} onChange={e=>setNote(e.target.value)} placeholder="Any extra detail for the business owner\u2026" />
+      </Field>
+    </Modal>
+  );
+}
+
 function PlatformBusinessesPage() {
   const toast = useToast();
   const { data: businesses, loading, reload } = usePlatformData('platform.listBusinesses', {}, []);
   const { data: tiers } = usePlatformData('platform.listTiers', {}, []);
+  const [purgeTarget, setPurgeTarget] = useState(null);
+  const [purging, setPurging] = useState(false);
+  const [suspendTarget, setSuspendTarget] = useState(null);
   const changeTier = async (b, tier) => {
     const res = await callServer('platform.updateBusinessTier', { businessId: b.businessId, tier });
     if (res.success) { toast('Plan updated.'); reload(); } else toast(res.message, 'error');
   };
-  const toggleStatus = async (b) => {
-    const res = await callServer('platform.updateBusinessStatus', { businessId: b.businessId, status: b.status==='Active'?'Suspended':'Active' });
-    if (res.success) { toast('Business updated.'); reload(); } else toast(res.message, 'error');
+  const reactivate = async (b) => {
+    const res = await callServer('platform.updateBusinessStatus', { businessId: b.businessId, status: 'Active' });
+    if (res.success) { toast(b.businessName + ' reactivated \u2014 they\u2019ve been notified.'); reload(); } else toast(res.message, 'error');
+  };
+  const purgeDemoData = async () => {
+    setPurging(true);
+    const res = await callServer('platform.purgeDemoData', { businessId: purgeTarget.businessId });
+    setPurging(false);
+    if (res.success) { toast(res.data.removed > 0 ? `Removed ${res.data.removed} demo record(s).` : 'No demo data found for this business.'); setPurgeTarget(null); reload(); }
+    else toast(res.message, 'error');
   };
   return (
     <div>
@@ -3105,7 +3302,12 @@ function PlatformBusinessesPage() {
       <DataTable loading={loading} rows={businesses} rowKey="businessId"
         emptyIcon="building" emptyTitle="No businesses yet."
         columns={[
-          { key:'businessName', header:'Business', render:r=><div style={{fontWeight:600}}>{r.businessName}</div> },
+          { key:'businessName', header:'Business', render:r=>(
+            <div>
+              <div style={{fontWeight:600}}>{r.businessName}</div>
+              {r.status==='Suspended' && r.suspensionReason && <div style={{fontSize:11, color:'var(--red)', marginTop:2}}>{r.suspensionReason}</div>}
+            </div>
+          )},
           { key:'email', header:'Owner Email' },
           { key:'userCount', header:'Users' },
           { key:'subscriptionPlan', header:'Plan', render:r => (
@@ -3115,18 +3317,37 @@ function PlatformBusinessesPage() {
             </select>
           )},
           { key:'status', header:'Status', render:r=><StatusBadge status={r.status} /> },
-          { key:'actions', header:'', render:r => <button className="btn btn-outline btn-sm" onClick={()=>toggleStatus(r)}>{r.status==='Active'?'Suspend':'Reactivate'}</button> }
+          { key:'actions', header:'', render:r => (
+            <div style={{display:'flex', gap:6}}>
+              {r.status==='Active'
+                ? <button className="btn btn-outline btn-sm" onClick={()=>setSuspendTarget(r)}>Suspend</button>
+                : <button className="btn btn-outline btn-sm" onClick={()=>reactivate(r)}>Reactivate</button>}
+              <button className="btn btn-danger btn-sm" onClick={()=>setPurgeTarget(r)}>Remove Demo Data</button>
+            </div>
+          )}
         ]}
       />
+      {purgeTarget && (
+        <ConfirmDialog title="Remove demo data" confirmLabel={purging ? 'Removing\u2026' : 'Remove Demo Data'}
+          message={`This permanently removes every sample product, customer, supplier, sale, purchase and expense ever added to "${purgeTarget.businessName}" via demo seeding. Real data this business added themselves is never touched. This cannot be undone.`}
+          onClose={()=>setPurgeTarget(null)} onConfirm={purgeDemoData} />
+      )}
+      {suspendTarget && <SuspendBusinessModal business={suspendTarget} onClose={()=>setSuspendTarget(null)} onSuspended={reload} />}
     </div>
   );
 }
 
 function TierFormModal({ onClose, onSaved, tier }) {
   const toast = useToast();
-  const [form, setForm] = useState(tier || { tierName:'', price:0, billingCycle:'Monthly', maxUsers:5, maxProducts:500, maxLocations:1, features:'' });
+  const [form, setForm] = useState(tier || { tierName:'', price:0, billingCycle:'Monthly', maxUsers:5, maxProducts:500, maxLocations:1, features:'', includedFeatures: GATED_FEATURES.join(',') });
   const [saving, setSaving] = useState(false);
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const includedList = String(form.includedFeatures||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const toggleFeature = (key) => {
+    const has = includedList.indexOf(key) !== -1;
+    const next = has ? includedList.filter(k=>k!==key) : [...includedList, key];
+    set('includedFeatures', next.join(','));
+  };
   const submit = async () => {
     if (!form.tierName) { toast('Tier name is required.', 'error'); return; }
     setSaving(true);
@@ -3135,7 +3356,7 @@ function TierFormModal({ onClose, onSaved, tier }) {
     if (res.success) { toast(tier?'Tier updated.':'Tier created.'); onSaved(); onClose(); } else toast(res.message, 'error');
   };
   return (
-    <Modal title={tier?'Edit Tier':'New Subscription Tier'} onClose={onClose} footer={<React.Fragment>
+    <Modal title={tier?'Edit Tier':'New Subscription Tier'} onClose={onClose} wide footer={<React.Fragment>
       <button className="btn btn-outline" onClick={onClose}>Cancel</button>
       <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving\u2026':'Save Tier'}</button>
     </React.Fragment>}>
@@ -3155,7 +3376,18 @@ function TierFormModal({ onClose, onSaved, tier }) {
         <Field label="Max products (-1 = unlimited)"><input className="input" type="number" value={form.maxProducts} onChange={e=>set('maxProducts', e.target.value)} /></Field>
         <Field label="Max locations (-1 = unlimited)"><input className="input" type="number" value={form.maxLocations} onChange={e=>set('maxLocations', e.target.value)} /></Field>
       </div>
-      <Field label="Features (comma-separated)"><textarea className="input" rows={3} value={form.features} onChange={e=>set('features', e.target.value)} /></Field>
+      <Field label="Features (marketing description, comma-separated)"><textarea className="input" rows={2} value={form.features} onChange={e=>set('features', e.target.value)} /></Field>
+      <Field label="Modules included in this plan">
+        <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:'6px 12px', border:'1px solid var(--line)', borderRadius:9, padding:12}}>
+          {GATED_FEATURES.map(key => (
+            <label key={key} style={{display:'flex', alignItems:'center', gap:7, fontSize:12.5, cursor:'pointer'}}>
+              <input type="checkbox" checked={includedList.indexOf(key)!==-1} onChange={()=>toggleFeature(key)} />
+              {FEATURE_LABELS[key] || key}
+            </label>
+          ))}
+        </div>
+      </Field>
+      <p style={{fontSize:11.5, color:'var(--muted)', margin:0}}>Unchecked modules show a padlock to businesses on this plan and prompt them to upgrade. Dashboard and Settings are always available regardless of plan.</p>
     </Modal>
   );
 }

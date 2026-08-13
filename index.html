@@ -391,6 +391,84 @@ function useToast() { return useContext(ToastCtx); }
 const AppCtx = createContext(null);
 function useApp() { return useContext(AppCtx); }
 
+function ProfileModal({ onClose, onLogout, forceChange }) {
+  const { user, setUser } = useApp();
+  const toast = useToast();
+  const [tab, setTab] = useState(forceChange ? 'password' : 'details');
+  const [details, setDetails] = useState({ name: user.name || '', phone: user.phone || '', bankName: user.bankName || '', bankAccountNumber: user.bankAccountNumber || '', bankAccountName: user.bankAccountName || '' });
+  const [savingDetails, setSavingDetails] = useState(false);
+  const [pw, setPw] = useState({ currentPassword:'', newPassword:'', confirmPassword:'' });
+  const [savingPw, setSavingPw] = useState(false);
+  const setD = (k,v) => setDetails(d=>({...d,[k]:v}));
+  const setP = (k,v) => setPw(p=>({...p,[k]:v}));
+
+  const saveDetails = async () => {
+    setSavingDetails(true);
+    const res = await callServer('profile.update', details);
+    setSavingDetails(false);
+    if (res.success) { toast('Profile updated.'); setUser && setUser(u => ({...u, ...details})); } else toast(res.message, 'error');
+  };
+
+  const savePassword = async () => {
+    if (!pw.currentPassword || !pw.newPassword) { toast('Fill in both password fields.', 'error'); return; }
+    if (pw.newPassword !== pw.confirmPassword) { toast('New passwords do not match.', 'error'); return; }
+    setSavingPw(true);
+    const res = await callServer('profile.changePassword', pw);
+    setSavingPw(false);
+    if (res.success) { toast('Password changed.'); setPw({ currentPassword:'', newPassword:'', confirmPassword:'' }); setUser && setUser(u => ({...u, mustChangePassword:false})); if (forceChange) onClose(); }
+    else toast(res.message, 'error');
+  };
+
+  return (
+    <Modal title="Your Profile" onClose={onClose} footer={
+      <React.Fragment>
+        <button className="btn btn-danger" onClick={onLogout}><I name="logout" size={14} />Log Out</button>
+        <div style={{flex:1}} />
+        {tab==='details'
+          ? <button className="btn btn-primary" disabled={savingDetails} onClick={saveDetails}>{savingDetails?'Saving\u2026':'Save Changes'}</button>
+          : <button className="btn btn-primary" disabled={savingPw} onClick={savePassword}>{savingPw?'Saving\u2026':'Change Password'}</button>}
+      </React.Fragment>
+    }>
+      {forceChange && (
+        <div style={{background:'#FCF1DA', color:'var(--amber)', fontSize:12.5, padding:'10px 12px', borderRadius:8, marginBottom:14}}>
+          For security, please set a new password before continuing.
+        </div>
+      )}
+      <div className="tabs">
+        <div className={"tab"+(tab==='details'?" active":"")} onClick={()=>setTab('details')} style={{cursor:'pointer'}}>Details</div>
+        <div className={"tab"+(tab==='password'?" active":"")} onClick={()=>setTab('password')} style={{cursor:'pointer'}}>Change Password</div>
+      </div>
+      {tab === 'details' && (
+        <div>
+          <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:16}}>
+            <div className="avatar" style={{width:44, height:44, fontSize:15}}>{initials(user.name)}</div>
+            <div>
+              <div style={{fontWeight:700, fontSize:14}}>{user.name}</div>
+              <div style={{fontSize:12, color:'var(--muted)'}}>{user.email} \u00b7 {user.role}</div>
+            </div>
+          </div>
+          <Field label="Full name"><input className="input" value={details.name} onChange={e=>setD('name', e.target.value)} /></Field>
+          <Field label="Phone"><input className="input" value={details.phone} onChange={e=>setD('phone', e.target.value)} /></Field>
+          <div className="divider" />
+          <div style={{fontWeight:700, fontSize:13, marginBottom:10}}>Bank Details (for payouts)</div>
+          <Field label="Bank name"><input className="input" value={details.bankName} onChange={e=>setD('bankName', e.target.value)} placeholder="e.g. GTBank" /></Field>
+          <div className="grid g2">
+            <Field label="Account number"><input className="input" value={details.bankAccountNumber} onChange={e=>setD('bankAccountNumber', e.target.value)} /></Field>
+            <Field label="Account name"><input className="input" value={details.bankAccountName} onChange={e=>setD('bankAccountName', e.target.value)} /></Field>
+          </div>
+        </div>
+      )}
+      {tab === 'password' && (
+        <div>
+          <Field label="Current password"><input className="input" type="password" value={pw.currentPassword} onChange={e=>setP('currentPassword', e.target.value)} /></Field>
+          <Field label="New password"><input className="input" type="password" value={pw.newPassword} onChange={e=>setP('newPassword', e.target.value)} /></Field>
+          <Field label="Confirm new password"><input className="input" type="password" value={pw.confirmPassword} onChange={e=>setP('confirmPassword', e.target.value)} /></Field>
+        </div>
+      )}
+    </Modal>
+  );
+}
+
 // ============================== SHARED UI ==============================
 function Skeleton({ h=16, w='100%', r=8 }) { return <div className="skeleton" style={{height:h, width:w, borderRadius:r}} />; }
 
@@ -647,6 +725,7 @@ function Sidebar({ page, setPage, mobileOpen, setMobileOpen }) {
   const { business, user, logout } = useApp();
   const { platformTheme } = useAppTheme();
   const allowed = ROLE_PAGES[user.role];
+  const [showProfile, setShowProfile] = useState(false);
   return (
     <div className={"sidebar" + (mobileOpen ? " open" : "")}>
       <div className="sidebar-brand">
@@ -678,15 +757,16 @@ function Sidebar({ page, setPage, mobileOpen, setMobileOpen }) {
         })}
       </div>
       <div className="sidebar-foot">
-        <div className="user-chip" onClick={logout} title="Log out" style={{cursor:'pointer'}}>
+        <div className="user-chip" onClick={() => setShowProfile(true)} title="View profile" style={{cursor:'pointer'}}>
           <div className="avatar">{initials(user.name)}</div>
           <div style={{flex:1, minWidth:0}}>
             <div style={{color:'#fff', fontSize:12.5, fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{user.name}</div>
             <div style={{fontSize:11, color:'#7C90AE'}}>{user.role}</div>
           </div>
-          <I name="logout" size={15} />
+          <I name="settings" size={15} />
         </div>
       </div>
+      {showProfile && <ProfileModal onClose={() => setShowProfile(false)} onLogout={logout} />}
     </div>
   );
 }
@@ -2794,9 +2874,18 @@ function Workspace({ session, onLogout, setSession }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const [business, setBusinessState] = useState(session.business);
+  const [user, setUserState] = useState(session.user);
   const [tabCommand, setTabCommand] = useState(null);
+  const [showForcedPasswordChange, setShowForcedPasswordChange] = useState(!!session.user.mustChangePassword);
 
   const setBusiness = (b) => { setBusinessState(b); window.__session.business = b; };
+  const setUser = (updater) => {
+    setUserState(u => {
+      const next = typeof updater === 'function' ? updater(u) : {...u, ...updater};
+      if (window.__session) window.__session.user = next;
+      return next;
+    });
+  };
 
   useEffect(() => {
     const onKey = (e) => {
@@ -2806,7 +2895,7 @@ function Workspace({ session, onLogout, setSession }) {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const allowed = ROLE_PAGES[session.user.role];
+  const allowed = ROLE_PAGES[user.role];
   const effectivePage = (!allowed || allowed.indexOf(page) !== -1) ? page : 'dashboard';
 
   const dispatchCommand = (cmd) => {
@@ -2819,7 +2908,7 @@ function Workspace({ session, onLogout, setSession }) {
   const pageCommand = effectivePage === (command && page) ? command : null;
 
   return (
-    <AppCtx.Provider value={{ business, setBusiness, user: session.user, logout: onLogout }}>
+    <AppCtx.Provider value={{ business, setBusiness, user, setUser, logout: onLogout }}>
       <div className="app-shell">
         <Sidebar page={effectivePage} setPage={(p) => { setPage(p); setCommand(null); }} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
         {mobileOpen && <div onClick={()=>setMobileOpen(false)} style={{position:'fixed', inset:0, background:'rgba(0,0,0,.3)', zIndex:35}} />}
@@ -2833,6 +2922,7 @@ function Workspace({ session, onLogout, setSession }) {
           <I name="plus" size={16} />Quick Action
         </button>
         {cmdkOpen && <CommandPalette onClose={() => setCmdkOpen(false)} dispatch={dispatchCommand} />}
+        {showForcedPasswordChange && <ProfileModal forceChange onClose={() => setShowForcedPasswordChange(false)} onLogout={onLogout} />}
       </div>
     </AppCtx.Provider>
   );

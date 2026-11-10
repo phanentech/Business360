@@ -221,6 +221,17 @@
   @media(max-width:600px){.feat-grid{grid-template-columns:1fr;}}
   .feat-card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:24px; transition:transform .15s, box-shadow .15s;}
   .feat-card:hover{transform:translateY(-3px); box-shadow:var(--shadow-lg); border-color:#D7DEEA;}
+
+  .pricing-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:20px; align-items:stretch;}
+  @media(max-width:900px){.pricing-grid{grid-template-columns:1fr; max-width:420px; margin:0 auto;}}
+  .price-card{background:#fff; border:1px solid var(--line); border-radius:16px; padding:28px 24px; display:flex; flex-direction:column; position:relative; transition:transform .15s, box-shadow .15s;}
+  .price-card:hover{transform:translateY(-4px); box-shadow:var(--shadow-lg);}
+  .price-card.featured{border-color:var(--gold); box-shadow:0 12px 32px rgba(217,164,65,.18);}
+  .price-badge{position:absolute; top:-13px; left:50%; transform:translateX(-50%); background:var(--gold); color:#241705; font-size:10.5px; font-weight:800; padding:5px 14px; border-radius:20px; text-transform:uppercase; letter-spacing:.04em;}
+  .price-amount{font-family:'Manrope'; font-weight:800; font-size:32px; margin:14px 0 2px;}
+  .price-cycle{font-size:12px; color:var(--muted); margin-bottom:18px;}
+  .price-feature-list{list-style:none; padding:0; margin:0 0 22px; flex:1; display:flex; flex-direction:column; gap:10px;}
+  .price-feature-list li{display:flex; align-items:flex-start; gap:8px; font-size:12.5px; color:var(--ink-2); line-height:1.5;}
   .feat-icon{width:42px; height:42px; border-radius:11px; background:linear-gradient(135deg, var(--brand), var(--brand-2)); display:flex; align-items:center; justify-content:center; color:#fff; margin-bottom:16px;}
   .feat-card h3{font-size:15px; margin:0 0 6px; font-family:'Manrope'; font-weight:700;}
   .feat-card p{font-size:13px; color:var(--muted); margin:0; line-height:1.55;}
@@ -285,6 +296,8 @@ const ICONS = {
   moon: "M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z",
   palette: "M12 2a10 10 0 000 20 1.5 1.5 0 001.5-1.5c0-.4-.15-.75-.4-1.03-.24-.28-.4-.62-.4-1.03A1.5 1.5 0 0114.1 17H16a5 5 0 005-5c0-5.52-4.48-10-9-10zM6.5 12a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM9.5 7.5A1.5 1.5 0 118 6a1.5 1.5 0 011.5 1.5zM14.5 7.5A1.5 1.5 0 1113 6a1.5 1.5 0 011.5 1.5zM17.5 12a1.5 1.5 0 110-3 1.5 1.5 0 010 3z",
   layers: "M12 2l9 5-9 5-9-5 9-5zM3 12l9 5 9-5M3 17l9 5 9-5",
+  link: "M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71",
+  copy: "M9 9h11v11H9zM5 15H4a1 1 0 01-1-1V4a1 1 0 011-1h10a1 1 0 011 1v1",
   shield: "M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z",
 };
 const I = ({ name, ...rest }) => <Icon path={ICONS[name] || ICONS.dashboard} {...rest} />;
@@ -300,7 +313,7 @@ const I = ({ name, ...rest }) => <Icon path={ICONS[name] || ICONS.dashboard} {..
 // resulting URL (ends in /exec), and paste it below. The app will then talk to it over HTTPS
 // automatically whenever it detects it isn't running inside the Apps Script iframe.
 const APP_CONFIG = {
-  WEBAPP_URL: 'https://script.google.com/macros/s/AKfycbzLYdxKfcsYvqJTNrOi5u0KjyeJqaOESNrcVzXqlU48v2U0Xsz07v1-p2w_UrwCOODIgQ/exec' // e.g. 'https://script.google.com/macros/s/AKfycb.../exec' -- leave blank for the default setup
+  WEBAPP_URL: 'https://script.google.com/macros/s/AKfycbxt8bcmnUCPQRlsNVSre8bB8PVJ0IGLJbIu-Q2FdIHv9bgxCRgbk3Vlrv1xuDlhpa-ptQ/exec' // e.g. 'https://script.google.com/macros/s/AKfycb.../exec' -- leave blank for the default setup
 };
 
 // ============================== API CLIENT ==============================
@@ -335,23 +348,108 @@ function callServer(action, payload) {
   });
 }
 
+// ============================== FILE DOWNLOAD HELPERS ==============================
+// Saves files straight to the user's computer (browser download) instead of opening Drive/Sheets pages.
+function saveBlob(filename, blob) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.style.display = 'none';
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500);
+}
+function saveBase64(filename, mimeType, b64) {
+  const bin = atob(b64); const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  saveBlob(filename, new Blob([bytes], { type: mimeType || 'application/octet-stream' }));
+}
+function saveServerFile(res, toast, okMsg) {
+  if (res.success && res.data && res.data.base64) {
+    saveBase64(res.data.filename, res.data.mimeType, res.data.base64);
+    if (toast && okMsg) toast(okMsg);
+    return true;
+  }
+  if (toast) toast((res && res.message) || 'Could not download the file.', 'error');
+  return false;
+}
+function toCsv(headers, rows) {
+  const esc = (v) => { const s = v == null ? '' : String(v); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  return [headers.map(esc).join(',')].concat(rows.map(r => headers.map(h => esc(r[h])).join(','))).join('\r\n');
+}
+function saveCsv(filename, headers, rows) {
+  saveBlob(filename.replace(/\.csv$/i, '') + '.csv', new Blob(['﻿' + toCsv(headers, rows)], { type: 'text/csv;charset=utf-8' }));
+}
+const _scriptCache = {};
+function loadScriptOnce(src) {
+  if (_scriptCache[src]) return _scriptCache[src];
+  _scriptCache[src] = new Promise((resolve, reject) => {
+    const s = document.createElement('script'); s.src = src; s.onload = resolve; s.onerror = () => { delete _scriptCache[src]; reject(new Error('load failed')); };
+    document.head.appendChild(s);
+  });
+  return _scriptCache[src];
+}
+async function saveExcel(filename, headers, rows) {
+  try {
+    await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+    const ws = window.XLSX.utils.json_to_sheet(rows, { header: headers });
+    const wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, ws, 'Report');
+    const out = window.XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    saveBlob(filename + '.xlsx', new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+  } catch (e) {
+    // Offline / library blocked: fall back to an Excel-readable HTML table (.xls)
+    const esc = (v) => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    const html = '<html><head><meta charset="utf-8"></head><body><table><tr>' + headers.map(h => '<th>' + esc(h) + '</th>').join('') + '</tr>' +
+      rows.map(r => '<tr>' + headers.map(h => '<td>' + esc(r[h]) + '</td>').join('') + '</tr>').join('') + '</table></body></html>';
+    saveBlob(filename + '.xls', new Blob([html], { type: 'application/vnd.ms-excel' }));
+  }
+}
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
+  return new Promise(resolve => {
+    const t = document.createElement('textarea'); t.value = text; t.style.position = 'fixed'; t.style.opacity = '0';
+    document.body.appendChild(t); t.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(t); resolve(ok);
+  });
+}
+function pick(obj, keys) { const o = {}; keys.forEach(k => { if (obj[k] !== undefined) o[k] = obj[k]; }); return o; }
+function waDigits(phone) { let d = String(phone || '').replace(/[^0-9]/g, ''); if (d.startsWith('0')) d = '234' + d.slice(1); return d; }
+function resizeImage(file, maxSize = 800) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read the image.'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('That file is not a valid image.'));
+      img.onload = () => {
+        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+        const c = document.createElement('canvas'); c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+        const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(img, 0, 0, c.width, c.height);
+        const dataUrl = c.toDataURL('image/jpeg', 0.82);
+        resolve({ base64: dataUrl.split(',')[1], mimeType: 'image/jpeg', preview: dataUrl });
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 // ============================== FORMAT HELPERS ==============================
 function useCurrency() {
   const { business } = useApp();
-  const symbol = (business && business.currencySymbol) || '\u20A6';
+  const symbol = (business && business.currencySymbol) || '₦';
   return useCallback((n) => {
     const val = Number(n || 0);
     return symbol + val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }, [symbol]);
 }
 function fmtDate(d) {
-  if (!d) return '\u2014';
+  if (!d) return '—';
   const dt = new Date(d);
   if (isNaN(dt)) return String(d);
   return dt.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
 }
 function fmtDateTime(d) {
-  if (!d) return '\u2014';
+  if (!d) return '—';
   const dt = new Date(d);
   if (isNaN(dt)) return String(d);
   return dt.toLocaleDateString(undefined, { day:'2-digit', month:'short' }) + ' ' + dt.toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' });
@@ -425,8 +523,8 @@ function ProfileModal({ onClose, onLogout, forceChange }) {
         <button className="btn btn-danger" onClick={onLogout}><I name="logout" size={14} />Log Out</button>
         <div style={{flex:1}} />
         {tab==='details'
-          ? <button className="btn btn-primary" disabled={savingDetails} onClick={saveDetails}>{savingDetails?'Saving\u2026':'Save Changes'}</button>
-          : <button className="btn btn-primary" disabled={savingPw} onClick={savePassword}>{savingPw?'Saving\u2026':'Change Password'}</button>}
+          ? <button className="btn btn-primary" disabled={savingDetails} onClick={saveDetails}>{savingDetails?'Saving…':'Save Changes'}</button>
+          : <button className="btn btn-primary" disabled={savingPw} onClick={savePassword}>{savingPw?'Saving…':'Change Password'}</button>}
       </React.Fragment>
     }>
       {forceChange && (
@@ -444,7 +542,7 @@ function ProfileModal({ onClose, onLogout, forceChange }) {
             <div className="avatar" style={{width:44, height:44, fontSize:15}}>{initials(user.name)}</div>
             <div>
               <div style={{fontWeight:700, fontSize:14}}>{user.name}</div>
-              <div style={{fontSize:12, color:'var(--muted)'}}>{user.email} \u00b7 {user.role}</div>
+              <div style={{fontSize:12, color:'var(--muted)'}}>{user.email} · {user.role}</div>
             </div>
           </div>
           <Field label="Full name"><input className="input" value={details.name} onChange={e=>setD('name', e.target.value)} /></Field>
@@ -542,7 +640,7 @@ function DeleteWithReasonDialog({ title, itemLabel, onConfirm, onClose }) {
     <Modal title={title || 'Delete record'} onClose={onClose} footer={
       <React.Fragment>
         <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-        <button className="btn btn-danger" disabled={!reason.trim() || busy} onClick={submit}>{busy ? 'Deleting\u2026' : 'Delete'}</button>
+        <button className="btn btn-danger" disabled={!reason.trim() || busy} onClick={submit}>{busy ? 'Deleting…' : 'Delete'}</button>
       </React.Fragment>
     }>
       <p style={{fontSize:13.5, color:'var(--muted)', margin:'0 0 14px'}}>
@@ -550,7 +648,7 @@ function DeleteWithReasonDialog({ title, itemLabel, onConfirm, onClose }) {
         This moves the record to the Recycle Bin, where it can be restored later. Please give a reason.
       </p>
       <Field label="Reason for deletion">
-        <textarea className="input" rows={3} autoFocus value={reason} onChange={e=>setReason(e.target.value)} placeholder="e.g. Duplicate entry, entered in error\u2026" />
+        <textarea className="input" rows={3} autoFocus value={reason} onChange={e=>setReason(e.target.value)} placeholder="e.g. Duplicate entry, entered in error…" />
       </Field>
     </Modal>
   );
@@ -691,6 +789,7 @@ const NAV = [
   { group: 'Overview', items: [ { key:'dashboard', label:'Dashboard', icon:'dashboard' } ] },
   { group: 'Operations', items: [
     { key:'sales', label:'Sales / POS', icon:'sales' },
+    { key:'orders', label:'Online Orders', icon:'cart' },
     { key:'products', label:'Products', icon:'products' },
     { key:'inventory', label:'Inventory', icon:'inventory' },
     { key:'customers', label:'Customers', icon:'customers' },
@@ -714,8 +813,8 @@ const NAV = [
 ];
 const ROLE_PAGES = {
   'Owner': null, 'Administrator': null,
-  'Manager': ['dashboard','sales','products','inventory','customers','suppliers','purchases','returns','invoices','reports'],
-  'Sales Staff': ['dashboard','sales','customers','invoices','returns'],
+  'Manager': ['dashboard','sales','orders','products','inventory','customers','suppliers','purchases','returns','invoices','reports'],
+  'Sales Staff': ['dashboard','sales','orders','customers','invoices','returns'],
   'Inventory Staff': ['dashboard','products','inventory','purchases'],
   'Accountant': ['dashboard','bookkeeping','expenses','income','invoices','reports'],
   'Viewer': ['dashboard','reports'],
@@ -723,6 +822,7 @@ const ROLE_PAGES = {
 
 // Must match GATED_FEATURES in Code.gs
 const GATED_FEATURES = ['sales','products','inventory','customers','suppliers','purchases','returns','invoices','expenses','income','bookkeeping','reports','users','audit','recyclebin'];
+const ROLE_FEATURES = GATED_FEATURES.concat(['orders']); // features a Super Admin can tick per role
 const FEATURE_LABELS = {};
 NAV.forEach(g => g.items.forEach(it => { FEATURE_LABELS[it.key] = it.label; }));
 
@@ -745,7 +845,7 @@ function UpgradeModal({ featureKey, onClose }) {
     setSending(true);
     const res = await callServer('support.requestUpgrade', { feature: featureLabel });
     setSending(false);
-    if (res.success) { setSent(true); toast('Upgrade request sent \u2014 we\'ll be in touch shortly.'); }
+    if (res.success) { setSent(true); toast('Upgrade request sent — we\'ll be in touch shortly.'); }
     else toast(res.message, 'error');
   };
 
@@ -765,10 +865,10 @@ function UpgradeModal({ featureKey, onClose }) {
           <I name="sales" size={15} />Message us on WhatsApp
         </a>
         <button className="btn btn-gold" disabled={sending || sent} onClick={sendEmail}>
-          <I name="invoices" size={15} />{sent ? 'Email Sent' : (sending ? 'Sending\u2026' : 'Send Email to ' + UPGRADE_EMAIL)}
+          <I name="invoices" size={15} />{sent ? 'Email Sent' : (sending ? 'Sending…' : 'Send Email to ' + UPGRADE_EMAIL)}
         </button>
       </div>
-      <p style={{fontSize:11, color:'var(--muted)', textAlign:'center', margin:'14px 0 0'}}>The email button sends automatically \u2014 no need to type anything.</p>
+      <p style={{fontSize:11, color:'var(--muted)', textAlign:'center', margin:'14px 0 0'}}>The email button sends automatically — no need to type anything.</p>
     </Modal>
   );
 }
@@ -776,7 +876,7 @@ function UpgradeModal({ featureKey, onClose }) {
 function Sidebar({ page, setPage, mobileOpen, setMobileOpen }) {
   const { business, user, logout, isLocked } = useApp();
   const { platformTheme } = useAppTheme();
-  const allowed = ROLE_PAGES[user.role];
+  const allowed = user.allowedPages !== undefined ? user.allowedPages : ROLE_PAGES[user.role];
   const [showProfile, setShowProfile] = useState(false);
   return (
     <div className={"sidebar" + (mobileOpen ? " open" : "")}>
@@ -787,8 +887,8 @@ function Sidebar({ page, setPage, mobileOpen, setMobileOpen }) {
           <div className="brand-sub" title={business.businessId}>{business.businessName}</div>
         </div>
       </div>
-      <div style={{padding:'0 20px 10px', fontSize:9.5, color:'#5B7292', fontFamily:'JetBrains Mono, monospace', userSelect:'all'}} title="Your current business ID \u2014 cross-check this against the spreadsheet if data looks missing">
-        {business.businessId} \u00b7 {user.email}
+      <div style={{padding:'0 20px 10px', fontSize:9.5, color:'#5B7292', fontFamily:'JetBrains Mono, monospace', userSelect:'all'}} title="Your current business ID — cross-check this against the spreadsheet if data looks missing">
+        {business.businessId} · {user.email}
       </div>
       <div className="nav-scroll">
         {NAV.map(group => {
@@ -861,7 +961,7 @@ function CommandPalette({ onClose, dispatch }) {
   return (
     <div className="cmdk-overlay" onMouseDown={(e) => { if (e.target===e.currentTarget) onClose(); }}>
       <div className="cmdk">
-        <input ref={inputRef} className="cmdk-input" placeholder="Type a command or search\u2026" value={q}
+        <input ref={inputRef} className="cmdk-input" placeholder="Type a command or search…" value={q}
           onChange={e => setQ(e.target.value)} onKeyDown={onKey} />
         <div style={{maxHeight:320, overflowY:'auto', padding:'6px 0'}}>
           {filtered.length === 0 && <div style={{padding:'20px 18px', fontSize:13, color:'var(--muted)'}}>No matches.</div>}
@@ -886,7 +986,7 @@ function Topbar({ onMenu, onSearch }) {
         <button className="icon-btn mobile-menu-btn" onClick={onMenu}><I name="menu" size={17} /></button>
         <div className="search-trigger" onClick={onSearch} style={{cursor:'pointer'}}>
           <I name="search" size={14} />
-          <span style={{flex:1}}>Search or run a command\u2026</span>
+          <span style={{flex:1}}>Search or run a command…</span>
           <span className="kbd">Ctrl K</span>
         </div>
       </div>
@@ -941,7 +1041,7 @@ function DemoLoginPanel({ onLogin }) {
               <div style={{fontWeight:700, fontSize:12.5}}>{u.role}</div>
               <div style={{fontSize:11, color:'var(--muted)', fontWeight:400}}>{(DEMO_ROLE_META[u.role]||{}).blurb}</div>
             </span>
-            {loadingRole===u.role ? <span style={{fontSize:11, color:'var(--muted)'}}>Signing in\u2026</span> : <I name="arrowRight" size={14} style={{color:'#C7CEDA'}} />}
+            {loadingRole===u.role ? <span style={{fontSize:11, color:'var(--muted)'}}>Signing in…</span> : <I name="arrowRight" size={14} style={{color:'#C7CEDA'}} />}
           </button>
         ))}
       </div>
@@ -966,17 +1066,19 @@ function DemoLoginPanel({ onLogin }) {
 
 // ============================== LANDING PAGE ==============================
 const FEATURES = [
-  { icon:'sales', title:'Sales & POS', desc:'A fast checkout for the counter \u2014 barcode search, discounts, VAT and change, calculated automatically on every sale.' },
+  { icon:'sales', title:'Sales & POS', desc:'A fast checkout for the counter — barcode search, discounts, VAT and change, calculated automatically on every sale.' },
   { icon:'inventory', title:'Multi-location Inventory', desc:'Stock levels across every branch or warehouse, with reorder alerts before you run out.' },
-  { icon:'bookkeeping', title:'Bookkeeping & VAT', desc:'Income, expenses, receivables and payables kept in one ledger \u2014 with VAT worked out for you, not a spreadsheet.' },
+  { icon:'bookkeeping', title:'Bookkeeping & VAT', desc:'Income, expenses, receivables and payables kept in one ledger — with VAT worked out for you, not a spreadsheet.' },
   { icon:'purchases', title:'Purchasing & Suppliers', desc:'Raise a purchase order, receive stock, and watch inventory and payables update themselves.' },
-  { icon:'reports', title:'Reports that matter', desc:'Profit & loss, cash flow, stock valuation and aging receivables \u2014 filtered by date, exportable in one click.' },
-  { icon:'users', title:'Role-based access', desc:'Owners, accountants, sales staff and store managers each see exactly what their job needs \u2014 nothing more.' },
+  { icon:'reports', title:'Reports that matter', desc:'Profit & loss, cash flow, stock valuation and aging receivables — filtered by date, exportable in one click.' },
+  { icon:'users', title:'Role-based access', desc:'Owners, accountants, sales staff and store managers each see exactly what their job needs — nothing more.' },
 ];
 
 function LandingPage({ onGotoLogin, onGotoSignup, onGotoPlatformAdmin }) {
   const { platformTheme } = useAppTheme();
   const appName = (platformTheme && platformTheme.appName) || 'Business360';
+  const [tiers, setTiers] = useState(null);
+  useEffect(() => { callServer('platform.publicTiers', {}).then(res => { if (res.success) setTiers(res.data); }); }, []);
   return (
     <div className="landing">
       <div className="landing-nav">
@@ -989,6 +1091,7 @@ function LandingPage({ onGotoLogin, onGotoSignup, onGotoPlatformAdmin }) {
         </div>
         <div className="navlinks">
           <a onClick={() => document.getElementById('lp-features').scrollIntoView({behavior:'smooth'})}>Features</a>
+          <a onClick={() => document.getElementById('lp-pricing').scrollIntoView({behavior:'smooth'})}>Pricing</a>
           <a onClick={() => document.getElementById('lp-about').scrollIntoView({behavior:'smooth'})}>Why {appName}</a>
         </div>
         <div style={{display:'flex', gap:10, alignItems:'center'}}>
@@ -1005,7 +1108,7 @@ function LandingPage({ onGotoLogin, onGotoSignup, onGotoPlatformAdmin }) {
           <div>
             <div className="eyebrow"><I name="check" size={12} />Built for African SMEs</div>
             <h1>Run your sales, stock and books from <em>one ledger.</em></h1>
-            <p className="hero-sub">Business360 replaces the scattered notebooks and spreadsheets with one system for sales, inventory and bookkeeping \u2014 in your currency, at your VAT rate.</p>
+            <p className="hero-sub">Business360 replaces the scattered notebooks and spreadsheets with one system for sales, inventory and bookkeeping — in your currency, at your VAT rate.</p>
             <div className="hero-ctas">
               <button className="btn btn-gold" onClick={onGotoLogin}><I name="logout" size={15} style={{transform:'scaleX(-1)'}} />Log In</button>
               <button className="btn btn-outline" style={{background:'transparent', borderColor:'rgba(255,255,255,.28)', color:'#fff'}} onClick={onGotoSignup}>Create Your Business<I name="arrowRight" size={15} /></button>
@@ -1021,7 +1124,7 @@ function LandingPage({ onGotoLogin, onGotoSignup, onGotoPlatformAdmin }) {
             <div className="mock-badge">Live dashboard</div>
             <div className="float-chip" style={{top:-18, left:-18}}>
               <span style={{width:8, height:8, borderRadius:99, background:'var(--green)', display:'inline-block'}} />
-              Sale completed \u2014 \u20a648,000
+              Sale completed — ₦48,000
             </div>
             <div className="float-chip" style={{bottom:-16, right:-14}}>
               <I name="check" size={14} style={{color:'var(--green)'}} />
@@ -1033,8 +1136,8 @@ function LandingPage({ onGotoLogin, onGotoSignup, onGotoPlatformAdmin }) {
               </div>
               <div className="mock-body">
                 <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:14}}>
-                  <div className="mock-kpi"><div style={{fontSize:10, color:'var(--muted)', fontWeight:700, textTransform:'uppercase'}}>Today's Sales</div><div style={{fontFamily:'Manrope', fontWeight:800, fontSize:16, marginTop:4}}>\u20a6245,000</div></div>
-                  <div className="mock-kpi"><div style={{fontSize:10, color:'var(--muted)', fontWeight:700, textTransform:'uppercase'}}>Net Profit</div><div style={{fontFamily:'Manrope', fontWeight:800, fontSize:16, marginTop:4, color:'var(--green)'}}>\u20a672,500</div></div>
+                  <div className="mock-kpi"><div style={{fontSize:10, color:'var(--muted)', fontWeight:700, textTransform:'uppercase'}}>Today's Sales</div><div style={{fontFamily:'Manrope', fontWeight:800, fontSize:16, marginTop:4}}>₦245,000</div></div>
+                  <div className="mock-kpi"><div style={{fontSize:10, color:'var(--muted)', fontWeight:700, textTransform:'uppercase'}}>Net Profit</div><div style={{fontFamily:'Manrope', fontWeight:800, fontSize:16, marginTop:4, color:'var(--green)'}}>₦72,500</div></div>
                   <div className="mock-kpi"><div style={{fontSize:10, color:'var(--muted)', fontWeight:700, textTransform:'uppercase'}}>Low Stock</div><div style={{fontFamily:'Manrope', fontWeight:800, fontSize:16, marginTop:4, color:'var(--amber)'}}>3 items</div></div>
                 </div>
                 <div style={{border:'1px solid var(--line)', borderRadius:10, padding:'10px 12px 2px'}}>
@@ -1050,7 +1153,7 @@ function LandingPage({ onGotoLogin, onGotoSignup, onGotoPlatformAdmin }) {
       <div className="stats-strip">
         <div className="ledger-lines" />
         <div className="stats-inner">
-          {[['22','Business modules'],['20+','Linked data tables'],['7','Role-based logins'],['\u2014','Fixed to one currency']].map(([n,l],i) => (
+          {[['22','Business modules'],['20+','Linked data tables'],['7','Role-based logins'],['—','Fixed to one currency']].map(([n,l],i) => (
             <div key={i}><div className="stat-num">{n}</div><div className="stat-lbl">{l}</div></div>
           ))}
         </div>
@@ -1060,7 +1163,7 @@ function LandingPage({ onGotoLogin, onGotoSignup, onGotoPlatformAdmin }) {
         <div className="section-head">
           <div className="eyebrow">Everything in one place</div>
           <h2>Stop reconciling five different notebooks</h2>
-          <p>Sales, stock and money move together \u2014 so a sale here updates inventory there, and your books, automatically.</p>
+          <p>Sales, stock and money move together — so a sale here updates inventory there, and your books, automatically.</p>
         </div>
         <div className="feat-grid">
           {FEATURES.map((f,i) => (
@@ -1073,10 +1176,45 @@ function LandingPage({ onGotoLogin, onGotoSignup, onGotoPlatformAdmin }) {
         </div>
       </div>
 
+      <div id="lp-pricing" className="section" style={{paddingTop:0}}>
+        <div className="section-head">
+          <div className="eyebrow">Simple pricing</div>
+          <h2>Pick the plan that fits your business</h2>
+          <p>Every plan runs on the same Business360 — upgrade any time as you grow. Talk to us to get set up.</p>
+        </div>
+        {!tiers ? (
+          <div style={{textAlign:'center', color:'var(--muted)', fontSize:13}}>Loading plans…</div>
+        ) : (
+          <div className="pricing-grid">
+            {tiers.map((t, i) => {
+              const featured = i === Math.min(1, tiers.length - 1);
+              const featureItems = String(t.features || '').split(',').map(s => s.trim()).filter(Boolean);
+              return (
+                <div key={t.tierName} className={"price-card" + (featured ? " featured" : "")}>
+                  {featured && <div className="price-badge">Most Popular</div>}
+                  <div style={{fontWeight:800, fontFamily:'Manrope', fontSize:16}}>{t.tierName}</div>
+                  <div className="price-amount">{Number(t.price) === 0 ? 'Free' : ('₦' + Number(t.price).toLocaleString())}</div>
+                  <div className="price-cycle">{Number(t.price) === 0 ? 'Forever' : ('per business / ' + t.billingCycle.toLowerCase())}</div>
+                  <ul className="price-feature-list">
+                    {featureItems.map((f, fi) => (
+                      <li key={fi}><I name="check" size={14} style={{color:'var(--green)', flexShrink:0, marginTop:1}} />{f}</li>
+                    ))}
+                  </ul>
+                  <button className={featured ? "btn btn-gold" : "btn btn-outline"} style={{justifyContent:'center'}} onClick={onGotoSignup}>Get Started</button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <p style={{textAlign:'center', fontSize:12.5, color:'var(--muted)', marginTop:24}}>
+          Questions or ready to subscribe? <a href={`https://wa.me/${UPGRADE_WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer" style={{color:'var(--brand-2)', fontWeight:600}}>Chat on WhatsApp</a> or email <a href={`mailto:${UPGRADE_EMAIL}`} style={{color:'var(--brand-2)', fontWeight:600}}>{UPGRADE_EMAIL}</a>
+        </p>
+      </div>
+
       <div id="lp-about" className="section" style={{paddingTop:0}}>
         <div className="cta-band">
           <h2>See it running in under a minute</h2>
-          <p>Log in as an Owner, an Accountant, or a Sales Staff member on a shared demo business \u2014 no signup needed.</p>
+          <p>Log in as an Owner, an Accountant, or a Sales Staff member on a shared demo business — no signup needed.</p>
           <div style={{display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap'}}>
             <button className="btn btn-gold" onClick={onGotoLogin}>Try the Demo</button>
             <button className="btn btn-outline" style={{background:'transparent', borderColor:'rgba(255,255,255,.3)', color:'#fff'}} onClick={onGotoSignup}>Create Your Business</button>
@@ -1132,11 +1270,11 @@ function LoginPage({ onLogin, onGotoSignup }) {
             <input className="input" type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@business.com" />
           </Field>
           <Field label="Password">
-            <input className="input" type="password" required value={password} onChange={e=>setPassword(e.target.value)} placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" />
+            <input className="input" type="password" required value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" />
           </Field>
           {error && <div style={{background:'#FCEBE7', color:'var(--red)', fontSize:12.5, padding:'9px 12px', borderRadius:8, marginBottom:14}}>{error}</div>}
           <button className="btn btn-primary" type="submit" style={{width:'100%', justifyContent:'center', padding:'11px'}} disabled={loading}>
-            {loading ? 'Signing in\u2026' : 'Sign In'}
+            {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
         <div style={{textAlign:'center', marginTop:18, fontSize:13, color:'var(--muted)'}}>
@@ -1150,9 +1288,9 @@ function LoginPage({ onLogin, onGotoSignup }) {
 }
 
 const CURRENCIES = [
-  { code:'NGN', label:'Nigerian Naira (\u20A6)' }, { code:'GHS', label:'Ghanaian Cedi (\u20B5)' },
+  { code:'NGN', label:'Nigerian Naira (₦)' }, { code:'GHS', label:'Ghanaian Cedi (₵)' },
   { code:'KES', label:'Kenyan Shilling (KSh)' }, { code:'ZAR', label:'South African Rand (R)' },
-  { code:'USD', label:'US Dollar ($)' }, { code:'GBP', label:'British Pound (\u00A3)' }, { code:'EUR', label:'Euro (\u20AC)' },
+  { code:'USD', label:'US Dollar ($)' }, { code:'GBP', label:'British Pound (£)' }, { code:'EUR', label:'Euro (€)' },
 ];
 
 function TermsModal({ onClose }) {
@@ -1234,7 +1372,7 @@ function SignupPage({ onSignup, onGotoLogin }) {
         {step === 1 && (
           <React.Fragment>
             <h2 style={{margin:'0 0 4px', fontSize:19}}>Tell us about your business</h2>
-            <p style={{margin:'0 0 18px', fontSize:13, color:'var(--muted)'}}>Step 1 of 3 \u2014 Business & owner details</p>
+            <p style={{margin:'0 0 18px', fontSize:13, color:'var(--muted)'}}>Step 1 of 3 — Business & owner details</p>
             <Field label="Business name"><input className="input" value={form.businessName} onChange={e=>set('businessName', e.target.value)} placeholder="e.g. Ade General Stores" /></Field>
             <Field label="Business type">
               <select className="input" value={form.businessType} onChange={e=>set('businessType', e.target.value)}>
@@ -1253,7 +1391,7 @@ function SignupPage({ onSignup, onGotoLogin }) {
         {step === 2 && (
           <React.Fragment>
             <h2 style={{margin:'0 0 4px', fontSize:19}}>Currency & tax</h2>
-            <p style={{margin:'0 0 18px', fontSize:13, color:'var(--muted)'}}>Step 2 of 3 \u2014 Configure your defaults</p>
+            <p style={{margin:'0 0 18px', fontSize:13, color:'var(--muted)'}}>Step 2 of 3 — Configure your defaults</p>
             <Field label="Currency">
               <select className="input" value={form.currency} onChange={e=>set('currency', e.target.value)}>
                 {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
@@ -1271,7 +1409,7 @@ function SignupPage({ onSignup, onGotoLogin }) {
         {step === 3 && (
           <React.Fragment>
             <h2 style={{margin:'0 0 4px', fontSize:19}}>Ready to launch</h2>
-            <p style={{margin:'0 0 18px', fontSize:13, color:'var(--muted)'}}>Step 3 of 3 \u2014 Review & finish</p>
+            <p style={{margin:'0 0 18px', fontSize:13, color:'var(--muted)'}}>Step 3 of 3 — Review & finish</p>
             <div className="card" style={{padding:14, marginBottom:16, fontSize:13}}>
               <div style={{display:'flex', justifyContent:'space-between', padding:'5px 0'}}><span style={{color:'var(--muted)'}}>Business</span><b>{form.businessName}</b></div>
               <div style={{display:'flex', justifyContent:'space-between', padding:'5px 0'}}><span style={{color:'var(--muted)'}}>Owner</span><b>{form.ownerName}</b></div>
@@ -1290,7 +1428,7 @@ function SignupPage({ onSignup, onGotoLogin }) {
             <div style={{display:'flex', gap:10}}>
               <button className="btn btn-outline" onClick={() => setStep(2)}>Back</button>
               <button className="btn btn-gold" style={{flex:1, justifyContent:'center'}} disabled={loading || !form.acceptedTerms} onClick={submit}>
-                {loading ? 'Creating your workspace\u2026' : 'Create Business'}
+                {loading ? 'Creating your workspace…' : 'Create Business'}
               </button>
             </div>
           </React.Fragment>
@@ -1330,7 +1468,7 @@ const KPI_DEFS = {
   todayProfit:        { label: "Today's Profit", accent: 'var(--green)' },
   netProfit:          { label: 'Net Profit (all time)', accent: 'var(--green)', sub: (k,fmt) => `Gross profit ${fmt(k.grossProfit)}` },
   receivables:        { label: 'Accounts Receivable', accent: 'var(--amber)', sub: (k) => `${k.outstandingInvoices} unpaid invoice(s)` },
-  inventoryValue:     { label: 'Inventory Value', accent: 'var(--brand-2)', sub: (k) => `${k.productCount} products \u00b7 ${k.lowStockCount} low stock` },
+  inventoryValue:     { label: 'Inventory Value', accent: 'var(--brand-2)', sub: (k) => `${k.productCount} products · ${k.lowStockCount} low stock` },
   totalSales:         { label: 'Total Sales' },
   totalExpenses:      { label: 'Total Expenses', accent: 'var(--red)' },
   cashBalance:        { label: 'Cash Balance' },
@@ -1457,8 +1595,10 @@ function DashboardPage({ dispatch }) {
 // ============================== PRODUCTS ==============================
 function ProductFormModal({ onClose, onSaved, categories, product }) {
   const toast = useToast();
-  const [form, setForm] = useState(product || { productName:'', sku:'', categoryId: categories[0] ? categories[0].categoryId : '', costPrice:'', sellingPrice:'', unit:'unit', reorderLevel:10, openingStock:0, avgConsumptionDays:30 });
+  const [form, setForm] = useState(product ? { ...product, showOnline: product.showOnline !== false } : { productName:'', sku:'', categoryId: categories[0] ? categories[0].categoryId : '', costPrice:'', sellingPrice:'', unit:'unit', reorderLevel:10, openingStock:0, avgConsumptionDays:30, description:'', showOnline:true });
   const [saving, setSaving] = useState(false);
+  const [img, setImg] = useState(null);
+  const pickImage = async (e) => { const f = e.target.files && e.target.files[0]; if (!f) return; try { setImg(await resizeImage(f)); } catch (err) { toast(err.message, 'error'); } };
   const set = (k,v) => setForm(f => ({...f, [k]:v}));
   const submit = async () => {
     if (!form.productName || !form.sellingPrice) { toast('Product name and selling price are required.', 'error'); return; }
@@ -1466,6 +1606,11 @@ function ProductFormModal({ onClose, onSaved, categories, product }) {
     const res = product
       ? await callServer('products.update', { id: product.productId, data: form })
       : await callServer('products.create', form);
+    if (res.success && img) {
+      const pid = product ? product.productId : res.data.productId;
+      const up = await callServer('products.uploadImage', { productId: pid, base64: img.base64, mimeType: img.mimeType });
+      if (!up.success) toast('Product saved, but the image could not be uploaded: ' + up.message, 'error');
+    }
     setSaving(false);
     if (res.success) { toast(product ? 'Product updated.' : 'Product added.'); onSaved(); onClose(); }
     else toast(res.message, 'error');
@@ -1473,7 +1618,7 @@ function ProductFormModal({ onClose, onSaved, categories, product }) {
   return (
     <Modal title={product ? 'Edit Product' : 'Add Product'} onClose={onClose} footer={
       <React.Fragment><button className="btn btn-outline" onClick={onClose}>Cancel</button>
-      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving ? 'Saving\u2026' : 'Save Product'}</button></React.Fragment>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving ? 'Saving…' : 'Save Product'}</button></React.Fragment>
     }>
       <div className="grid g2">
         <Field label="Product name"><input className="input" value={form.productName} onChange={e=>set('productName', e.target.value)} /></Field>
@@ -1493,6 +1638,19 @@ function ProductFormModal({ onClose, onSaved, categories, product }) {
         <Field label="Reorder level"><input className="input" type="number" value={form.reorderLevel} onChange={e=>set('reorderLevel', e.target.value)} /></Field>
       </div>
       {!product && <Field label="Opening stock (primary location)"><input className="input" type="number" value={form.openingStock} onChange={e=>set('openingStock', e.target.value)} /></Field>}
+      <Field label="Description (shown in your online store)"><input className="input" value={form.description || ''} onChange={e=>set('description', e.target.value)} placeholder="Short description for customers" /></Field>
+      <div style={{display:'flex', gap:14, alignItems:'center', marginBottom:14, flexWrap:'wrap'}}>
+        <div style={{width:84, height:84, borderRadius:12, border:'1px dashed var(--line)', overflow:'hidden', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bg)', flexShrink:0}}>
+          {(img || form.imageUrl) ? <img src={img ? img.preview : form.imageUrl} alt="" style={{width:'100%', height:'100%', objectFit:'cover'}} /> : <I name="package" size={26} style={{opacity:.4}} />}
+        </div>
+        <div style={{flex:1, minWidth:180}}>
+          <div style={{fontWeight:700, fontSize:13, marginBottom:4}}>Product photo</div>
+          <input type="file" accept="image/*" onChange={pickImage} style={{fontSize:12.5, maxWidth:'100%'}} />
+          <label style={{display:'flex', alignItems:'center', gap:7, fontSize:12.5, marginTop:8, cursor:'pointer'}}>
+            <input type="checkbox" checked={form.showOnline !== false} onChange={e=>set('showOnline', e.target.checked)} /> Show in online store
+          </label>
+        </div>
+      </div>
       <Field label="Days 1 unit typically lasts a customer">
         <input className="input" type="number" value={form.avgConsumptionDays} onChange={e=>set('avgConsumptionDays', e.target.value)} placeholder="30" />
       </Field>
@@ -1522,7 +1680,7 @@ function ProductsPage({ command, clearCommand }) {
         <button className="btn btn-primary" onClick={() => { setEditing(null); setShowForm(true); }}><I name="plus" size={15} />Add Product</button>
       } />
       <div style={{marginBottom:14, maxWidth:320}}>
-        <input className="input" placeholder="Search products or SKU\u2026" value={query} onChange={e=>setQuery(e.target.value)} />
+        <input className="input" placeholder="Search products or SKU…" value={query} onChange={e=>setQuery(e.target.value)} />
       </div>
       <DataTable
         loading={loading} rows={filtered} rowKey="productId"
@@ -1530,10 +1688,11 @@ function ProductsPage({ command, clearCommand }) {
         emptySubtitle="Add your first product to start tracking inventory."
         emptyAction={<button className="btn btn-primary" onClick={() => setShowForm(true)}><I name="plus" size={14}/>Add Product</button>}
         columns={[
-          { key:'productName', header:'Product', render:r => <div><div style={{fontWeight:600}}>{r.productName}</div><div style={{fontSize:11.5, color:'var(--muted)'}} className="mono">{r.sku}</div></div> },
-          { key:'category', header:'Category', render:r => catMap[r.categoryId] || '\u2014' },
+          { key:'productName', header:'Product', render:r => <div style={{display:'flex', alignItems:'center', gap:10}}><div style={{width:38, height:38, borderRadius:8, overflow:'hidden', background:'var(--bg)', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center'}}>{r.imageUrl ? <img src={r.imageUrl} alt="" loading="lazy" style={{width:'100%', height:'100%', objectFit:'cover'}} /> : <I name="package" size={16} style={{opacity:.4}} />}</div><div><div style={{fontWeight:600}}>{r.productName}</div><div style={{fontSize:11.5, color:'var(--muted)'}} className="mono">{r.sku}</div></div></div> },
+          { key:'category', header:'Category', render:r => catMap[r.categoryId] || '—' },
           { key:'costPrice', header:'Cost', render:r => fmt(r.costPrice) },
           { key:'sellingPrice', header:'Price', render:r => fmt(r.sellingPrice) },
+          { key:'online', header:'Online', render:r => r.showOnline === false ? <span className="badge badge-slate">Hidden</span> : <span className="badge badge-blue">Listed</span> },
           { key:'status', header:'Status', render:r => <StatusBadge status={r.status} /> },
           { key:'actions', header:'', render:r => (
             <div style={{display:'flex', gap:6}} onClick={e=>e.stopPropagation()}>
@@ -1586,14 +1745,14 @@ function StockMovementModal({ direction, onClose, onSaved, products, locations }
   return (
     <Modal title={isIn ? 'Stock In' : 'Stock Out'} onClose={onClose} footer={<React.Fragment>
       <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-      <button className={isIn ? "btn btn-primary" : "btn btn-danger"} disabled={saving} onClick={submit}>{saving?'Saving\u2026':(isIn?'Add Stock':'Remove Stock')}</button>
+      <button className={isIn ? "btn btn-primary" : "btn btn-danger"} disabled={saving} onClick={submit}>{saving?'Saving…':(isIn?'Add Stock':'Remove Stock')}</button>
     </React.Fragment>}>
       <Field label="Product"><select className="input" value={form.productId} onChange={e=>set('productId', e.target.value)}>{products.map(p=><option key={p.productId} value={p.productId}>{p.productName}</option>)}</select></Field>
       <Field label="Location"><select className="input" value={form.locationId} onChange={e=>set('locationId', e.target.value)}>{locations.map(l=><option key={l.locationId} value={l.locationId}>{l.locationName}</option>)}</select></Field>
       <Field label="Quantity"><input className="input" type="number" min="1" value={form.quantity} onChange={e=>set('quantity', e.target.value)} /></Field>
       <Field label="Reason">
         <input className="input" value={form.reason} onChange={e=>set('reason', e.target.value)}
-          placeholder={isIn ? 'e.g. New delivery received, stock count correction\u2026' : 'e.g. Damaged goods, expired, stock count correction\u2026'} />
+          placeholder={isIn ? 'e.g. New delivery received, stock count correction…' : 'e.g. Damaged goods, expired, stock count correction…'} />
       </Field>
     </Modal>
   );
@@ -1621,7 +1780,7 @@ function AdjustStockModal({ onClose, onSaved, products, locations }) {
   return (
     <Modal title="Stock Adjustment" onClose={onClose} footer={<React.Fragment>
       <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving\u2026':'Apply Adjustment'}</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving…':'Apply Adjustment'}</button>
     </React.Fragment>}>
       <Field label="Product"><select className="input" value={form.productId} onChange={e=>set('productId', e.target.value)}>{products.map(p=><option key={p.productId} value={p.productId}>{p.productName}</option>)}</select></Field>
       <Field label="Location"><select className="input" value={form.locationId} onChange={e=>set('locationId', e.target.value)}>{locations.map(l=><option key={l.locationId} value={l.locationId}>{l.locationName}</option>)}</select></Field>
@@ -1654,7 +1813,7 @@ function TransferStockModal({ onClose, onSaved, products, locations }) {
   return (
     <Modal title="Transfer Stock" onClose={onClose} footer={<React.Fragment>
       <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Transferring\u2026':'Transfer'}</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Transferring…':'Transfer'}</button>
     </React.Fragment>}>
       <Field label="Product"><select className="input" value={form.productId} onChange={e=>set('productId', e.target.value)}>{products.map(p=><option key={p.productId} value={p.productId}>{p.productName}</option>)}</select></Field>
       <div className="grid g2">
@@ -1716,9 +1875,52 @@ function InventoryPage({ command, clearCommand }) {
 }
 
 // ============================== CUSTOMERS ==============================
+// ============================== SHARE LINKS (signup links + online store) ==============================
+function ShareLinksModal({ onClose, focus }) {
+  const toast = useToast();
+  const { user } = useApp();
+  const { data, loading, reload } = useApiData('links.get', {}, []);
+  const canToggle = user.role === 'Owner' || user.role === 'Administrator';
+  const rows = data ? [
+    { key:'customer', title:'Customer sign-up link', desc:'Customers open this link and add their own details. No login, no access to your app.', url:data.customerLink },
+    { key:'supplier', title:'Supplier sign-up link', desc:'Suppliers register themselves here. No login needed.', url:data.supplierLink },
+    { key:'store', title:'Online store / order link', desc:'Put this in your Facebook / Instagram / WhatsApp ads. Shows your products, prices and photos and lets people order.', url:data.storeLink },
+  ] : [];
+  const copy = async (u) => { const ok = await copyText(u); toast(ok ? 'Link copied.' : 'Could not copy — select and copy it manually.', ok ? 'success' : 'error'); };
+  const toggleStore = async () => {
+    const res = await callServer('links.setStoreEnabled', { enabled: !data.storeEnabled });
+    if (res.success) { toast(res.data.storeEnabled ? 'Online store is now live.' : 'Online store switched off.'); reload(); } else toast(res.message, 'error');
+  };
+  return (
+    <Modal title="Share links" onClose={onClose} wide>
+      {loading || !data ? <Skeleton h={180} /> : (
+        <div>
+          {rows.map(r => (
+            <div key={r.key} className="card" style={{padding:14, marginBottom:12, borderColor: focus === r.key ? 'var(--brand)' : undefined}}>
+              <div style={{fontWeight:800, fontSize:14, marginBottom:2}}>{r.title}</div>
+              <div style={{fontSize:12.5, color:'var(--muted)', marginBottom:8}}>{r.desc}</div>
+              <input className="input mono" readOnly value={r.url} onFocus={e => e.target.select()} style={{fontSize:12, marginBottom:8}} />
+              <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
+                <button className="btn btn-primary btn-sm" onClick={() => copy(r.url)}><I name="copy" size={13} />Copy link</button>
+                <a className="btn btn-outline btn-sm" href={r.url} target="_blank" rel="noreferrer"><I name="link" size={13} />Open</a>
+                <a className="btn btn-outline btn-sm" target="_blank" rel="noreferrer" href={'https://wa.me/?text=' + encodeURIComponent(r.title + ': ' + r.url)}>Share on WhatsApp</a>
+                {r.key === 'store' && canToggle && <button className="btn btn-outline btn-sm" onClick={toggleStore}>{data.storeEnabled ? 'Switch store off' : 'Switch store on'}</button>}
+              </div>
+              {r.key === 'store' && !data.storeEnabled && <p style={{fontSize:12, color:'var(--red)', margin:'8px 0 0'}}>The store is currently off — visitors will see "not available".</p>}
+            </div>
+          ))}
+        </div>
+      )}
+    </Modal>
+  );
+}
+
+// ============================== CUSTOMERS (CRM) ==============================
+const CUSTOMER_FIELDS = ['customerName','phone','email','address','customerType','creditLimit','openingBalance','birthday','notes','status'];
+
 function CustomerFormModal({ onClose, onSaved, customer }) {
   const toast = useToast();
-  const [form, setForm] = useState(customer || { customerName:'', phone:'', email:'', address:'', customerType:'Retail', creditLimit:0, birthday:'' });
+  const [form, setForm] = useState(customer ? pick(customer, CUSTOMER_FIELDS) : { customerName:'', phone:'', email:'', address:'', customerType:'Retail', creditLimit:0, birthday:'', notes:'' });
   const [saving, setSaving] = useState(false);
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
   const submit = async () => {
@@ -1731,7 +1933,7 @@ function CustomerFormModal({ onClose, onSaved, customer }) {
   return (
     <Modal title={customer?'Edit Customer':'Add Customer'} onClose={onClose} footer={<React.Fragment>
       <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving\u2026':'Save Customer'}</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving…':'Save Customer'}</button>
     </React.Fragment>}>
       <Field label="Customer name"><input className="input" value={form.customerName} onChange={e=>set('customerName', e.target.value)} /></Field>
       <div className="grid g2">
@@ -1747,9 +1949,10 @@ function CustomerFormModal({ onClose, onSaved, customer }) {
         </Field>
         <Field label="Credit limit"><input className="input" type="number" value={form.creditLimit} onChange={e=>set('creditLimit', e.target.value)} /></Field>
       </div>
-      <Field label="Birthday (optional \u2014 sends an automatic birthday email)">
+      <Field label="Birthday (optional — sends an automatic birthday email)">
         <input className="input" type="date" value={form.birthday} onChange={e=>set('birthday', e.target.value)} />
       </Field>
+      <Field label="Notes"><input className="input" value={form.notes || ''} onChange={e=>set('notes', e.target.value)} placeholder="Preferences, delivery notes…" /></Field>
     </Modal>
   );
 }
@@ -1757,25 +1960,71 @@ function CustomerFormModal({ onClose, onSaved, customer }) {
 function CustomersPage({ command, clearCommand }) {
   const fmt = useCurrency();
   const toast = useToast();
-  const { data: customers, loading, reload } = useApiData('customers.list', {}, []);
+  const { data: customers, loading, reload } = useApiData('customers.crm', {}, []);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [detailId, setDetailId] = useState(null);
   const [delRow, setDelRow] = useState(null);
+  const [showLinks, setShowLinks] = useState(false);
+  const [q, setQ] = useState('');
+  const [typeF, setTypeF] = useState('');
+  const [balF, setBalF] = useState('');
   useEffect(() => { if (command==='new') { setEditing(null); setShowForm(true); clearCommand(); } }, [command]);
+
+  const list = customers || [];
+  const filtered = list.filter(c => {
+    const s = q.trim().toLowerCase();
+    if (s && ![c.customerName, c.phone, c.email, c.address].some(v => String(v || '').toLowerCase().includes(s))) return false;
+    if (typeF && c.customerType !== typeF) return false;
+    if (balF === 'owing' && !(Number(c.outstandingBalance) > 0)) return false;
+    if (balF === 'self' && c.source !== 'Self-registered') return false;
+    return true;
+  });
+  const totalPurchases = list.reduce((s, c) => s + Number(c.totalPurchases || 0), 0);
+  const totalOwed = list.reduce((s, c) => s + Number(c.outstandingBalance || 0), 0);
+
+  const exportList = () => {
+    const headers = ['Name','Phone','Email','Address','Type','Birthday','Orders','Total Purchases','Total Paid','Outstanding','Last Purchase','Credit Limit','Source','Joined','Status'];
+    const rows = filtered.map(c => ({ 'Name':c.customerName, 'Phone':c.phone, 'Email':c.email, 'Address':c.address, 'Type':c.customerType, 'Birthday':c.birthday ? fmtDate(c.birthday) : '', 'Orders':c.ordersCount, 'Total Purchases':c.totalPurchases, 'Total Paid':c.totalPaid, 'Outstanding':c.outstandingBalance, 'Last Purchase':c.lastPurchase ? fmtDate(c.lastPurchase) : '', 'Credit Limit':c.creditLimit, 'Source':c.source || 'Manual', 'Joined':c.createdAt ? fmtDate(c.createdAt) : '', 'Status':c.status }));
+    saveCsv('customers', headers, rows);
+  };
 
   return (
     <div>
-      <PageHeader title="Customers" subtitle="Your customer relationships" action={
-        <button className="btn btn-primary" onClick={() => { setEditing(null); setShowForm(true); }}><I name="plus" size={15} />Add Customer</button>
+      <PageHeader title="Customers (CRM)" subtitle="Every customer, what they buy and what they owe" action={
+        <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
+          <button className="btn btn-outline" onClick={() => setShowLinks(true)}><I name="link" size={15} />Sign-up link</button>
+          <button className="btn btn-outline" onClick={exportList}><I name="download" size={15} />Export</button>
+          <button className="btn btn-primary" onClick={() => { setEditing(null); setShowForm(true); }}><I name="plus" size={15} />Add Customer</button>
+        </div>
       } />
-      <DataTable loading={loading} rows={customers} rowKey="customerId" onRowClick={r => setDetailId(r.customerId)}
-        emptyIcon="customers" emptyTitle="No customers yet." emptySubtitle="Add your first customer to start building relationships."
+      <div className="grid g3" style={{marginBottom:14}}>
+        <KpiCard label="Customers" value={list.length} />
+        <KpiCard label="Total Purchases" value={fmt(totalPurchases)} />
+        <KpiCard label="Outstanding" value={fmt(totalOwed)} accent="var(--red)" />
+      </div>
+      <div style={{display:'flex', gap:8, flexWrap:'wrap', marginBottom:14}}>
+        <input className="input" style={{maxWidth:300}} placeholder="Search name, phone, email, address…" value={q} onChange={e=>setQ(e.target.value)} />
+        <select className="input" style={{maxWidth:160}} value={typeF} onChange={e=>setTypeF(e.target.value)}><option value="">All types</option>{['Retail','Wholesale','Corporate'].map(t=><option key={t}>{t}</option>)}</select>
+        <select className="input" style={{maxWidth:190}} value={balF} onChange={e=>setBalF(e.target.value)}><option value="">All customers</option><option value="owing">Owing money</option><option value="self">Self-registered</option></select>
+      </div>
+      <DataTable loading={loading} rows={filtered} rowKey="customerId" onRowClick={r => setDetailId(r.customerId)}
+        emptyIcon="customers" emptyTitle="No customers found." emptySubtitle="Add a customer, or share your sign-up link so customers add themselves."
         emptyAction={<button className="btn btn-primary" onClick={()=>setShowForm(true)}><I name="plus" size={14}/>Add Customer</button>}
         columns={[
-          { key:'customerName', header:'Name', render:r => <div style={{fontWeight:600}}>{r.customerName}</div> },
+          { key:'customerName', header:'Customer', render:r => <div><div style={{fontWeight:600}}>{r.customerName}</div><div style={{fontSize:11.5, color:'var(--muted)'}}>{r.customerType}</div></div> },
           { key:'phone', header:'Phone' },
-          { key:'customerType', header:'Type', render:r => <StatusBadge status={r.customerType==='Retail'?'blue':'slate'} /> },
+          { key:'email', header:'Email' },
+          { key:'address', header:'Address', render:r => <span style={{display:'inline-block', minWidth:140}}>{r.address || '—'}</span> },
+          { key:'birthday', header:'Birthday', render:r => r.birthday ? fmtDate(r.birthday) : '—' },
+          { key:'ordersCount', header:'Orders' },
+          { key:'totalPurchases', header:'Total Purchases', render:r => fmt(r.totalPurchases) },
+          { key:'totalPaid', header:'Paid', render:r => fmt(r.totalPaid) },
+          { key:'outstandingBalance', header:'Outstanding', render:r => <span style={{color: Number(r.outstandingBalance) > 0 ? 'var(--red)' : 'inherit', fontWeight: Number(r.outstandingBalance) > 0 ? 700 : 400}}>{fmt(r.outstandingBalance)}</span> },
+          { key:'lastPurchase', header:'Last Purchase', render:r => r.lastPurchase ? fmtDate(r.lastPurchase) : '—' },
+          { key:'creditLimit', header:'Credit Limit', render:r => fmt(r.creditLimit || 0) },
+          { key:'source', header:'Source', render:r => r.source || 'Manual' },
+          { key:'createdAt', header:'Joined', render:r => r.createdAt ? fmtDate(r.createdAt) : '—' },
           { key:'status', header:'Status', render:r => <StatusBadge status={r.status} /> },
           { key:'actions', header:'', render:r => (
             <div style={{display:'flex', gap:6}} onClick={e=>e.stopPropagation()}>
@@ -1787,6 +2036,7 @@ function CustomersPage({ command, clearCommand }) {
       />
       {showForm && <CustomerFormModal customer={editing} onClose={()=>setShowForm(false)} onSaved={reload} />}
       {detailId && <CustomerDetailModal id={detailId} onClose={()=>setDetailId(null)} />}
+      {showLinks && <ShareLinksModal focus="customer" onClose={()=>setShowLinks(false)} />}
       {delRow && <DeleteWithReasonDialog title="Delete customer" itemLabel={delRow.customerName} onClose={() => setDelRow(null)}
         onConfirm={async (reason) => { const res = await callServer('customers.delete', { id: delRow.customerId, reason }); if (res.success) { toast('Customer moved to recycle bin.'); reload(); } else toast(res.message, 'error'); }} />}
     </div>
@@ -1796,12 +2046,21 @@ function CustomersPage({ command, clearCommand }) {
 function CustomerDetailModal({ id, onClose }) {
   const fmt = useCurrency();
   const { data, loading } = useApiData('customers.detail', { id }, [id]);
+  const c = data && data.customer;
   return (
     <Modal title="Customer Profile" onClose={onClose} wide>
       {loading || !data ? <Skeleton h={200} /> : (
         <div>
-          <h3 style={{margin:'0 0 4px'}}>{data.customer.customerName}</h3>
-          <p style={{margin:'0 0 16px', fontSize:13, color:'var(--muted)'}}>{data.customer.phone} {data.customer.email && '\u00b7 ' + data.customer.email}</p>
+          <h3 style={{margin:'0 0 4px'}}>{c.customerName} <StatusBadge status={c.status} /></h3>
+          <div className="grid g2" style={{margin:'8px 0 16px', fontSize:13}}>
+            <div><span style={{color:'var(--muted)'}}>Phone: </span>{c.phone || '—'}</div>
+            <div><span style={{color:'var(--muted)'}}>Email: </span>{c.email || '—'}</div>
+            <div><span style={{color:'var(--muted)'}}>Address: </span>{c.address || '—'}</div>
+            <div><span style={{color:'var(--muted)'}}>Type: </span>{c.customerType || '—'}</div>
+            <div><span style={{color:'var(--muted)'}}>Birthday: </span>{c.birthday ? fmtDate(c.birthday) : '—'}</div>
+            <div><span style={{color:'var(--muted)'}}>Source: </span>{c.source || 'Manual'}</div>
+            {c.notes && <div style={{gridColumn:'1 / -1'}}><span style={{color:'var(--muted)'}}>Notes: </span>{c.notes}</div>}
+          </div>
           <div className="grid g3" style={{marginBottom:18}}>
             <KpiCard label="Total Spend" value={fmt(data.totalSpend)} />
             <KpiCard label="Outstanding" value={fmt(data.outstandingBalance)} accent="var(--red)" />
@@ -1809,8 +2068,13 @@ function CustomerDetailModal({ id, onClose }) {
           </div>
           <h4 style={{fontSize:13.5, margin:'0 0 8px'}}>Sales History</h4>
           {data.sales.length===0 ? <p style={{fontSize:13, color:'var(--muted)'}}>No sales yet.</p> : (
-            <table><thead><tr><th>Invoice</th><th>Date</th><th>Total</th><th>Balance</th></tr></thead>
-            <tbody>{data.sales.map(s=><tr key={s.saleId}><td className="mono">{s.invoiceNumber}</td><td>{fmtDate(s.createdAt)}</td><td>{fmt(s.total)}</td><td>{fmt(s.balance)}</td></tr>)}</tbody></table>
+            <table><thead><tr><th>Invoice</th><th>Date</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
+            <tbody>{data.sales.map(s=><tr key={s.saleId}><td className="mono">{s.invoiceNumber}</td><td>{fmtDate(s.createdAt)}</td><td>{fmt(s.total)}</td><td>{fmt(s.amountPaid)}</td><td>{fmt(s.balance)}</td><td><StatusBadge status={s.paymentStatus} /></td></tr>)}</tbody></table>
+          )}
+          <h4 style={{fontSize:13.5, margin:'16px 0 8px'}}>Payments &amp; Receipts</h4>
+          {(data.payments || []).length===0 ? <p style={{fontSize:13, color:'var(--muted)'}}>No payments recorded.</p> : (
+            <table><thead><tr><th>Date</th><th>Receipt</th><th>Method</th><th>Amount</th></tr></thead>
+            <tbody>{data.payments.map(p=><tr key={p.paymentId}><td>{fmtDate(p.paymentDate)}</td><td className="mono">{p.receiptNumber || '—'}</td><td>{p.paymentMethod}</td><td>{fmt(p.amount)}</td></tr>)}</tbody></table>
           )}
         </div>
       )}
@@ -1821,7 +2085,7 @@ function CustomerDetailModal({ id, onClose }) {
 // ============================== SUPPLIERS ==============================
 function SupplierFormModal({ onClose, onSaved, supplier }) {
   const toast = useToast();
-  const [form, setForm] = useState(supplier || { supplierName:'', contactPerson:'', phone:'', email:'', address:'', taxNumber:'' });
+  const [form, setForm] = useState(supplier ? pick(supplier, ['supplierName','contactPerson','phone','email','address','taxNumber','notes','status']) : { supplierName:'', contactPerson:'', phone:'', email:'', address:'', taxNumber:'' });
   const [saving, setSaving] = useState(false);
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
   const submit = async () => {
@@ -1834,7 +2098,7 @@ function SupplierFormModal({ onClose, onSaved, supplier }) {
   return (
     <Modal title={supplier?'Edit Supplier':'Add Supplier'} onClose={onClose} footer={<React.Fragment>
       <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving\u2026':'Save Supplier'}</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving…':'Save Supplier'}</button>
     </React.Fragment>}>
       <Field label="Supplier name"><input className="input" value={form.supplierName} onChange={e=>set('supplierName', e.target.value)} /></Field>
       <Field label="Contact person"><input className="input" value={form.contactPerson} onChange={e=>set('contactPerson', e.target.value)} /></Field>
@@ -1842,6 +2106,7 @@ function SupplierFormModal({ onClose, onSaved, supplier }) {
         <Field label="Phone"><input className="input" value={form.phone} onChange={e=>set('phone', e.target.value)} /></Field>
         <Field label="Email"><input className="input" value={form.email} onChange={e=>set('email', e.target.value)} /></Field>
       </div>
+      <Field label="Address"><input className="input" value={form.address || ''} onChange={e=>set('address', e.target.value)} /></Field>
       <Field label="Tax number"><input className="input" value={form.taxNumber} onChange={e=>set('taxNumber', e.target.value)} /></Field>
     </Modal>
   );
@@ -1854,18 +2119,28 @@ function SuppliersPage({ command, clearCommand }) {
   const [editing, setEditing] = useState(null);
   const [detailId, setDetailId] = useState(null);
   const [delRow, setDelRow] = useState(null);
+  const [showLinks, setShowLinks] = useState(false);
+  const [q, setQ] = useState('');
   useEffect(() => { if (command==='new') { setEditing(null); setShowForm(true); clearCommand(); } }, [command]);
+  const filtered = (suppliers || []).filter(s => !q.trim() || [s.supplierName, s.contactPerson, s.phone, s.email, s.address].some(v => String(v || '').toLowerCase().includes(q.trim().toLowerCase())));
   return (
     <div>
       <PageHeader title="Suppliers" subtitle="Vendors you purchase from" action={
-        <button className="btn btn-primary" onClick={() => { setEditing(null); setShowForm(true); }}><I name="plus" size={15} />Add Supplier</button>
+        <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
+          <button className="btn btn-outline" onClick={() => setShowLinks(true)}><I name="link" size={15} />Sign-up link</button>
+          <button className="btn btn-primary" onClick={() => { setEditing(null); setShowForm(true); }}><I name="plus" size={15} />Add Supplier</button>
+        </div>
       } />
-      <DataTable loading={loading} rows={suppliers} rowKey="supplierId" onRowClick={r=>setDetailId(r.supplierId)}
-        emptyIcon="suppliers" emptyTitle="No suppliers yet." emptySubtitle="Add your first supplier to start recording purchases."
+      <div style={{marginBottom:14, maxWidth:320}}><input className="input" placeholder="Search suppliers…" value={q} onChange={e=>setQ(e.target.value)} /></div>
+      <DataTable loading={loading} rows={filtered} rowKey="supplierId" onRowClick={r=>setDetailId(r.supplierId)}
+        emptyIcon="suppliers" emptyTitle="No suppliers yet." emptySubtitle="Add a supplier, or share your supplier sign-up link so they register themselves."
         emptyAction={<button className="btn btn-primary" onClick={()=>setShowForm(true)}><I name="plus" size={14}/>Add Supplier</button>}
         columns={[
           { key:'supplierName', header:'Supplier', render:r=><div style={{fontWeight:600}}>{r.supplierName}</div> },
-          { key:'contactPerson', header:'Contact' }, { key:'phone', header:'Phone' },
+          { key:'contactPerson', header:'Contact' }, { key:'phone', header:'Phone' }, { key:'email', header:'Email' },
+          { key:'address', header:'Address', render:r => <span style={{display:'inline-block', minWidth:130}}>{r.address || '—'}</span> },
+          { key:'taxNumber', header:'Tax No.', render:r => r.taxNumber || '—' },
+          { key:'source', header:'Source', render:r => r.source || 'Manual' },
           { key:'status', header:'Status', render:r=><StatusBadge status={r.status} /> },
           { key:'actions', header:'', render:r => (
             <div style={{display:'flex', gap:6}} onClick={e=>e.stopPropagation()}>
@@ -1877,6 +2152,7 @@ function SuppliersPage({ command, clearCommand }) {
       />
       {showForm && <SupplierFormModal supplier={editing} onClose={()=>setShowForm(false)} onSaved={reload} />}
       {detailId && <SupplierDetailModal id={detailId} onClose={()=>setDetailId(null)} />}
+      {showLinks && <ShareLinksModal focus="supplier" onClose={()=>setShowLinks(false)} />}
       {delRow && <DeleteWithReasonDialog title="Delete supplier" itemLabel={delRow.supplierName} onClose={() => setDelRow(null)}
         onConfirm={async (reason) => { const res = await callServer('suppliers.delete', { id: delRow.supplierId, reason }); if (res.success) { toast('Supplier moved to recycle bin.'); reload(); } else toast(res.message, 'error'); }} />}
     </div>
@@ -1891,7 +2167,7 @@ function SupplierDetailModal({ id, onClose }) {
       {loading || !data ? <Skeleton h={200} /> : (
         <div>
           <h3 style={{margin:'0 0 4px'}}>{data.supplier.supplierName}</h3>
-          <p style={{margin:'0 0 16px', fontSize:13, color:'var(--muted)'}}>{data.supplier.contactPerson} {data.supplier.phone && '\u00b7 ' + data.supplier.phone}</p>
+          <p style={{margin:'0 0 16px', fontSize:13, color:'var(--muted)'}}>{data.supplier.contactPerson} {data.supplier.phone && '· ' + data.supplier.phone}</p>
           <KpiCard label="Outstanding Payable" value={fmt(data.outstandingPayable)} accent="var(--red)" />
           <h4 style={{fontSize:13.5, margin:'18px 0 8px'}}>Purchase History</h4>
           {data.purchases.length===0 ? <p style={{fontSize:13, color:'var(--muted)'}}>No purchases yet.</p> : (
@@ -1900,6 +2176,90 @@ function SupplierDetailModal({ id, onClose }) {
           )}
         </div>
       )}
+    </Modal>
+  );
+}
+
+// ============================== RECORD PAYMENT (Full / Part) + RECEIPTS ==============================
+function RecordPaymentModal({ sale, onClose, onSaved }) {
+  const fmt = useCurrency();
+  const toast = useToast();
+  const balance = Number(sale.balance || 0);
+  const [mode, setMode] = useState('full');
+  const [amount, setAmount] = useState(String(balance));
+  const [method, setMethod] = useState('Cash');
+  const [reference, setReference] = useState('');
+  const [emailTo, setEmailTo] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(null);
+  const [dlBusy, setDlBusy] = useState(false);
+
+  const chooseMode = (m) => { setMode(m); setAmount(m === 'full' ? String(balance) : ''); };
+  const hasEmail = !!sale.customerEmail;
+
+  const submit = async () => {
+    const amt = Number(amount);
+    if (!(amt > 0)) { toast('Enter the amount the customer paid.', 'error'); return; }
+    if (amt > balance + 0.005) { toast('That is more than the outstanding balance (' + fmt(balance) + ').', 'error'); return; }
+    setSaving(true);
+    const res = await callServer('payments.create', { transactionType: 'Sale', transactionId: sale.saleId, amount: amt, paymentMethod: method, reference, emailTo: hasEmail ? '' : emailTo.trim() });
+    setSaving(false);
+    if (res.success) { setDone(res.data); onSaved && onSaved(res.data); }
+    else toast(res.message, 'error');
+  };
+  const downloadReceipt = async () => {
+    setDlBusy(true);
+    const res = await callServer('receipts.download', { paymentId: done.paymentId });
+    setDlBusy(false);
+    saveServerFile(res, toast, 'Receipt saved to your computer.');
+  };
+
+  if (done) {
+    return (
+      <Modal title="Payment Recorded" onClose={onClose} footer={<React.Fragment>
+        <button className="btn btn-outline" disabled={dlBusy} onClick={downloadReceipt}><I name="download" size={14} />{dlBusy ? 'Preparing…' : 'Download Receipt'}</button>
+        <button className="btn btn-primary" onClick={onClose}>Done</button>
+      </React.Fragment>}>
+        <div style={{textAlign:'center', padding:'6px 0'}}>
+          <div style={{width:52, height:52, borderRadius:'50%', background:'#E4F5EC', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 12px'}}><I name="check" size={26} style={{color:'var(--green)'}} /></div>
+          <h3 style={{margin:'0 0 4px'}}>{fmt(done.amount)} received</h3>
+          <p style={{margin:'0 0 12px', color:'var(--muted)', fontSize:13}}>Receipt <b className="mono">{done.receiptNumber}</b></p>
+          <div style={{display:'inline-flex', gap:8, alignItems:'center', marginBottom:10}}>
+            <StatusBadge status={done.paymentStatusAfter || 'Paid'} />
+            <span style={{fontSize:13}}>{Number(done.balanceAfter) > 0 ? 'Balance remaining: ' + fmt(done.balanceAfter) : 'Invoice fully paid'}</span>
+          </div>
+          <p style={{margin:0, fontSize:12.5, color: done.receiptEmailed ? 'var(--green)' : 'var(--amber)'}}>{done.receiptEmailNote}</p>
+        </div>
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal title={'Record Payment — ' + sale.invoiceNumber} onClose={onClose} footer={<React.Fragment>
+      <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving ? 'Saving…' : 'Record Payment & Send Receipt'}</button>
+    </React.Fragment>}>
+      <div style={{display:'flex', justifyContent:'space-between', fontSize:13, marginBottom:12}}>
+        <span>Invoice total <b>{fmt(sale.total)}</b></span><span>Paid so far <b>{fmt(sale.amountPaid)}</b></span><span style={{color:'var(--red)'}}>Balance <b>{fmt(balance)}</b></span>
+      </div>
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:14}}>
+        {[['full','Full payment','Pay the whole balance'],['part','Part payment','Customer pays some now']].map(([k,t,s]) => (
+          <button key={k} type="button" onClick={() => chooseMode(k)} style={{textAlign:'left', padding:'10px 12px', borderRadius:10, cursor:'pointer', background: mode===k ? '#EEF3FA' : 'var(--card)', color:'var(--ink)', border:'1.5px solid ' + (mode===k ? 'var(--brand)' : 'var(--line)')}}>
+            <div style={{fontWeight:700, fontSize:13.5}}>{t}</div><div style={{fontSize:11.5, color:'var(--muted)'}}>{s}</div>
+          </button>
+        ))}
+      </div>
+      <div className="grid g2">
+        <Field label={mode === 'full' ? 'Amount (full balance)' : 'Amount paid now'}>
+          <input className="input" type="number" min="0" step="0.01" value={amount} readOnly={mode === 'full'} onChange={e => setAmount(e.target.value)} placeholder="0.00" />
+        </Field>
+        <Field label="Payment method"><select className="input" value={method} onChange={e => setMethod(e.target.value)}>{['Cash','Bank Transfer','POS','Card','Mobile Money','Other'].map(m => <option key={m}>{m}</option>)}</select></Field>
+      </div>
+      {mode === 'part' && Number(amount) > 0 && Number(amount) < balance && <p style={{fontSize:12, color:'var(--muted)', margin:'-6px 0 10px'}}>Balance after this payment: <b>{fmt(balance - Number(amount))}</b></p>}
+      <Field label="Reference (optional)"><input className="input" value={reference} onChange={e => setReference(e.target.value)} placeholder="Transfer ref, POS slip no." /></Field>
+      {hasEmail
+        ? <p style={{fontSize:12.5, color:'var(--muted)', margin:0}}>A PDF receipt will be emailed to <b>{sale.customerEmail}</b>.</p>
+        : <Field label="Customer email (to send the receipt)"><input className="input" type="email" value={emailTo} onChange={e => setEmailTo(e.target.value)} placeholder="customer@email.com — optional" /></Field>}
     </Modal>
   );
 }
@@ -1919,6 +2279,8 @@ function POSModal({ onClose, onSaved, products, customers, locations }) {
   const [applyVat, setApplyVat] = useState(true);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState(null);
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
 
   // locations often arrive after this modal's first render (async fetch) — sync the default once they load
   useEffect(() => { if (!locationId && locations.length) setLocationId(locations[0].locationId); }, [locations]);
@@ -1947,7 +2309,7 @@ function POSModal({ onClose, onSaved, products, customers, locations }) {
     setSaving(true);
     const res = await callServer('sales.create', {
       customerId, locationId, items: cart.map(i => ({ productId:i.productId, quantity:i.quantity, unitPrice:i.unitPrice, discount:i.discount||0 })),
-      discount: Number(discount||0), paymentMethod, amountPaid: amountPaid===''? total : Number(amountPaid), applyVat
+      discount: Number(discount||0), paymentMethod, amountPaid: amountPaid==='' ? 0 : Number(amountPaid), applyVat
     });
     setSaving(false);
     if (res.success) { setResult(res.data); toast('Sale recorded.'); onSaved(); }
@@ -1955,27 +2317,41 @@ function POSModal({ onClose, onSaved, products, customers, locations }) {
   };
 
   if (result) {
+    const cust = customers.find(c => c.customerId === customerId);
+    const saleObj = { ...result.sale, customerEmail: cust ? cust.email : '' };
+    const owing = Number(result.sale.balance) > 0;
     return (
-      <Modal title="Sale Complete" onClose={() => { onClose(); }} footer={<button className="btn btn-primary" style={{width:'100%', justifyContent:'center'}} onClick={onClose}>Done</button>}>
-        <div style={{textAlign:'center', padding:'10px 0'}}>
-          <div style={{width:52, height:52, borderRadius:'50%', background:'#E4F5EC', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px'}}>
-            <I name="check" size={26} style={{color:'var(--green)'}} />
+      <React.Fragment>
+        <Modal title="Sale Complete" onClose={onClose} footer={<React.Fragment>
+          <button className="btn btn-outline" disabled={pdfBusy} onClick={async () => { setPdfBusy(true); const r = await callServer('invoices.generatePdf', { saleId: result.sale.saleId }); setPdfBusy(false); saveServerFile(r, toast, 'Invoice saved to your computer.'); }}><I name="download" size={14} />{pdfBusy ? 'Preparing…' : 'Download invoice'}</button>
+          {owing && <button className="btn btn-gold" onClick={() => setPayOpen(true)}><I name="wallet" size={14} />Record payment</button>}
+          <button className="btn btn-primary" onClick={onClose}>Done</button>
+        </React.Fragment>}>
+          <div style={{textAlign:'center', padding:'10px 0'}}>
+            <div style={{width:52, height:52, borderRadius:'50%', background:'#E4F5EC', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px'}}>
+              <I name="check" size={26} style={{color:'var(--green)'}} />
+            </div>
+            <h3 style={{margin:'0 0 4px'}}>Invoice {result.invoice.invoiceNumber}</h3>
+            <p style={{color:'var(--muted)', fontSize:13, margin:'0 0 8px'}}>Total {fmt(result.sale.total)} &middot; <StatusBadge status={result.sale.paymentStatus} /></p>
+            {owing
+              ? <p style={{fontSize:12.5, margin:0}}>Balance due: <b>{fmt(result.sale.balance)}</b>. Click <b>Record payment</b> when the customer pays (full or part).</p>
+              : <p style={{fontSize:12.5, margin:0, color:'var(--green)'}}>Fully paid.</p>}
+            {result.receipt && <p style={{fontSize:12.5, margin:'8px 0 0', color:'var(--muted)'}}>Receipt {result.receipt.receiptNumber} &mdash; {result.receipt.note}</p>}
           </div>
-          <h3 style={{margin:'0 0 4px'}}>Invoice {result.invoice.invoiceNumber}</h3>
-          <p style={{color:'var(--muted)', fontSize:13, margin:'0 0 16px'}}>Total {fmt(result.sale.total)} \u00b7 {result.sale.paymentStatus}</p>
-        </div>
-      </Modal>
+        </Modal>
+        {payOpen && <RecordPaymentModal sale={saleObj} onClose={() => setPayOpen(false)} onSaved={(p) => { setResult(r => ({ ...r, sale: { ...r.sale, amountPaid: Number(r.sale.amountPaid) + Number(p.amount), balance: p.balanceAfter, paymentStatus: p.paymentStatusAfter }, receipt: { receiptNumber: p.receiptNumber, note: p.receiptEmailNote } })); onSaved(); }} />}
+      </React.Fragment>
     );
   }
 
   return (
     <Modal title="New Sale" onClose={onClose} wide footer={<React.Fragment>
       <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-      <button className="btn btn-gold" disabled={saving} onClick={submit}>{saving?'Processing\u2026':`Complete Sale \u2014 ${fmt(total)}`}</button>
+      <button className="btn btn-gold" disabled={saving} onClick={submit}>{saving?'Processing…':`Complete Sale — ${fmt(total)}`}</button>
     </React.Fragment>}>
       <div className="grid g2" style={{alignItems:'start'}}>
         <div>
-          <input className="input" placeholder="Search product or SKU\u2026" value={search} onChange={e=>setSearch(e.target.value)} style={{marginBottom:10}} />
+          <input className="input" placeholder="Search product or SKU…" value={search} onChange={e=>setSearch(e.target.value)} style={{marginBottom:10}} />
           <div style={{maxHeight:280, overflowY:'auto', border:'1px solid var(--line)', borderRadius:9}}>
             {filteredProducts.slice(0,40).map(p => (
               <div key={p.productId} onClick={()=>addToCart(p)} style={{display:'flex', justifyContent:'space-between', padding:'9px 12px', borderBottom:'1px solid #EEF0F5', cursor:'pointer', fontSize:13}}>
@@ -2017,7 +2393,13 @@ function POSModal({ onClose, onSaved, products, customers, locations }) {
                 {['Cash','Bank Transfer','POS','Card','Mobile Money','Other'].map(m=><option key={m}>{m}</option>)}
               </select>
             </Field>
-            <Field label="Amount paid (blank = full)"><input className="input" type="number" value={amountPaid} onChange={e=>setAmountPaid(e.target.value)} placeholder={total.toFixed(2)} /></Field>
+            <Field label="Paid now (blank = pay later)">
+              <input className="input" type="number" value={amountPaid} onChange={e=>setAmountPaid(e.target.value)} placeholder="0 — invoice stays unpaid" />
+              <div style={{display:'flex', gap:10, marginTop:5, fontSize:11.5}}>
+                <a style={{color:'var(--brand-2)', cursor:'pointer', fontWeight:700}} onClick={()=>setAmountPaid(total.toFixed(2))}>Customer paid in full</a>
+                {amountPaid !== '' && <a style={{color:'var(--muted)', cursor:'pointer'}} onClick={()=>setAmountPaid('')}>Clear (pay later)</a>}
+              </div>
+            </Field>
           </div>
           <div className="divider" />
           <div style={{fontSize:13}}>
@@ -2066,25 +2448,26 @@ function SalesPage({ command, clearCommand }) {
         ]}
       />
       {showPOS && <POSModal products={products||[]} customers={customers||[]} locations={locations||[]} onClose={()=>setShowPOS(false)} onSaved={reload} />}
-      {detailId && <SaleDetailModal id={detailId} onClose={()=>setDetailId(null)} />}
+      {detailId && <SaleDetailModal id={detailId} onChanged={reload} onClose={()=>setDetailId(null)} />}
     </div>
   );
 }
 
-function SaleDetailModal({ id, onClose }) {
+function SaleDetailModal({ id, onClose, onChanged }) {
   const fmt = useCurrency();
   const toast = useToast();
   const { data, loading, reload } = useApiData('sales.detail', { id }, [id]);
   const [pdfBusy, setPdfBusy] = useState(false);
   const [emailBusy, setEmailBusy] = useState(false);
   const [emailInput, setEmailInput] = useState('');
+  const [payOpen, setPayOpen] = useState(false);
+  const [rcptBusy, setRcptBusy] = useState('');
 
   const downloadPdf = async () => {
     setPdfBusy(true);
     const res = await callServer('invoices.generatePdf', { saleId: id });
     setPdfBusy(false);
-    if (res.success) window.open(res.data.url, '_blank');
-    else toast(res.message, 'error');
+    saveServerFile(res, toast, 'Invoice saved to your computer.');
   };
   const emailInvoice = async () => {
     setEmailBusy(true);
@@ -2101,19 +2484,37 @@ function SaleDetailModal({ id, onClose }) {
     if (res.success) { toast('Invoice sent to ' + res.data.sentTo + ' to pay.'); setEmailInput(''); reload(); }
     else toast(res.message, 'error');
   };
+  const downloadReceipt = async (p) => {
+    setRcptBusy(p.paymentId + 'd');
+    const res = await callServer('receipts.download', { paymentId: p.paymentId });
+    setRcptBusy('');
+    saveServerFile(res, toast, 'Receipt saved to your computer.');
+  };
+  const emailReceipt = async (p) => {
+    const to = data.customer && data.customer.email;
+    if (!to) { toast('Add a customer email first (use the box below), then email the receipt.', 'error'); return; }
+    setRcptBusy(p.paymentId + 'e');
+    const res = await callServer('receipts.email', { paymentId: p.paymentId, email: to });
+    setRcptBusy('');
+    if (res.success) toast('Receipt emailed to ' + res.data.sentTo + '.'); else toast(res.message, 'error');
+  };
 
   const hasCustomerEmail = data && data.customer && data.customer.email;
+  const owing = data && Number(data.sale.balance) > 0;
+  const saleForPay = data ? { ...data.sale, customerEmail: data.customer ? data.customer.email : '' } : null;
 
   return (
+    <React.Fragment>
     <Modal title={loading || !data ? 'Sale' : data.sale.invoiceNumber} onClose={onClose} wide footer={
       !loading && data && (
         <React.Fragment>
-          <button className="btn btn-outline" disabled={pdfBusy} onClick={downloadPdf}><I name="download" size={14} />{pdfBusy ? 'Generating\u2026' : 'Download PDF'}</button>
+          <button className="btn btn-outline" disabled={pdfBusy} onClick={downloadPdf}><I name="download" size={14} />{pdfBusy ? 'Preparing…' : 'Download PDF'}</button>
           {hasCustomerEmail && (
-            <button className="btn btn-primary" disabled={emailBusy} onClick={emailInvoice}>
-              <I name="invoices" size={14} />{emailBusy ? 'Sending\u2026' : 'Email Invoice'}
+            <button className="btn btn-outline" disabled={emailBusy} onClick={emailInvoice}>
+              <I name="invoices" size={14} />{emailBusy ? 'Sending…' : 'Email Invoice'}
             </button>
           )}
+          {owing && <button className="btn btn-gold" onClick={() => setPayOpen(true)}><I name="wallet" size={14} />Record Payment</button>}
         </React.Fragment>
       )
     }>
@@ -2129,19 +2530,31 @@ function SaleDetailModal({ id, onClose }) {
           <div style={{textAlign:'right', fontSize:13}}>
             <div>Subtotal: {fmt(data.sale.subtotal)}</div><div>VAT: {fmt(data.sale.vat)}</div>
             <div style={{fontWeight:800, fontSize:15}}>Total: {fmt(data.sale.total)}</div>
-            <div style={{color:'var(--muted)'}}>Paid: {fmt(data.sale.amountPaid)} \u00b7 Balance: {fmt(data.sale.balance)}</div>
+            <div style={{color:'var(--muted)'}}>Paid: {fmt(data.sale.amountPaid)} &middot; <span style={{color: owing ? 'var(--red)' : 'inherit', fontWeight: owing ? 700 : 400}}>Balance: {fmt(data.sale.balance)}</span></div>
           </div>
+          <div className="divider" />
+          <div style={{fontWeight:700, fontSize:13, marginBottom:8}}>Payments &amp; receipts</div>
+          {(data.payments || []).length === 0 ? <p style={{fontSize:12.5, color:'var(--muted)', margin:0}}>No payment recorded yet. This invoice stays unpaid until you record one.</p> : (
+            <table><thead><tr><th>Date</th><th>Receipt</th><th>Method</th><th>Amount</th><th></th></tr></thead>
+              <tbody>{data.payments.map(p => (
+                <tr key={p.paymentId}><td>{fmtDate(p.paymentDate)}</td><td className="mono">{p.receiptNumber || '—'}</td><td>{p.paymentMethod}</td><td>{fmt(p.amount)}</td>
+                  <td>{p.receiptNumber && <div style={{display:'flex', gap:6}}>
+                    <button className="btn btn-outline btn-sm" disabled={!!rcptBusy} onClick={() => downloadReceipt(p)}><I name="download" size={12} />{rcptBusy === p.paymentId + 'd' ? '…' : 'Receipt'}</button>
+                    <button className="btn btn-outline btn-sm" disabled={!!rcptBusy} onClick={() => emailReceipt(p)}>{rcptBusy === p.paymentId + 'e' ? '…' : 'Email'}</button>
+                  </div>}</td></tr>
+              ))}</tbody></table>
+          )}
           {!hasCustomerEmail && (
             <React.Fragment>
               <div className="divider" />
               <div style={{fontWeight:700, fontSize:13, marginBottom:8}}>Send this invoice to be paid</div>
               <p style={{fontSize:12, color:'var(--muted)', margin:'0 0 10px'}}>
-                No email on file for this customer yet. Enter one below to send them the invoice as a PDF \u2014 it'll also be saved to their customer record for next time.
+                No email on file for this customer yet. Enter one below to send them the invoice as a PDF &mdash; it'll also be saved to their customer record for next time.
               </p>
               <div style={{display:'flex', gap:8}}>
                 <input className="input" type="email" placeholder="customer@email.com" value={emailInput} onChange={e=>setEmailInput(e.target.value)} />
                 <button className="btn btn-gold" style={{whiteSpace:'nowrap'}} disabled={emailBusy} onClick={sendToTypedEmail}>
-                  <I name="invoices" size={14} />{emailBusy ? 'Sending\u2026' : 'Send to Pay'}
+                  <I name="invoices" size={14} />{emailBusy ? 'Sending…' : 'Send to Pay'}
                 </button>
               </div>
             </React.Fragment>
@@ -2149,6 +2562,8 @@ function SaleDetailModal({ id, onClose }) {
         </div>
       )}
     </Modal>
+    {payOpen && saleForPay && <RecordPaymentModal sale={saleForPay} onClose={() => setPayOpen(false)} onSaved={() => { reload(); onChanged && onChanged(); }} />}
+    </React.Fragment>
   );
 }
 
@@ -2168,17 +2583,17 @@ function ReturnFormModal({ onClose, onSaved, sales, products }) {
   return (
     <Modal title="Process Return" onClose={onClose} footer={<React.Fragment>
       <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Processing\u2026':'Process Return'}</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Processing…':'Process Return'}</button>
     </React.Fragment>}>
       <Field label="Original invoice">
         <select className="input" value={form.saleId} onChange={e=>set('saleId', e.target.value)}>
-          <option value="">Select sale\u2026</option>
-          {sales.map(s=><option key={s.saleId} value={s.saleId}>{s.invoiceNumber} \u2014 {s.customerName}</option>)}
+          <option value="">Select sale…</option>
+          {sales.map(s=><option key={s.saleId} value={s.saleId}>{s.invoiceNumber} — {s.customerName}</option>)}
         </select>
       </Field>
       <Field label="Product">
         <select className="input" value={form.productId} onChange={e=>set('productId', e.target.value)}>
-          <option value="">Select product\u2026</option>
+          <option value="">Select product…</option>
           {products.map(p=><option key={p.productId} value={p.productId}>{p.productName}</option>)}
         </select>
       </Field>
@@ -2242,7 +2657,7 @@ function POFormModal({ onClose, onSaved, suppliers, products, locations }) {
   return (
     <Modal title="New Purchase Order" onClose={onClose} wide footer={<React.Fragment>
       <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Creating\u2026':`Create PO \u2014 ${fmt(total)}`}</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Creating…':`Create PO — ${fmt(total)}`}</button>
     </React.Fragment>}>
       <div className="grid g2">
         <Field label="Supplier"><select className="input" value={supplierId} onChange={e=>setSupplierId(e.target.value)}>{suppliers.map(s=><option key={s.supplierId} value={s.supplierId}>{s.supplierName}</option>)}</select></Field>
@@ -2253,7 +2668,7 @@ function POFormModal({ onClose, onSaved, suppliers, products, locations }) {
       {items.map((it, idx) => (
         <div key={idx} style={{display:'flex', gap:8, marginBottom:8, alignItems:'center'}}>
           <select className="input" value={it.productId} onChange={e=>updateLine(idx, { productId:e.target.value })} style={{flex:2}}>
-            <option value="">Select product\u2026</option>
+            <option value="">Select product…</option>
             {products.map(p=><option key={p.productId} value={p.productId}>{p.productName}</option>)}
           </select>
           <input className="input" type="number" min="1" value={it.quantity} onChange={e=>updateLine(idx, { quantity:Number(e.target.value) })} style={{width:80}} placeholder="Qty" />
@@ -2349,7 +2764,7 @@ function ExpenseFormModal({ onClose, onSaved, expense }) {
   return (
     <Modal title={expense ? 'Edit Expense' : 'Record Expense'} onClose={onClose} footer={<React.Fragment>
       <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving\u2026':'Save Expense'}</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving…':'Save Expense'}</button>
     </React.Fragment>}>
       <div className="grid g2">
         <Field label="Date"><input className="input" type="date" value={String(form.expenseDate).slice(0,10)} onChange={e=>set('expenseDate', e.target.value)} /></Field>
@@ -2411,7 +2826,7 @@ function IncomeFormModal({ onClose, onSaved, income }) {
   return (
     <Modal title={income ? 'Edit Income' : 'Record Income'} onClose={onClose} footer={<React.Fragment>
       <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving\u2026':'Save Income'}</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving…':'Save Income'}</button>
     </React.Fragment>}>
       <div className="grid g2">
         <Field label="Date"><input className="input" type="date" value={String(form.incomeDate).slice(0,10)} onChange={e=>set('incomeDate', e.target.value)} /></Field>
@@ -2479,12 +2894,12 @@ function PaymentFormModal({ onClose, onSaved, sales, purchases }) {
     setSaving(true);
     const res = await callServer('payments.create', { ...form, amount:Number(form.amount) });
     setSaving(false);
-    if (res.success) { toast('Payment recorded.'); onSaved(); onClose(); } else toast(res.message, 'error');
+    if (res.success) { toast('Payment recorded.' + (res.data.receiptNumber ? ' Receipt ' + res.data.receiptNumber + '. ' + (res.data.receiptEmailNote || '') : '')); onSaved(); onClose(); } else toast(res.message, 'error');
   };
   return (
     <Modal title="Record Payment" onClose={onClose} footer={<React.Fragment>
       <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving\u2026':'Record Payment'}</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving…':'Record Payment'}</button>
     </React.Fragment>}>
       <Field label="Payment against">
         <select className="input" value={form.transactionType} onChange={e=>set('transactionType', e.target.value)}>
@@ -2493,11 +2908,11 @@ function PaymentFormModal({ onClose, onSaved, sales, purchases }) {
         </select>
       </Field>
       <Field label="Transaction">
-        <select className="input" value={form.transactionId} onChange={e=>set('transactionId', e.target.value)}>
-          <option value="">Select\u2026</option>
+        <select className="input" value={form.transactionId} onChange={e=>{ const o=(options||[]).find(x=>(x.saleId||x.purchaseId)===e.target.value); setForm(f=>({...f, transactionId:e.target.value, amount: o ? String(o.balance) : f.amount})); }}>
+          <option value="">Select…</option>
           {(options||[]).filter(o => Number(o.balance) > 0).map(o => (
             <option key={o.saleId||o.purchaseId} value={o.saleId||o.purchaseId}>
-              {(o.invoiceNumber||o.purchaseOrderNumber)} \u2014 balance {o.balance}
+              {(o.invoiceNumber||o.purchaseOrderNumber)} — balance {o.balance}
             </option>
           ))}
         </select>
@@ -2544,9 +2959,9 @@ function BookkeepingPage({ command, clearCommand }) {
       {tab==='pnl' && (pnl.loading || !pnl.data ? <Skeleton h={200} /> : (
         <div className="card" style={{padding:24, maxWidth:520}}>
           <Row label="Revenue" value={fmt(pnl.data.revenue)} />
-          <Row label="Cost of Goods Sold" value={'\u2212 ' + fmt(pnl.data.cogs)} />
+          <Row label="Cost of Goods Sold" value={'− ' + fmt(pnl.data.cogs)} />
           <div className="divider" /><Row bold label="Gross Profit" value={fmt(pnl.data.grossProfit)} />
-          <Row label="Operating Expenses" value={'\u2212 ' + fmt(pnl.data.operatingExpenses)} />
+          <Row label="Operating Expenses" value={'− ' + fmt(pnl.data.operatingExpenses)} />
           <div className="divider" /><Row bold big label="Net Profit" value={fmt(pnl.data.netProfit)} accent={pnl.data.netProfit>=0?'var(--green)':'var(--red)'} />
         </div>
       ))}
@@ -2616,35 +3031,41 @@ function Row({ label, value, bold, big, accent }) {
 function InvoicesPage() {
   const fmt = useCurrency();
   const toast = useToast();
-  const { data: invoices, loading } = useApiData('invoices.list', {}, []);
+  const { data: invoices, loading, reload } = useApiData('invoices.list', {}, []);
   const [detailId, setDetailId] = useState(null);
   const [busyId, setBusyId] = useState(null);
+  const [payFor, setPayFor] = useState(null);
 
   const downloadPdf = async (r) => {
     setBusyId(r.invoiceId);
     const res = await callServer('invoices.generatePdf', { saleId: r.saleId });
     setBusyId(null);
-    if (res.success) window.open(res.data.url, '_blank');
-    else toast(res.message, 'error');
+    saveServerFile(res, toast, 'Invoice saved to your computer.');
   };
 
   return (
     <div>
-      <PageHeader title="Invoices" subtitle="All invoices issued to customers" />
+      <PageHeader title="Invoices" subtitle="All invoices issued to customers. Invoices stay unpaid until you record a payment." />
       <DataTable loading={loading} rows={invoices} rowKey="invoiceId" onRowClick={r=>setDetailId(r.saleId)}
         emptyIcon="invoices" emptyTitle="No invoices yet." emptySubtitle="Invoices are generated automatically when you record a sale."
         columns={[
           { key:'invoiceNumber', header:'Invoice', render:r=><span className="mono">{r.invoiceNumber}</span> }, { key:'customerName', header:'Customer' },
           { key:'issueDate', header:'Issued', render:r=>fmtDate(r.issueDate) }, { key:'total', header:'Total', render:r=>fmt(r.total) },
+          { key:'amountPaid', header:'Paid', render:r=>fmt(r.amountPaid) },
+          { key:'balance', header:'Balance', render:r=><span style={{color: Number(r.balance) > 0 ? 'var(--red)' : 'inherit', fontWeight: Number(r.balance) > 0 ? 700 : 400}}>{fmt(r.balance)}</span> },
           { key:'status', header:'Status', render:r=><StatusBadge status={r.status} /> },
           { key:'actions', header:'', render:r => (
-            <button className="btn btn-outline btn-sm" disabled={busyId===r.invoiceId} onClick={e=>{e.stopPropagation(); downloadPdf(r);}}>
-              <I name="download" size={13} />{busyId===r.invoiceId ? '\u2026' : 'PDF'}
-            </button>
+            <div style={{display:'flex', gap:6}} onClick={e=>e.stopPropagation()}>
+              {Number(r.balance) > 0 && <button className="btn btn-gold btn-sm" onClick={()=>setPayFor(r)}><I name="wallet" size={13} />Record payment</button>}
+              <button className="btn btn-outline btn-sm" disabled={busyId===r.invoiceId} onClick={()=>downloadPdf(r)}>
+                <I name="download" size={13} />{busyId===r.invoiceId ? '…' : 'PDF'}
+              </button>
+            </div>
           )}
         ]}
       />
-      {detailId && <SaleDetailModal id={detailId} onClose={()=>setDetailId(null)} />}
+      {detailId && <SaleDetailModal id={detailId} onChanged={reload} onClose={()=>setDetailId(null)} />}
+      {payFor && <RecordPaymentModal sale={{ saleId: payFor.saleId, invoiceNumber: payFor.invoiceNumber, total: payFor.total, amountPaid: payFor.amountPaid, balance: payFor.balance, customerEmail: payFor.customerEmail }} onClose={()=>setPayFor(null)} onSaved={reload} />}
     </div>
   );
 }
@@ -2656,16 +3077,6 @@ const REPORT_LIST = [
   { key:'vat', label:'VAT Report', icon:'reports' }, { key:'receivables', label:'Accounts Receivable', icon:'invoices' },
   { key:'payables', label:'Accounts Payable', icon:'suppliers' },
 ];
-
-function exportCsv(filename, rows) {
-  if (!rows || !rows.length) return;
-  const headers = Object.keys(rows[0]);
-  const csv = [headers.join(',')].concat(rows.map(r => headers.map(h => JSON.stringify(r[h] != null ? r[h] : '')).join(','))).join('\n');
-  const blob = new Blob([csv], { type:'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
-  URL.revokeObjectURL(url);
-}
 
 function ReportsPage() {
   const fmt = useCurrency();
@@ -2685,9 +3096,13 @@ function ReportsPage() {
   const exportAs = async (format) => {
     setExporting(format);
     const res = await callServer('reports.export', { reportType: active, filters: { from, to }, format });
+    if (!res.success) { setExporting(''); toast(res.message, 'error'); return; }
+    try {
+      if (format === 'pdf') saveServerFile(res, toast, 'PDF saved to your computer.');
+      else if (format === 'csv') { saveCsv(res.data.filename, res.data.headers, res.data.rows); toast('CSV saved to your computer.'); }
+      else { await saveExcel(res.data.filename, res.data.headers, res.data.rows); toast('Excel file saved to your computer.'); }
+    } catch (e) { toast('Could not save the file: ' + e.message, 'error'); }
     setExporting('');
-    if (res.success) window.open(res.data.url, '_blank');
-    else toast(res.message, 'error');
   };
 
   return (
@@ -2705,9 +3120,9 @@ function ReportsPage() {
           <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-end', flexWrap:'wrap', gap:10}}>
             <DateRangeBar from={from} to={to} setFrom={setFrom} setTo={setTo} onApply={()=>setKey(k=>k+1)} />
             <div style={{display:'flex', gap:8, marginBottom:14}}>
-              <button className="btn btn-outline btn-sm" disabled={!!exporting} onClick={()=>exportAs('csv')}><I name="download" size={13}/>{exporting==='csv'?'\u2026':'CSV'}</button>
-              <button className="btn btn-outline btn-sm" disabled={!!exporting} onClick={()=>exportAs('excel')}><I name="download" size={13}/>{exporting==='excel'?'\u2026':'Excel'}</button>
-              <button className="btn btn-outline btn-sm" disabled={!!exporting} onClick={()=>exportAs('pdf')}><I name="download" size={13}/>{exporting==='pdf'?'\u2026':'PDF'}</button>
+              <button className="btn btn-outline btn-sm" disabled={!!exporting} onClick={()=>exportAs('csv')}><I name="download" size={13}/>{exporting==='csv'?'…':'CSV'}</button>
+              <button className="btn btn-outline btn-sm" disabled={!!exporting} onClick={()=>exportAs('excel')}><I name="download" size={13}/>{exporting==='excel'?'…':'Excel'}</button>
+              <button className="btn btn-outline btn-sm" disabled={!!exporting} onClick={()=>exportAs('pdf')}><I name="download" size={13}/>{exporting==='pdf'?'…':'PDF'}</button>
             </div>
           </div>
           {loading || !data ? <Skeleton h={200} /> : rows.length === 0 ? (
@@ -2762,14 +3177,14 @@ function SettingsPage() {
           </Field>
           <Field label="VAT rate (%)"><input className="input" type="number" step="0.1" disabled={!canEdit} value={form.vatRate} onChange={e=>set('vatRate', e.target.value)} /></Field>
         </div>
-        {canEdit && <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving\u2026':'Save Settings'}</button>}
+        {canEdit && <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving…':'Save Settings'}</button>}
         {!canEdit && <p style={{fontSize:12.5, color:'var(--muted)'}}>Only Owners and Administrators can edit business settings.</p>}
       </div>
       {canEdit && (
         <div className="card" style={{padding:24, maxWidth:600, marginTop:16}}>
           <h3 style={{margin:'0 0 4px', fontSize:14.5}}>Demo Data</h3>
           <p style={{fontSize:12.5, color:'var(--muted)', margin:'0 0 14px'}}>
-            Populate this business with sample products, customers, suppliers, sales, purchases and expenses so you can explore the app. Safe to run alongside real data \u2014 it only adds records, it never deletes anything.
+            Populate this business with sample products, customers, suppliers, sales, purchases and expenses so you can explore the app. Safe to run alongside real data — it only adds records, it never deletes anything.
           </p>
           <SeedDemoButton />
         </div>
@@ -2861,7 +3276,7 @@ function SeedDemoButton() {
   return (
     <React.Fragment>
       <button className="btn btn-gold" disabled={seeding} onClick={() => setShowConfirm(true)}>
-        <I name="refund" size={14} />{seeding ? 'Populating\u2026' : 'Populate Demo Data'}
+        <I name="refund" size={14} />{seeding ? 'Populating…' : 'Populate Demo Data'}
       </button>
       {showConfirm && <ConfirmDialog title="Populate demo data" danger={false} confirmLabel="Populate"
         message="This will add ~20 sample products, 10 customers, 5 suppliers, 30 sales, 20 purchases and 20 expenses to this business. Continue?"
@@ -2886,7 +3301,7 @@ function UserFormModal({ onClose, onSaved }) {
   return (
     <Modal title="Invite User" onClose={onClose} footer={<React.Fragment>
       <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Inviting\u2026':'Invite User'}</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Inviting…':'Invite User'}</button>
     </React.Fragment>}>
       <Field label="Full name"><input className="input" value={form.name} onChange={e=>set('name', e.target.value)} /></Field>
       <Field label="Email"><input className="input" type="email" value={form.email} onChange={e=>set('email', e.target.value)} /></Field>
@@ -2970,7 +3385,7 @@ function RecycleBinPage() {
 
   return (
     <div>
-      <PageHeader title="Recycle Bin" subtitle="Deleted records from across the business \u2014 restore or permanently remove them" />
+      <PageHeader title="Recycle Bin" subtitle="Deleted records from across the business — restore or permanently remove them" />
       <DataTable loading={loading} rows={items} rowKey="recordId"
         emptyIcon="trash" emptyTitle="Recycle bin is empty." emptySubtitle="Anything deleted from Products, Customers, Suppliers and more will show up here."
         columns={[
@@ -2988,21 +3403,156 @@ function RecycleBinPage() {
         ]}
       />
       {purgeRow && <ConfirmDialog title="Permanently delete" confirmLabel="Delete Forever"
-        message={"This will permanently remove \"" + purgeRow.recordLabel + "\" \u2014 it cannot be restored after this."}
+        message={"This will permanently remove \"" + purgeRow.recordLabel + "\" — it cannot be restored after this."}
         onClose={()=>setPurgeRow(null)} onConfirm={()=>purge(purgeRow)} />}
     </div>
   );
 }
 
 // ============================== PAGE ROUTER ==============================
+// ============================== ONLINE ORDERS ==============================
+function OrderDetailModal({ order, onClose, onChanged }) {
+  const fmt = useCurrency();
+  const toast = useToast();
+  const { data: locations } = useApiData('locations.list', {}, []);
+  const [locationId, setLocationId] = useState('');
+  const [busy, setBusy] = useState('');
+  useEffect(() => { if (!locationId && locations && locations.length) setLocationId(locations[0].locationId); }, [locations]);
+  const open = order.status === 'New' || order.status === 'Confirmed';
+
+  const setStatus = async (status) => {
+    setBusy(status);
+    const res = await callServer('orders.updateStatus', { id: order.orderId, status });
+    setBusy('');
+    if (res.success) { toast('Order ' + status.toLowerCase() + '.'); onChanged(); onClose(); } else toast(res.message, 'error');
+  };
+  const convert = async () => {
+    if (!locationId) { toast('Choose a location first.', 'error'); return; }
+    setBusy('convert');
+    const res = await callServer('orders.convert', { id: order.orderId, locationId });
+    setBusy('');
+    if (res.success) { toast('Invoice ' + res.data.invoice.invoiceNumber + ' created (unpaid).'); onChanged(); onClose(); } else toast(res.message, 'error');
+  };
+  const wa = waDigits(order.phone);
+  return (
+    <Modal title={'Order ' + order.orderNumber} onClose={onClose} wide footer={open ? (
+      <React.Fragment>
+        <button className="btn btn-outline" disabled={!!busy} onClick={() => setStatus('Cancelled')}>Cancel order</button>
+        {order.status === 'New' && <button className="btn btn-outline" disabled={!!busy} onClick={() => setStatus('Confirmed')}>{busy === 'Confirmed' ? '…' : 'Confirm order'}</button>}
+        <button className="btn btn-gold" disabled={!!busy} onClick={convert}>{busy === 'convert' ? 'Creating…' : 'Convert to invoice'}</button>
+      </React.Fragment>
+    ) : null}>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12}}>
+        <div style={{fontSize:12.5, color:'var(--muted)'}}>{fmtDateTime(order.createdAt)}</div><StatusBadge status={order.status} />
+      </div>
+      <div className="grid g2" style={{fontSize:13, marginBottom:14}}>
+        <div><span style={{color:'var(--muted)'}}>Customer: </span><b>{order.customerName}</b></div>
+        <div><span style={{color:'var(--muted)'}}>Phone: </span>{order.phone} {wa && <a href={'https://wa.me/' + wa} target="_blank" rel="noreferrer" style={{marginLeft:6, color:'var(--brand-2)', fontWeight:700}}>WhatsApp</a>}</div>
+        <div><span style={{color:'var(--muted)'}}>Email: </span>{order.email || '—'}</div>
+        <div><span style={{color:'var(--muted)'}}>Address: </span>{order.address || '—'}</div>
+        {order.notes && <div style={{gridColumn:'1 / -1'}}><span style={{color:'var(--muted)'}}>Note: </span>{order.notes}</div>}
+      </div>
+      <table><thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead>
+        <tbody>{(order.items || []).map(i => <tr key={i.orderItemId}><td>{i.productName}</td><td>{i.quantity}</td><td>{fmt(i.unitPrice)}</td><td>{fmt(i.total)}</td></tr>)}</tbody></table>
+      <div style={{textAlign:'right', fontSize:13, marginTop:10}}>
+        <div>Subtotal: {fmt(order.subtotal)}</div><div>VAT: {fmt(order.vat)}</div>
+        <div style={{fontWeight:800, fontSize:15}}>Total: {fmt(order.total)}</div>
+      </div>
+      {open && (
+        <div style={{marginTop:14}}>
+          <Field label="Take stock from">
+            <select className="input" value={locationId} onChange={e => setLocationId(e.target.value)}>{(locations || []).map(l => <option key={l.locationId} value={l.locationId}>{l.locationName}</option>)}</select>
+          </Field>
+          <p style={{fontSize:12, color:'var(--muted)', margin:0}}>Converting creates an <b>unpaid</b> invoice and deducts stock. Record the payment when the customer pays.</p>
+        </div>
+      )}
+      {order.saleId && <p style={{fontSize:12.5, color:'var(--green)', marginTop:12}}>Converted to an invoice. Find it under Sales / Invoices.</p>}
+    </Modal>
+  );
+}
+
+function OrdersPage() {
+  const fmt = useCurrency();
+  const { data: orders, loading, reload } = useApiData('orders.list', {}, []);
+  const [showLinks, setShowLinks] = useState(false);
+  const [sel, setSel] = useState(null);
+  const [filter, setFilter] = useState('open');
+  const list = (orders || []).filter(o => filter === 'all' ? true : filter === 'open' ? (o.status === 'New' || o.status === 'Confirmed') : o.status === filter);
+  const newCount = (orders || []).filter(o => o.status === 'New').length;
+  return (
+    <div>
+      <PageHeader title="Online Orders" subtitle="Orders placed through your online store link" action={
+        <button className="btn btn-gold" onClick={() => setShowLinks(true)}><I name="link" size={15} />Get store link</button>
+      } />
+      <div className="grid g3" style={{marginBottom:14}}>
+        <KpiCard label="New orders" value={newCount} accent="var(--amber)" />
+        <KpiCard label="All orders" value={(orders || []).length} />
+        <KpiCard label="Value of open orders" value={fmt((orders || []).filter(o => o.status === 'New' || o.status === 'Confirmed').reduce((s, o) => s + Number(o.total || 0), 0))} />
+      </div>
+      <div style={{display:'flex', gap:8, flexWrap:'wrap', marginBottom:14}}>
+        {[['open','Open'],['New','New'],['Confirmed','Confirmed'],['Fulfilled','Invoiced'],['Cancelled','Cancelled'],['all','All']].map(([k, l]) => (
+          <button key={k} className={'btn btn-sm ' + (filter === k ? 'btn-primary' : 'btn-outline')} onClick={() => setFilter(k)}>{l}</button>
+        ))}
+      </div>
+      <DataTable loading={loading} rows={list} rowKey="orderId" onRowClick={r => setSel(r)}
+        emptyIcon="cart" emptyTitle="No orders here yet." emptySubtitle="Share your store link in your ads and orders will appear here."
+        emptyAction={<button className="btn btn-gold" onClick={() => setShowLinks(true)}><I name="link" size={14} />Get store link</button>}
+        columns={[
+          { key:'orderNumber', header:'Order', render:r => <span className="mono">{r.orderNumber}</span> },
+          { key:'createdAt', header:'Date', render:r => fmtDateTime(r.createdAt) },
+          { key:'customerName', header:'Customer', render:r => <div><div style={{fontWeight:600}}>{r.customerName}</div><div style={{fontSize:11.5, color:'var(--muted)'}}>{r.phone}</div></div> },
+          { key:'items', header:'Items', render:r => (r.items || []).map(i => i.quantity + '× ' + i.productName).join(', ') },
+          { key:'total', header:'Total', render:r => fmt(r.total) },
+          { key:'status', header:'Status', render:r => <StatusBadge status={r.status === 'Fulfilled' ? 'Completed' : r.status === 'New' ? 'Pending' : r.status === 'Confirmed' ? 'Ordered' : 'Voided'} /> },
+        ]}
+      />
+      {sel && <OrderDetailModal order={sel} onClose={() => setSel(null)} onChanged={reload} />}
+      {showLinks && <ShareLinksModal focus="store" onClose={() => setShowLinks(false)} />}
+    </div>
+  );
+}
+
 const PAGES = {
-  dashboard: DashboardPage, sales: SalesPage, products: ProductsPage, inventory: InventoryPage,
+  dashboard: DashboardPage, sales: SalesPage, orders: OrdersPage, products: ProductsPage, inventory: InventoryPage,
   customers: CustomersPage, suppliers: SuppliersPage, purchases: PurchasesPage, returns: ReturnsPage,
   invoices: InvoicesPage, expenses: ExpensesPage, income: IncomePage, bookkeeping: BookkeepingPage,
   reports: ReportsPage, users: UsersPage, audit: AuditLogPage, settings: SettingsPage, recyclebin: RecycleBinPage,
 };
 
 // ============================== APP ROOT ==============================
+// ============================== IDLE SESSION TIMEOUT ==============================
+// Hard 2-minute inactivity timeout: any mouse/keyboard/touch activity resets the clock.
+// A warning toast fires 30s before logout so it isn't a total surprise.
+const IDLE_TIMEOUT_MS = 2 * 60 * 1000;
+const IDLE_WARNING_MS = 30 * 1000;
+
+function useIdleLogout(onIdle) {
+  const toast = useToast();
+  const lastActivity = useRef(Date.now());
+  const warned = useRef(false);
+
+  useEffect(() => {
+    const markActive = () => { lastActivity.current = Date.now(); warned.current = false; };
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
+    events.forEach(e => window.addEventListener(e, markActive, { passive: true }));
+
+    const interval = setInterval(() => {
+      const idleFor = Date.now() - lastActivity.current;
+      if (idleFor >= IDLE_TIMEOUT_MS) {
+        onIdle();
+      } else if (idleFor >= IDLE_TIMEOUT_MS - IDLE_WARNING_MS && !warned.current) {
+        warned.current = true;
+        toast && toast('You’ll be logged out in 30 seconds due to inactivity.', 'error');
+      }
+    }, 5000);
+
+    return () => {
+      events.forEach(e => window.removeEventListener(e, markActive));
+      clearInterval(interval);
+    };
+  }, [onIdle]);
+}
+
 function Workspace({ session, onLogout, setSession }) {
   const [page, setPage] = useState('dashboard');
   const [command, setCommand] = useState(null);
@@ -3024,6 +3574,8 @@ function Workspace({ session, onLogout, setSession }) {
     });
   };
 
+  useIdleLogout(onLogout);
+
   useEffect(() => {
     callServer('billing.getPlan', {}).then(res => { if (res.success) setPlan(res.data); });
   }, []);
@@ -3038,7 +3590,9 @@ function Workspace({ session, onLogout, setSession }) {
 
   const isLocked = (key) => plan && plan.includedFeatures && GATED_FEATURES.indexOf(key) !== -1 && plan.includedFeatures.indexOf(key) === -1;
 
-  const allowed = ROLE_PAGES[user.role];
+  // Prefer the business-specific permission set computed server-side (may be a Super Admin override);
+  // fall back to the static default map if a session doesn't carry one (e.g. an older cached session).
+  const allowed = user.allowedPages !== undefined ? user.allowedPages : ROLE_PAGES[user.role];
   const effectivePage = (!allowed || allowed.indexOf(page) !== -1) ? page : 'dashboard';
 
   const dispatchCommand = (cmd) => {
@@ -3135,10 +3689,10 @@ function PlatformLoginPage({ onLogin, onBack }) {
           <Field label="Admin email"><input className="input" type="email" required value={email} onChange={e=>setEmail(e.target.value)} /></Field>
           <Field label="Password"><input className="input" type="password" required value={password} onChange={e=>setPassword(e.target.value)} /></Field>
           {error && <div style={{background:'#FCEBE7', color:'var(--red)', fontSize:12.5, padding:'9px 12px', borderRadius:8, marginBottom:14}}>{error}</div>}
-          <button className="btn btn-primary" type="submit" style={{width:'100%', justifyContent:'center', padding:'11px'}} disabled={loading}>{loading?'Signing in\u2026':'Sign In'}</button>
+          <button className="btn btn-primary" type="submit" style={{width:'100%', justifyContent:'center', padding:'11px'}} disabled={loading}>{loading?'Signing in…':'Sign In'}</button>
         </form>
         <div style={{textAlign:'center', marginTop:18, fontSize:13, color:'var(--muted)'}}>
-          <a onClick={onBack} style={{color:'var(--brand-2)', fontWeight:600, cursor:'pointer'}}>\u2190 Back to Business360</a>
+          <a onClick={onBack} style={{color:'var(--brand-2)', fontWeight:600, cursor:'pointer'}}>← Back to Business360</a>
         </div>
       </div>
     </div>
@@ -3155,6 +3709,7 @@ const PLATFORM_NAV = [
 function PlatformAdminWorkspace({ session, onLogout }) {
   const [page, setPage] = useState('dashboard');
   const { dark, toggleDark } = useAppTheme();
+  useIdleLogout(onLogout);
   return (
     <div className="app-shell">
       <div className="sidebar">
@@ -3248,13 +3803,13 @@ function SuspendBusinessModal({ business, onClose, onSuspended }) {
     setSaving(true);
     const res = await callServer('platform.updateBusinessStatus', { businessId: business.businessId, status: 'Suspended', reasons: selected, note });
     setSaving(false);
-    if (res.success) { toast(business.businessName + ' has been suspended \u2014 they\u2019ve been emailed the reason.'); onSuspended(); onClose(); }
+    if (res.success) { toast(business.businessName + ' has been suspended — they’ve been emailed the reason.'); onSuspended(); onClose(); }
     else toast(res.message, 'error');
   };
   return (
     <Modal title={`Suspend ${business.businessName}`} onClose={onClose} footer={<React.Fragment>
       <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-      <button className="btn btn-danger" disabled={saving} onClick={submit}>{saving?'Suspending\u2026':'Suspend & Notify Business'}</button>
+      <button className="btn btn-danger" disabled={saving} onClick={submit}>{saving?'Suspending…':'Suspend & Notify Business'}</button>
     </React.Fragment>}>
       <p style={{fontSize:12.5, color:'var(--muted)', margin:'0 0 14px'}}>
         Select every reason that applies. The business owner will receive an email explaining why their account was suspended.
@@ -3268,8 +3823,55 @@ function SuspendBusinessModal({ business, onClose, onSuspended }) {
         ))}
       </div>
       <Field label="Additional note (optional, included in the email)">
-        <textarea className="input" rows={3} value={note} onChange={e=>setNote(e.target.value)} placeholder="Any extra detail for the business owner\u2026" />
+        <textarea className="input" rows={3} value={note} onChange={e=>setNote(e.target.value)} placeholder="Any extra detail for the business owner…" />
       </Field>
+    </Modal>
+  );
+}
+
+function RolePermissionsModal({ business, onClose }) {
+  const toast = useToast();
+  const { data, loading, reload } = usePlatformData('platform.getRolePermissions', { businessId: business.businessId }, [business.businessId]);
+  const [saving, setSaving] = useState(null); // role currently saving
+
+  const toggleFeature = async (role, currentPages, key) => {
+    const has = currentPages.indexOf(key) !== -1;
+    const next = has ? currentPages.filter(k=>k!==key) : [...currentPages, key];
+    setSaving(role);
+    const res = await callServer('platform.updateRolePermissions', { businessId: business.businessId, role, pages: next });
+    setSaving(null);
+    if (res.success) reload();
+    else toast(res.message, 'error');
+  };
+
+  return (
+    <Modal title={`User Roles — ${business.businessName}`} onClose={onClose} wide>
+      <p style={{fontSize:12.5, color:'var(--muted)', margin:'0 0 16px'}}>
+        Tick a module to grant that role access to it — for example, give Accountant access to Sales if this business wants their accountant handling some sales tasks. Owner and Administrator always have full access and aren't shown here.
+      </p>
+      {loading || !data ? <Skeleton h={240} /> : (
+        <div style={{display:'flex', flexDirection:'column', gap:18}}>
+          {data.map(r => (
+            <div key={r.role}>
+              <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:8}}>
+                <b style={{fontSize:13.5}}>{r.role}</b>
+                {r.isCustomized && <span className="badge badge-blue">Customized</span>}
+                {saving===r.role && <span style={{fontSize:11, color:'var(--muted)'}}>Saving…</span>}
+              </div>
+              <div style={{display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:'6px 12px'}}>
+                {ROLE_FEATURES.map(key => (
+                  <label key={key} style={{display:'flex', alignItems:'center', gap:7, fontSize:12.5, cursor:'pointer'}}>
+                    <input type="checkbox" checked={r.allowedPages.indexOf(key)!==-1} disabled={saving===r.role}
+                      onChange={()=>toggleFeature(r.role, r.allowedPages, key)} />
+                    {FEATURE_LABELS[key] || key}
+                  </label>
+                ))}
+              </div>
+              <div className="divider" />
+            </div>
+          ))}
+        </div>
+      )}
     </Modal>
   );
 }
@@ -3281,13 +3883,14 @@ function PlatformBusinessesPage() {
   const [purgeTarget, setPurgeTarget] = useState(null);
   const [purging, setPurging] = useState(false);
   const [suspendTarget, setSuspendTarget] = useState(null);
+  const [rolesTarget, setRolesTarget] = useState(null);
   const changeTier = async (b, tier) => {
     const res = await callServer('platform.updateBusinessTier', { businessId: b.businessId, tier });
     if (res.success) { toast('Plan updated.'); reload(); } else toast(res.message, 'error');
   };
   const reactivate = async (b) => {
     const res = await callServer('platform.updateBusinessStatus', { businessId: b.businessId, status: 'Active' });
-    if (res.success) { toast(b.businessName + ' reactivated \u2014 they\u2019ve been notified.'); reload(); } else toast(res.message, 'error');
+    if (res.success) { toast(b.businessName + ' reactivated — they’ve been notified.'); reload(); } else toast(res.message, 'error');
   };
   const purgeDemoData = async () => {
     setPurging(true);
@@ -3318,7 +3921,8 @@ function PlatformBusinessesPage() {
           )},
           { key:'status', header:'Status', render:r=><StatusBadge status={r.status} /> },
           { key:'actions', header:'', render:r => (
-            <div style={{display:'flex', gap:6}}>
+            <div style={{display:'flex', gap:6, flexWrap:'wrap'}}>
+              <button className="btn btn-outline btn-sm" onClick={()=>setRolesTarget(r)}><I name="users" size={13}/>User Roles</button>
               {r.status==='Active'
                 ? <button className="btn btn-outline btn-sm" onClick={()=>setSuspendTarget(r)}>Suspend</button>
                 : <button className="btn btn-outline btn-sm" onClick={()=>reactivate(r)}>Reactivate</button>}
@@ -3328,11 +3932,12 @@ function PlatformBusinessesPage() {
         ]}
       />
       {purgeTarget && (
-        <ConfirmDialog title="Remove demo data" confirmLabel={purging ? 'Removing\u2026' : 'Remove Demo Data'}
+        <ConfirmDialog title="Remove demo data" confirmLabel={purging ? 'Removing…' : 'Remove Demo Data'}
           message={`This permanently removes every sample product, customer, supplier, sale, purchase and expense ever added to "${purgeTarget.businessName}" via demo seeding. Real data this business added themselves is never touched. This cannot be undone.`}
           onClose={()=>setPurgeTarget(null)} onConfirm={purgeDemoData} />
       )}
       {suspendTarget && <SuspendBusinessModal business={suspendTarget} onClose={()=>setSuspendTarget(null)} onSuspended={reload} />}
+      {rolesTarget && <RolePermissionsModal business={rolesTarget} onClose={()=>setRolesTarget(null)} />}
     </div>
   );
 }
@@ -3358,7 +3963,7 @@ function TierFormModal({ onClose, onSaved, tier }) {
   return (
     <Modal title={tier?'Edit Tier':'New Subscription Tier'} onClose={onClose} wide footer={<React.Fragment>
       <button className="btn btn-outline" onClick={onClose}>Cancel</button>
-      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving\u2026':'Save Tier'}</button>
+      <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving…':'Save Tier'}</button>
     </React.Fragment>}>
       <div className="grid g2">
         <Field label="Tier name"><input className="input" value={form.tierName} onChange={e=>set('tierName', e.target.value)} placeholder="e.g. Premium" /></Field>
@@ -3409,7 +4014,7 @@ function PlatformTiersPage() {
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
               <div>
                 <div style={{fontWeight:800, fontFamily:'Manrope', fontSize:16}}>{t.tierName}</div>
-                <div style={{fontSize:20, fontWeight:800, marginTop:4}}>{Number(t.price)===0?'Free':('\u20A6'+Number(t.price).toLocaleString())}<span style={{fontSize:11, color:'var(--muted)', fontWeight:500}}>/{t.billingCycle}</span></div>
+                <div style={{fontSize:20, fontWeight:800, marginTop:4}}>{Number(t.price)===0?'Free':('₦'+Number(t.price).toLocaleString())}<span style={{fontSize:11, color:'var(--muted)', fontWeight:500}}>/{t.billingCycle}</span></div>
               </div>
               <div style={{display:'flex', gap:6}}>
                 <button className="icon-btn" onClick={()=>{setEditing(t); setShowForm(true);}}><I name="edit" size={13}/></button>
@@ -3417,7 +4022,7 @@ function PlatformTiersPage() {
               </div>
             </div>
             <div style={{fontSize:12, color:'var(--muted)', margin:'12px 0 8px'}}>
-              {t.maxUsers==-1?'Unlimited':t.maxUsers} users \u00b7 {t.maxProducts==-1?'Unlimited':t.maxProducts} products \u00b7 {t.maxLocations==-1?'Unlimited':t.maxLocations} location(s)
+              {t.maxUsers==-1?'Unlimited':t.maxUsers} users · {t.maxProducts==-1?'Unlimited':t.maxProducts} products · {t.maxLocations==-1?'Unlimited':t.maxLocations} location(s)
             </div>
             <div style={{fontSize:12.5, color:'var(--ink-2)'}}>{t.features}</div>
           </div>
@@ -3448,10 +4053,10 @@ function PlatformAppearancePage() {
   };
   return (
     <div>
-      <PageHeader title="Appearance" subtitle="Global branding \u2014 applies across every business on the platform" />
+      <PageHeader title="Appearance" subtitle="Global branding — applies across every business on the platform" />
       <div className="card" style={{padding:24, maxWidth:560}}>
         <Field label="App name"><input className="input" value={form.appName} onChange={e=>set('appName', e.target.value)} /></Field>
-        <Field label="Logo URL (leave blank to use the default letter mark)"><input className="input" value={form.logoUrl} onChange={e=>set('logoUrl', e.target.value)} placeholder="https://\u2026" /></Field>
+        <Field label="Logo URL (leave blank to use the default letter mark)"><input className="input" value={form.logoUrl} onChange={e=>set('logoUrl', e.target.value)} placeholder="https://…" /></Field>
         <div className="grid g3">
           <Field label="Primary color"><input className="input" type="color" value={form.primaryColor} onChange={e=>set('primaryColor', e.target.value)} style={{padding:4, height:40}} /></Field>
           <Field label="Secondary color"><input className="input" type="color" value={form.secondaryColor} onChange={e=>set('secondaryColor', e.target.value)} style={{padding:4, height:40}} /></Field>
@@ -3463,12 +4068,213 @@ function PlatformAppearancePage() {
           <button className="btn btn-primary btn-sm" style={{background:form.secondaryColor}}>Secondary</button>
           <button className="btn btn-gold btn-sm" style={{background:form.accentColor, color:'#241705'}}>Accent</button>
         </div>
-        <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving\u2026':'Save & Apply to All Users'}</button>
+        <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving…':'Save & Apply to All Users'}</button>
       </div>
     </div>
   );
 }
 
+
+// ============================== PUBLIC PAGES (no login): sign-up links + online store ==============================
+function PublicShell({ title, subtitle, logoUrl, children }) {
+  return (
+    <div style={{minHeight:'100vh', background:'var(--bg)', color:'var(--ink)'}}>
+      <div style={{background:'linear-gradient(135deg, var(--brand), var(--brand-2))', color:'#fff', padding:'22px 16px'}}>
+        <div style={{maxWidth:980, margin:'0 auto', display:'flex', alignItems:'center', gap:12}}>
+          {logoUrl ? <img src={logoUrl} alt="" style={{width:44, height:44, borderRadius:10, objectFit:'cover', background:'#fff'}} /> : <BrandMark size={44} fontSize={18} />}
+          <div style={{minWidth:0}}>
+            <div style={{fontWeight:800, fontSize:19, overflow:'hidden', textOverflow:'ellipsis'}}>{title}</div>
+            {subtitle && <div style={{fontSize:13, opacity:.85}}>{subtitle}</div>}
+          </div>
+        </div>
+      </div>
+      <div style={{maxWidth:980, margin:'0 auto', padding:'18px 16px 90px'}}>{children}</div>
+      <div style={{textAlign:'center', fontSize:11.5, color:'var(--muted)', padding:'0 0 22px'}}>Powered by BPA Business360</div>
+    </div>
+  );
+}
+
+function PublicJoinPage({ kind, token }) {
+  const toast = useToast();
+  const isSupplier = kind === 'supplier';
+  const [info, setInfo] = useState(null);
+  const [error, setError] = useState('');
+  const [form, setForm] = useState({ customerName:'', supplierName:'', contactPerson:'', phone:'', email:'', address:'', birthday:'', taxNumber:'', website:'' });
+  const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(false);
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  useEffect(() => { callServer('public.joinInfo', { key: token, kind }).then(res => { if (res.success) setInfo(res.data); else setError(res.message || 'This link is not valid.'); }); }, []);
+
+  const submit = async () => {
+    setSaving(true);
+    const res = await callServer(isSupplier ? 'public.registerSupplier' : 'public.registerCustomer', { ...form, key: token });
+    setSaving(false);
+    if (res.success) setDone(true); else toast(res.message, 'error');
+  };
+
+  if (error) return <PublicShell title="Business360"><div className="card" style={{padding:24, textAlign:'center'}}><h3 style={{margin:'0 0 6px'}}>Link not available</h3><p style={{color:'var(--muted)', margin:0}}>{error}</p></div></PublicShell>;
+  if (!info) return <PublicShell title="Loading…"><Skeleton h={220} /></PublicShell>;
+  return (
+    <PublicShell title={info.businessName} subtitle={isSupplier ? 'Supplier registration' : 'Customer registration'} logoUrl={info.logoUrl}>
+      <div className="card" style={{padding:22, maxWidth:560, margin:'0 auto'}}>
+        {done ? (
+          <div style={{textAlign:'center', padding:'10px 0'}}>
+            <div style={{width:56, height:56, borderRadius:'50%', background:'#E4F5EC', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 12px'}}><I name="check" size={28} style={{color:'var(--green)'}} /></div>
+            <h3 style={{margin:'0 0 6px'}}>Thank you!</h3>
+            <p style={{margin:0, color:'var(--muted)', fontSize:14}}>Your details have been sent to {info.businessName}. You do not need to do anything else.</p>
+          </div>
+        ) : (
+          <div>
+            <h3 style={{margin:'0 0 4px'}}>{isSupplier ? 'Register as a supplier' : 'Create your customer account'}</h3>
+            <p style={{margin:'0 0 16px', color:'var(--muted)', fontSize:13}}>Fill in your details so {info.businessName} can reach you. This takes less than a minute.</p>
+            {isSupplier ? (
+              <React.Fragment>
+                <Field label="Company / business name *"><input className="input" value={form.supplierName} onChange={e => set('supplierName', e.target.value)} /></Field>
+                <Field label="Contact person"><input className="input" value={form.contactPerson} onChange={e => set('contactPerson', e.target.value)} /></Field>
+              </React.Fragment>
+            ) : (
+              <Field label="Full name *"><input className="input" value={form.customerName} onChange={e => set('customerName', e.target.value)} /></Field>
+            )}
+            <div className="grid g2">
+              <Field label="Phone number *"><input className="input" type="tel" value={form.phone} onChange={e => set('phone', e.target.value)} /></Field>
+              <Field label="Email"><input className="input" type="email" value={form.email} onChange={e => set('email', e.target.value)} /></Field>
+            </div>
+            <Field label="Address"><input className="input" value={form.address} onChange={e => set('address', e.target.value)} /></Field>
+            {isSupplier
+              ? <Field label="Tax number (optional)"><input className="input" value={form.taxNumber} onChange={e => set('taxNumber', e.target.value)} /></Field>
+              : <Field label="Birthday (optional)"><input className="input" type="date" value={form.birthday} onChange={e => set('birthday', e.target.value)} /></Field>}
+            <input type="text" tabIndex={-1} autoComplete="off" aria-hidden="true" value={form.website} onChange={e => set('website', e.target.value)} style={{position:'absolute', left:'-9999px', width:1, height:1, opacity:0}} />
+            <button className="btn btn-primary" style={{width:'100%', justifyContent:'center', marginTop:6}} disabled={saving} onClick={submit}>{saving ? 'Submitting…' : 'Submit'}</button>
+          </div>
+        )}
+      </div>
+    </PublicShell>
+  );
+}
+
+function PublicStorePage({ slug }) {
+  const toast = useToast();
+  const [store, setStore] = useState(null);
+  const [error, setError] = useState('');
+  const [q, setQ] = useState('');
+  const [cat, setCat] = useState('');
+  const [cart, setCart] = useState({}); // productId -> qty
+  const [checkout, setCheckout] = useState(false);
+  const [placed, setPlaced] = useState(null);
+  const [form, setForm] = useState({ name:'', phone:'', email:'', address:'', notes:'', website:'' });
+  const [saving, setSaving] = useState(false);
+  useEffect(() => { callServer('public.store', { slug }).then(res => { if (res.success) setStore(res.data); else setError(res.message || 'This store is not available.'); }); }, []);
+
+  if (error) return <PublicShell title="Online store"><div className="card" style={{padding:24, textAlign:'center'}}><h3 style={{margin:'0 0 6px'}}>Store not available</h3><p style={{color:'var(--muted)', margin:0}}>{error}</p></div></PublicShell>;
+  if (!store) return <PublicShell title="Loading…"><Skeleton h={260} /></PublicShell>;
+
+  const sym = store.currencySymbol || '';
+  const money = (n) => sym + Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const cats = Array.from(new Set(store.products.map(p => p.category).filter(Boolean)));
+  const shown = store.products.filter(p => (!cat || p.category === cat) && (!q.trim() || p.productName.toLowerCase().includes(q.trim().toLowerCase())));
+  const byId = {}; store.products.forEach(p => { byId[p.productId] = p; });
+  const lines = Object.keys(cart).filter(id => cart[id] > 0 && byId[id]).map(id => ({ p: byId[id], qty: cart[id] }));
+  const itemCount = lines.reduce((s, l) => s + l.qty, 0);
+  const subtotal = lines.reduce((s, l) => s + l.qty * l.p.price, 0);
+  const vat = lines.reduce((s, l) => s + Math.round(l.qty * l.p.price * (l.p.vatRate / 100) * 100) / 100, 0);
+  const total = subtotal + vat;
+  const setQty = (p, qty) => setCart(c => ({ ...c, [p.productId]: Math.max(0, Math.min(p.available, qty)) }));
+  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const place = async () => {
+    if (!form.name.trim() || !form.phone.trim()) { toast('Please enter your name and phone number.', 'error'); return; }
+    setSaving(true);
+    const res = await callServer('public.placeOrder', { slug, customer: { name: form.name, phone: form.phone, email: form.email, address: form.address }, notes: form.notes, website: form.website, items: lines.map(l => ({ productId: l.p.productId, quantity: l.qty })) });
+    setSaving(false);
+    if (res.success) { setPlaced(res.data); setCart({}); setCheckout(false); } else toast(res.message, 'error');
+  };
+
+  if (placed) {
+    const wa = waDigits(store.phone);
+    return (
+      <PublicShell title={store.businessName} logoUrl={store.logoUrl}>
+        <div className="card" style={{padding:24, maxWidth:520, margin:'0 auto', textAlign:'center'}}>
+          <div style={{width:56, height:56, borderRadius:'50%', background:'#E4F5EC', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 12px'}}><I name="check" size={28} style={{color:'var(--green)'}} /></div>
+          <h3 style={{margin:'0 0 6px'}}>Order received!</h3>
+          <p style={{margin:'0 0 4px', fontSize:14}}>Your order number is <b className="mono">{placed.orderNumber}</b></p>
+          <p style={{margin:'0 0 14px', color:'var(--muted)', fontSize:13.5}}>Total {money(placed.total)}. {store.businessName} will contact you shortly to confirm and arrange payment and delivery.</p>
+          {wa && <a className="btn btn-gold" style={{justifyContent:'center'}} target="_blank" rel="noreferrer" href={'https://wa.me/' + wa + '?text=' + encodeURIComponent('Hello, I just placed order ' + placed.orderNumber + ' on your online store.')}>Message us on WhatsApp</a>}
+          <div style={{marginTop:12}}><button className="btn btn-outline btn-sm" onClick={() => setPlaced(null)}>Back to store</button></div>
+        </div>
+      </PublicShell>
+    );
+  }
+
+  return (
+    <PublicShell title={store.businessName} subtitle={[store.address, store.phone].filter(Boolean).join(' · ')} logoUrl={store.logoUrl}>
+      <div style={{display:'flex', gap:8, flexWrap:'wrap', marginBottom:14}}>
+        <input className="input" style={{flex:'1 1 220px', maxWidth:340}} placeholder="Search products…" value={q} onChange={e => setQ(e.target.value)} />
+        {cats.length > 0 && <select className="input" style={{maxWidth:200}} value={cat} onChange={e => setCat(e.target.value)}><option value="">All categories</option>{cats.map(c => <option key={c}>{c}</option>)}</select>}
+      </div>
+      {shown.length === 0 ? <div className="card"><EmptyState icon="products" title="No products found" subtitle="Try a different search." /></div> : (
+        <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(165px, 1fr))', gap:12}}>
+          {shown.map(p => {
+            const qty = cart[p.productId] || 0;
+            return (
+              <div key={p.productId} className="card" style={{padding:0, overflow:'hidden', display:'flex', flexDirection:'column'}}>
+                <div style={{aspectRatio:'1 / 1', background:'var(--bg)', display:'flex', alignItems:'center', justifyContent:'center'}}>
+                  {p.imageUrl ? <img src={p.imageUrl} alt={p.productName} loading="lazy" style={{width:'100%', height:'100%', objectFit:'cover'}} /> : <I name="package" size={38} style={{color:'var(--muted)', opacity:.5}} />}
+                </div>
+                <div style={{padding:'10px 11px 12px', display:'flex', flexDirection:'column', gap:4, flex:1}}>
+                  <div style={{fontWeight:700, fontSize:13.5, lineHeight:1.25}}>{p.productName}</div>
+                  {p.description && <div style={{fontSize:11.5, color:'var(--muted)', lineHeight:1.3, maxHeight:30, overflow:'hidden'}}>{p.description}</div>}
+                  <div style={{fontWeight:800, fontSize:15, color:'var(--brand)'}}>{money(p.price)}{p.unit ? <span style={{fontSize:11, fontWeight:500, color:'var(--muted)'}}> / {p.unit}</span> : null}</div>
+                  <div style={{marginTop:'auto', paddingTop:6}}>
+                    {p.available <= 0 ? <span className="badge badge-red">Out of stock</span> : qty === 0 ? (
+                      <button className="btn btn-primary btn-sm" style={{width:'100%', justifyContent:'center'}} onClick={() => setQty(p, 1)}><I name="plus" size={13} />Add</button>
+                    ) : (
+                      <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', gap:6}}>
+                        <button className="icon-btn" onClick={() => setQty(p, qty - 1)}>−</button>
+                        <b>{qty}</b>
+                        <button className="icon-btn" onClick={() => setQty(p, qty + 1)} disabled={qty >= p.available}><I name="plus" size={13} /></button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {itemCount > 0 && (
+        <div style={{position:'fixed', left:0, right:0, bottom:0, background:'var(--card)', borderTop:'1px solid var(--line)', padding:'10px 16px', zIndex:50, boxShadow:'0 -6px 20px rgba(0,0,0,.08)'}}>
+          <div style={{maxWidth:980, margin:'0 auto', display:'flex', alignItems:'center', justifyContent:'space-between', gap:10}}>
+            <div><div style={{fontSize:12, color:'var(--muted)'}}>{itemCount} item{itemCount > 1 ? 's' : ''}</div><div style={{fontWeight:800, fontSize:16}}>{money(total)}</div></div>
+            <button className="btn btn-gold" onClick={() => setCheckout(true)}><I name="cart" size={15} />Place order</button>
+          </div>
+        </div>
+      )}
+      {checkout && (
+        <Modal title="Your order" onClose={() => setCheckout(false)} footer={<React.Fragment>
+          <button className="btn btn-outline" onClick={() => setCheckout(false)}>Back</button>
+          <button className="btn btn-gold" disabled={saving} onClick={place}>{saving ? 'Sending…' : 'Confirm order — ' + money(total)}</button>
+        </React.Fragment>}>
+          <div style={{marginBottom:12}}>
+            {lines.map(l => <div key={l.p.productId} style={{display:'flex', justifyContent:'space-between', fontSize:13, padding:'4px 0'}}><span>{l.qty} × {l.p.productName}</span><span>{money(l.qty * l.p.price)}</span></div>)}
+            <div className="divider" />
+            <div style={{display:'flex', justifyContent:'space-between', fontSize:12.5, color:'var(--muted)'}}><span>Subtotal</span><span>{money(subtotal)}</span></div>
+            <div style={{display:'flex', justifyContent:'space-between', fontSize:12.5, color:'var(--muted)'}}><span>VAT</span><span>{money(vat)}</span></div>
+            <div style={{display:'flex', justifyContent:'space-between', fontWeight:800}}><span>Total</span><span>{money(total)}</span></div>
+          </div>
+          <div className="grid g2">
+            <Field label="Your name *"><input className="input" value={form.name} onChange={e => setF('name', e.target.value)} /></Field>
+            <Field label="Phone number *"><input className="input" type="tel" value={form.phone} onChange={e => setF('phone', e.target.value)} /></Field>
+          </div>
+          <Field label="Email (for your confirmation)"><input className="input" type="email" value={form.email} onChange={e => setF('email', e.target.value)} /></Field>
+          <Field label="Delivery address"><input className="input" value={form.address} onChange={e => setF('address', e.target.value)} /></Field>
+          <Field label="Note (optional)"><input className="input" value={form.notes} onChange={e => setF('notes', e.target.value)} /></Field>
+          <input type="text" tabIndex={-1} autoComplete="off" aria-hidden="true" value={form.website} onChange={e => setF('website', e.target.value)} style={{position:'absolute', left:'-9999px', width:1, height:1, opacity:0}} />
+          <p style={{fontSize:11.5, color:'var(--muted)', margin:0}}>No payment is taken now. {store.businessName} will confirm your order and share payment details.</p>
+        </Modal>
+      )}
+    </PublicShell>
+  );
+}
 
 function App() {
   const [session, setSession] = useState(null);
@@ -3493,6 +4299,19 @@ function App() {
   const logout = () => { window.__session = null; setSession(null); setScreen('landing'); };
   const platformLogout = () => { window.__platformToken = null; setPlatformSession(null); setScreen('landing'); };
   const handlePlatformAuthed = (data) => { window.__platformToken = data.token; setPlatformSession(data); };
+
+  // Public, no-login pages opened from shared links: ?join=customer|supplier&b=TOKEN  and  ?store=SLUG
+  const urlParams = useMemo(() => { try { return new URLSearchParams(window.location.search); } catch (e) { return new URLSearchParams(''); } }, []);
+  const joinKind = urlParams.get('join'), joinKey = urlParams.get('b'), storeSlug = urlParams.get('store');
+  if (storeSlug || (joinKind && joinKey)) {
+    return (
+      <ThemeCtx.Provider value={themeValue}>
+        <ToastProvider>
+          {storeSlug ? <PublicStorePage slug={storeSlug} /> : <PublicJoinPage kind={joinKind === 'supplier' ? 'supplier' : 'customer'} token={joinKey} />}
+        </ToastProvider>
+      </ThemeCtx.Provider>
+    );
+  }
 
   if (platformSession) {
     return (

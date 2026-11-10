@@ -792,6 +792,7 @@ const NAV = [
     { key:'orders', label:'Online Orders', icon:'cart' },
     { key:'products', label:'Products', icon:'products' },
     { key:'inventory', label:'Inventory', icon:'inventory' },
+    { key:'scan', label:'Scan & Record', icon:'search' },
     { key:'customers', label:'Customers', icon:'customers' },
     { key:'suppliers', label:'Suppliers', icon:'suppliers' },
     { key:'purchases', label:'Purchasing', icon:'purchases' },
@@ -813,9 +814,9 @@ const NAV = [
 ];
 const ROLE_PAGES = {
   'Owner': null, 'Administrator': null,
-  'Manager': ['dashboard','sales','orders','products','inventory','customers','suppliers','purchases','returns','invoices','reports'],
+  'Manager': ['dashboard','sales','orders','scan','products','inventory','customers','suppliers','purchases','returns','invoices','reports'],
   'Sales Staff': ['dashboard','sales','orders','customers','invoices','returns'],
-  'Inventory Staff': ['dashboard','products','inventory','purchases'],
+  'Inventory Staff': ['dashboard','products','inventory','scan','purchases'],
   'Accountant': ['dashboard','bookkeeping','expenses','income','invoices','reports'],
   'Viewer': ['dashboard','reports'],
 };
@@ -892,7 +893,7 @@ function Sidebar({ page, setPage, mobileOpen, setMobileOpen }) {
       </div>
       <div className="nav-scroll">
         {NAV.map(group => {
-          const items = group.items.filter(it => !allowed || allowed.indexOf(it.key) !== -1);
+          const items = group.items.filter(it => !allowed || allowed.indexOf(it.key) !== -1 || (it.key === 'scan' && allowed.indexOf('inventory') !== -1));
           if (!items.length) return null;
           return (
             <div key={group.group}>
@@ -1624,6 +1625,7 @@ function ProductFormModal({ onClose, onSaved, categories, product }) {
         <Field label="Product name"><input className="input" value={form.productName} onChange={e=>set('productName', e.target.value)} /></Field>
         <Field label="SKU (auto if blank)"><input className="input" value={form.sku} onChange={e=>set('sku', e.target.value)} /></Field>
       </div>
+      <Field label="Barcode (type it, or scan with a Bluetooth scanner)"><input className="input" value={form.barcode || ''} onChange={e=>set('barcode', e.target.value)} placeholder="e.g. 6001234567890" /></Field>
       <div className="grid g2">
         <Field label="Category">
           <select className="input" value={form.categoryId} onChange={e=>set('categoryId', e.target.value)}>
@@ -1672,7 +1674,7 @@ function ProductsPage({ command, clearCommand }) {
   useEffect(() => { if (command === 'new') { setEditing(null); setShowForm(true); clearCommand(); } }, [command]);
 
   const catMap = useMemo(() => { const m={}; (categories||[]).forEach(c=>m[c.categoryId]=c.categoryName); return m; }, [categories]);
-  const filtered = (products||[]).filter(p => !query || p.productName.toLowerCase().includes(query.toLowerCase()) || String(p.sku).toLowerCase().includes(query.toLowerCase()));
+  const filtered = (products||[]).filter(p => !query || p.productName.toLowerCase().includes(query.toLowerCase()) || String(p.sku).toLowerCase().includes(query.toLowerCase()) || String(p.barcode||'').toLowerCase().includes(query.toLowerCase()));
 
   return (
     <div>
@@ -3515,8 +3517,229 @@ function OrdersPage() {
   );
 }
 
+// ============================== SCAN & RECORD (phone camera barcode / QR) ==============================
+function beep() {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    const ctx = new AC(), o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination); o.frequency.value = 880; g.gain.value = 0.08; o.start(); setTimeout(() => { o.stop(); ctx.close(); }, 120);
+  } catch (e) {}
+  try { if (navigator.vibrate) navigator.vibrate(60); } catch (e) {}
+}
+
+function CameraScanner({ onCode, paused }) {
+  const videoRef = useRef(null);
+  const lastRef = useRef({ code: '', at: 0 });
+  const onCodeRef = useRef(onCode); onCodeRef.current = onCode;
+  const pausedRef = useRef(paused); pausedRef.current = paused;
+  const [status, setStatus] = useState('Starting camera…');
+
+  useEffect(() => {
+    let stopped = false, stream = null, timer = null, h5 = null;
+    const emit = (code) => {
+      const now = Date.now(); const l = lastRef.current;
+      if (pausedRef.current || !code) return;
+      if (code === l.code && now - l.at < 2500) return;
+      lastRef.current = { code, at: now }; onCodeRef.current(code);
+    };
+    const keepAlive = setInterval(() => { try { window.dispatchEvent(new Event('mousemove')); } catch (e) {} }, 20000); // scanning counts as activity
+
+    (async () => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { setStatus('Camera not available here. Use HTTPS, or type / use a Bluetooth scanner below.'); return; }
+      try {
+        if (window.BarcodeDetector) {
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+          if (stopped) { stream.getTracks().forEach(t => t.stop()); return; }
+          const v = videoRef.current; v.srcObject = stream; await v.play();
+          const det = new window.BarcodeDetector();
+          setStatus('Point the camera at a barcode or QR code');
+          timer = setInterval(async () => { if (pausedRef.current || v.readyState < 2) return; try { const r = await det.detect(v); if (r && r[0] && r[0].rawValue) emit(r[0].rawValue); } catch (e) {} }, 250);
+        } else {
+          await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js');
+          if (stopped) return;
+          h5 = new window.Html5Qrcode('scan-region');
+          await h5.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 260, height: 160 } }, (txt) => emit(txt), () => {});
+          setStatus('Point the camera at a barcode or QR code');
+        }
+      } catch (e) {
+        setStatus('Could not start the camera (' + ((e && e.name) || 'blocked') + '). Allow camera access in your browser, or type the code below.');
+      }
+    })();
+    return () => {
+      stopped = true; clearInterval(keepAlive); if (timer) clearInterval(timer);
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      if (h5) { try { h5.stop().then(() => h5.clear()).catch(() => {}); } catch (e) {} }
+    };
+  }, []);
+
+  return (
+    <div>
+      <div style={{position:'relative', borderRadius:14, overflow:'hidden', background:'#000', minHeight:200, maxWidth:520, margin:'0 auto'}}>
+        <video ref={videoRef} playsInline muted style={{width:'100%', display: window.BarcodeDetector ? 'block' : 'none', maxHeight:340, objectFit:'cover'}} />
+        <div id="scan-region" style={{width:'100%'}} />
+        {paused && <div style={{position:'absolute', inset:0, background:'rgba(0,0,0,.55)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700}}>Scan paused</div>}
+      </div>
+      <p style={{textAlign:'center', fontSize:12.5, color:'var(--muted)', margin:'8px 0 0'}}>{status}</p>
+    </div>
+  );
+}
+
+function ScanPage() {
+  const toast = useToast();
+  const { data: locations } = useApiData('locations.list', {}, []);
+  const [direction, setDirection] = useState('in');
+  const [locationId, setLocationId] = useState('');
+  const [cameraOn, setCameraOn] = useState(true);
+  const [auto, setAuto] = useState(false);
+  const [manual, setManual] = useState('');
+  const [looking, setLooking] = useState(false);
+  const [hit, setHit] = useState(null);       // { product, stock }
+  const [missing, setMissing] = useState(null); // scanned code with no product
+  const [qty, setQty] = useState('1');
+  const [reason, setReason] = useState('');
+  const [log, setLog] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [np, setNp] = useState({ productName:'', sellingPrice:'', costPrice:'' });
+  const dirRef = useRef(direction); dirRef.current = direction;
+  const locRef = useRef(locationId); locRef.current = locationId;
+  const autoRef = useRef(auto); autoRef.current = auto;
+  const busyRef = useRef(false);
+  useEffect(() => { if (!locationId && locations && locations.length) setLocationId(locations[0].locationId); }, [locations]);
+
+  const record = async (productId, name, quantity, why) => {
+    const res = await callServer('inventory.scanRecord', { productId, locationId: locRef.current, direction: dirRef.current, quantity, reason: why || 'Scanned' });
+    if (res.success) {
+      setLog(l => [{ at: new Date(), name: res.data.productName, dir: dirRef.current, qty: Number(quantity), now: res.data.newQuantity, loc: res.data.locationName }, ...l].slice(0, 30));
+      toast((dirRef.current === 'in' ? 'Added ' : 'Removed ') + quantity + ' × ' + res.data.productName + ' → now ' + res.data.newQuantity);
+      return true;
+    }
+    toast(res.message, 'error'); return false;
+  };
+
+  const handleCode = async (code) => {
+    if (busyRef.current) return;
+    busyRef.current = true; setLooking(true); beep();
+    const res = await callServer('products.lookup', { code });
+    setLooking(false);
+    if (!res.success) { toast(res.message, 'error'); busyRef.current = false; return; }
+    if (!res.data.found) { setMissing(code); setHit(null); setNp({ productName:'', sellingPrice:'', costPrice:'' }); busyRef.current = false; return; }
+    if (autoRef.current) { await record(res.data.product.productId, res.data.product.productName, 1, 'Scanned (auto)'); busyRef.current = false; return; }
+    setHit(res.data); setMissing(null); setQty('1'); busyRef.current = false;
+  };
+
+  const confirm = async () => {
+    const q = Number(qty);
+    if (!(q > 0)) { toast('Enter a quantity greater than zero.', 'error'); return; }
+    setSaving(true);
+    const ok = await record(hit.product.productId, hit.product.productName, q, reason);
+    setSaving(false);
+    if (ok) { setHit(null); setReason(''); }
+  };
+  const createAndRecord = async () => {
+    if (!np.productName.trim() || !np.sellingPrice) { toast('Enter the product name and selling price.', 'error'); return; }
+    setSaving(true);
+    const res = await callServer('products.create', { productName: np.productName.trim(), sellingPrice: Number(np.sellingPrice), costPrice: Number(np.costPrice || 0), barcode: missing, openingStock: 0 });
+    if (!res.success) { setSaving(false); toast(res.message, 'error'); return; }
+    if (dirRef.current === 'in') await record(res.data.productId, np.productName, Number(qty) > 0 ? Number(qty) : 1, 'New product via scan');
+    else toast('Product created. Switch to Stock In to add its first stock.');
+    setSaving(false); setMissing(null);
+  };
+
+  const isIn = direction === 'in';
+  const phoneLink = (() => { try { return window.location.origin + '/?scan=1'; } catch (e) { return ''; } })();
+  const showCard = !!(hit || missing);
+
+  return (
+    <div>
+      <PageHeader title="Scan & Record" subtitle="Use your phone camera to scan a barcode or QR code and record stock in or out" />
+      <div className="card" style={{padding:14, marginBottom:14}}>
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:10}}>
+          {[['in','Stock In','Receiving / adding stock'],['out','Stock Out','Removing / damaged / issued']].map(([k,t,s]) => (
+            <button key={k} type="button" onClick={() => setDirection(k)} style={{textAlign:'left', padding:'10px 12px', borderRadius:10, cursor:'pointer', background: direction===k ? (k==='in' ? '#E4F5EC' : '#FCE9E5') : 'var(--card)', color:'var(--ink)', border:'1.5px solid ' + (direction===k ? (k==='in' ? 'var(--green)' : 'var(--red)') : 'var(--line)')}}>
+              <div style={{fontWeight:800, fontSize:14}}>{t}</div><div style={{fontSize:11.5, color:'var(--muted)'}}>{s}</div>
+            </button>
+          ))}
+        </div>
+        <div className="grid g2">
+          <Field label="Location"><select className="input" value={locationId} onChange={e => setLocationId(e.target.value)}>{(locations || []).map(l => <option key={l.locationId} value={l.locationId}>{l.locationName}</option>)}</select></Field>
+          <Field label="Quick mode"><label style={{display:'flex', gap:8, alignItems:'center', fontSize:13, padding:'9px 0', cursor:'pointer'}}><input type="checkbox" checked={auto} onChange={e => setAuto(e.target.checked)} /> Record 1 automatically per scan</label></Field>
+        </div>
+      </div>
+
+      {cameraOn
+        ? <CameraScanner paused={showCard || looking} onCode={handleCode} />
+        : <div className="card" style={{padding:18, textAlign:'center', color:'var(--muted)', fontSize:13}}>Camera is off.</div>}
+      <div style={{textAlign:'center', margin:'10px 0'}}>
+        <button className="btn btn-outline btn-sm" onClick={() => setCameraOn(c => !c)}>{cameraOn ? 'Turn camera off' : 'Turn camera on'}</button>
+      </div>
+
+      <div className="card" style={{padding:14, marginBottom:14}}>
+        <Field label="Type a code or use a Bluetooth / USB scanner">
+          <div style={{display:'flex', gap:8}}>
+            <input className="input" value={manual} placeholder="Barcode, SKU or QR text" onChange={e => setManual(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && manual.trim()) { handleCode(manual.trim()); setManual(''); } }} />
+            <button className="btn btn-primary" onClick={() => { if (manual.trim()) { handleCode(manual.trim()); setManual(''); } }}>Find</button>
+          </div>
+        </Field>
+        <p style={{fontSize:11.5, color:'var(--muted)', margin:0}}>Works with the product's barcode, its SKU, or a QR code that contains the SKU. Set a product's barcode in Products &rarr; Edit.</p>
+      </div>
+
+      {hit && (
+        <Modal title={isIn ? 'Stock In' : 'Stock Out'} onClose={() => setHit(null)} footer={<React.Fragment>
+          <button className="btn btn-outline" onClick={() => setHit(null)}>Cancel</button>
+          <button className={isIn ? 'btn btn-primary' : 'btn btn-danger'} disabled={saving} onClick={confirm}>{saving ? 'Saving…' : (isIn ? 'Add stock' : 'Remove stock')}</button>
+        </React.Fragment>}>
+          <div style={{display:'flex', gap:12, alignItems:'center', marginBottom:12}}>
+            <div style={{width:60, height:60, borderRadius:10, overflow:'hidden', background:'var(--bg)', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center'}}>
+              {hit.product.imageUrl ? <img src={hit.product.imageUrl} alt="" style={{width:'100%', height:'100%', objectFit:'cover'}} /> : <I name="package" size={24} style={{opacity:.4}} />}
+            </div>
+            <div><div style={{fontWeight:800}}>{hit.product.productName}</div><div style={{fontSize:12, color:'var(--muted)'}} className="mono">{hit.product.barcode || hit.product.sku}</div></div>
+          </div>
+          <div style={{fontSize:12.5, marginBottom:10}}>
+            {hit.stock.length === 0 ? 'No stock recorded yet.' : hit.stock.map(s => <div key={s.locationId} style={{display:'flex', justifyContent:'space-between'}}><span>{s.locationName}</span><b>{s.quantity}</b></div>)}
+          </div>
+          <Field label="Quantity"><input className="input" type="number" min="1" inputMode="numeric" autoFocus value={qty} onChange={e => setQty(e.target.value)} /></Field>
+          <Field label="Note (optional)"><input className="input" value={reason} onChange={e => setReason(e.target.value)} placeholder={isIn ? 'e.g. Delivery from supplier' : 'e.g. Damaged'} /></Field>
+        </Modal>
+      )}
+      {missing && (
+        <Modal title="New product" onClose={() => setMissing(null)} footer={<React.Fragment>
+          <button className="btn btn-outline" onClick={() => setMissing(null)}>Cancel</button>
+          <button className="btn btn-primary" disabled={saving} onClick={createAndRecord}>{saving ? 'Saving…' : 'Create product'}</button>
+        </React.Fragment>}>
+          <p style={{fontSize:13, margin:'0 0 10px'}}>No product has the code <b className="mono">{missing}</b>. Create it now and it will be linked to this barcode.</p>
+          <Field label="Product name"><input className="input" value={np.productName} onChange={e => setNp(n => ({ ...n, productName: e.target.value }))} /></Field>
+          <div className="grid g3">
+            <Field label="Selling price"><input className="input" type="number" value={np.sellingPrice} onChange={e => setNp(n => ({ ...n, sellingPrice: e.target.value }))} /></Field>
+            <Field label="Cost price"><input className="input" type="number" value={np.costPrice} onChange={e => setNp(n => ({ ...n, costPrice: e.target.value }))} /></Field>
+            <Field label="Opening qty"><input className="input" type="number" min="1" value={qty} onChange={e => setQty(e.target.value)} /></Field>
+          </div>
+        </Modal>
+      )}
+
+      <div className="card" style={{padding:14, marginBottom:14}}>
+        <div style={{fontWeight:700, fontSize:13, marginBottom:8}}>This session</div>
+        {log.length === 0 ? <p style={{fontSize:12.5, color:'var(--muted)', margin:0}}>Nothing recorded yet.</p> : log.map((l, i) => (
+          <div key={i} style={{display:'flex', justifyContent:'space-between', gap:8, fontSize:12.5, padding:'5px 0', borderBottom:'1px solid var(--line)'}}>
+            <span>{l.name} <span style={{color:'var(--muted)'}}>@ {l.loc}</span></span>
+            <span style={{color: l.dir === 'in' ? 'var(--green)' : 'var(--red)', fontWeight:700, whiteSpace:'nowrap'}}>{l.dir === 'in' ? '+' : '−'}{l.qty} &rarr; {l.now}</span>
+          </div>
+        ))}
+      </div>
+      <div className="card" style={{padding:14}}>
+        <div style={{fontWeight:700, fontSize:13, marginBottom:6}}>Open this on your phone</div>
+        <p style={{fontSize:12.5, color:'var(--muted)', margin:'0 0 8px'}}>Open this link on your phone, log in, and it goes straight to the scanner. Add it to your home screen for one-tap access.</p>
+        <div style={{display:'flex', gap:8}}>
+          <input className="input mono" readOnly value={phoneLink} style={{fontSize:12}} onFocus={e => e.target.select()} />
+          <button className="btn btn-outline" onClick={async () => { const ok = await copyText(phoneLink); toast(ok ? 'Link copied.' : 'Could not copy.', ok ? 'success' : 'error'); }}><I name="copy" size={14} />Copy</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const PAGES = {
-  dashboard: DashboardPage, sales: SalesPage, orders: OrdersPage, products: ProductsPage, inventory: InventoryPage,
+  dashboard: DashboardPage, sales: SalesPage, orders: OrdersPage, scan: ScanPage, products: ProductsPage, inventory: InventoryPage,
   customers: CustomersPage, suppliers: SuppliersPage, purchases: PurchasesPage, returns: ReturnsPage,
   invoices: InvoicesPage, expenses: ExpensesPage, income: IncomePage, bookkeeping: BookkeepingPage,
   reports: ReportsPage, users: UsersPage, audit: AuditLogPage, settings: SettingsPage, recyclebin: RecycleBinPage,
@@ -3557,7 +3780,7 @@ function useIdleLogout(onIdle) {
 }
 
 function Workspace({ session, onLogout, setSession }) {
-  const [page, setPage] = useState('dashboard');
+  const [page, setPage] = useState(() => { try { return new URLSearchParams(window.location.search).get('scan') ? 'scan' : 'dashboard'; } catch (e) { return 'dashboard'; } });
   const [command, setCommand] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cmdkOpen, setCmdkOpen] = useState(false);
@@ -3596,7 +3819,7 @@ function Workspace({ session, onLogout, setSession }) {
   // Prefer the business-specific permission set computed server-side (may be a Super Admin override);
   // fall back to the static default map if a session doesn't carry one (e.g. an older cached session).
   const allowed = user.allowedPages !== undefined ? user.allowedPages : ROLE_PAGES[user.role];
-  const effectivePage = (!allowed || allowed.indexOf(page) !== -1) ? page : 'dashboard';
+  const effectivePage = (!allowed || allowed.indexOf(page) !== -1 || (page === 'scan' && allowed.indexOf('inventory') !== -1)) ? page : 'dashboard';
 
   const dispatchCommand = (cmd) => {
     if (isLocked(cmd.page)) { setUpgradeFeature(cmd.page); return; }

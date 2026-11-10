@@ -654,8 +654,8 @@ function DeleteWithReasonDialog({ title, itemLabel, onConfirm, onClose }) {
   );
 }
 
-function Field({ label, children }) {
-  return <div className="field"><label className="label">{label}</label>{children}</div>;
+function Field({ label, hint, children }) {
+  return <div className="field"><label className="label">{label}</label>{children}{hint && <div style={{fontSize:11.5, color:'var(--muted)', marginTop:4}}>{hint}</div>}</div>;
 }
 
 function DataTable({ columns, rows, loading, emptyIcon, emptyTitle, emptySubtitle, emptyAction, rowKey, onRowClick }) {
@@ -3194,7 +3194,55 @@ function SettingsPage() {
           <SeedDemoButton />
         </div>
       )}
+      {canEdit && <OnlinePaymentsPanel />}
       {canEdit && <CategoriesLocationsPanel />}
+    </div>
+  );
+}
+
+function OnlinePaymentsPanel() {
+  const toast = useToast();
+  const [cfg, setCfg] = useState(null);
+  const [provider, setProvider] = useState('');
+  const [key, setKey] = useState('');
+  const [req, setReq] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const load = async () => { const r = await callServer('payments.getConfig', {}); if (r.success) { setCfg(r.data); setProvider(r.data.provider || ''); setReq(!!r.data.requirePayment); setKey(''); } };
+  useEffect(() => { load(); }, []);
+  const save = async () => {
+    setSaving(true);
+    const r = await callServer('payments.saveConfig', { provider, secretKey: key, requirePayment: req });
+    setSaving(false);
+    if (r.success) { toast(provider ? 'Online payments saved.' : 'Online payments turned off.'); setCfg(r.data); setKey(''); } else toast(r.message, 'error');
+  };
+  const names = { paystack: 'Paystack', flutterwave: 'Flutterwave' };
+  return (
+    <div className="card" style={{padding:24, maxWidth:600, marginTop:16}}>
+      <h3 style={{margin:'0 0 4px', fontSize:14.5}}>Online payments (online store)</h3>
+      <p style={{fontSize:12.5, color:'var(--muted)', margin:'0 0 14px'}}>Let customers pay by card, bank transfer or USSD when they order from your store link. Money goes straight to <b>your own</b> {provider ? names[provider] : 'Paystack / Flutterwave'} account. Get your <b>secret key</b> from your gateway dashboard (Settings → API keys). Use a <span className="mono">test</span> key first.</p>
+      {!cfg ? <Skeleton h={80} /> : (
+        <React.Fragment>
+          <Field label="Payment gateway">
+            <select className="input" value={provider} onChange={e => setProvider(e.target.value)}>
+              <option value="">Off — customers order now, pay later</option>
+              <option value="paystack">Paystack</option>
+              <option value="flutterwave">Flutterwave</option>
+            </select>
+          </Field>
+          {provider && (
+            <React.Fragment>
+              <Field label={names[provider] + ' secret key'} hint={cfg.keySet && cfg.provider === provider ? 'Saved (' + cfg.keyHint + '). Leave blank to keep it.' : (provider === 'paystack' ? 'Starts with sk_test_ or sk_live_' : 'Starts with FLWSECK-')}>
+                <input className="input" type="password" autoComplete="off" value={key} onChange={e => setKey(e.target.value)} placeholder={cfg.keySet && cfg.provider === provider ? '••••••••••••' : 'Paste secret key'} />
+              </Field>
+              <label style={{display:'flex', gap:8, alignItems:'center', fontSize:13, margin:'4px 0 14px'}}>
+                <input type="checkbox" checked={req} onChange={e => setReq(e.target.checked)} /> Customers must pay online (hide the "pay later" option)
+              </label>
+              <p style={{fontSize:12, color:'var(--muted)', margin:'0 0 12px'}}>Customers must enter an email address to pay online. Never share your secret key — it is stored securely on the server and is never shown again.</p>
+            </React.Fragment>
+          )}
+          <button className="btn btn-primary" disabled={saving} onClick={save}>{saving ? 'Saving…' : 'Save payment settings'}</button>
+        </React.Fragment>
+      )}
     </div>
   );
 }
@@ -3438,6 +3486,13 @@ function OrderDetailModal({ order, onClose, onChanged }) {
     setBusy('');
     if (res.success) { toast('Invoice ' + res.data.invoice.invoiceNumber + ' created (unpaid).'); onChanged(); onClose(); } else toast(res.message, 'error');
   };
+  const [checking, setChecking] = useState(false);
+  const checkPay = async () => {
+    setChecking(true);
+    const r = await callServer('orders.checkPayment', { id: order.orderId });
+    setChecking(false);
+    if (r.success && r.data.paid) { toast('Payment confirmed.'); onChanged(); onClose(); } else toast(r.success ? (r.data.reason || 'Not paid yet.') : r.message, 'error');
+  };
   const wa = waDigits(order.phone);
   return (
     <Modal title={'Order ' + order.orderNumber} onClose={onClose} wide footer={open ? (
@@ -3450,6 +3505,8 @@ function OrderDetailModal({ order, onClose, onChanged }) {
       <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12}}>
         <div style={{fontSize:12.5, color:'var(--muted)'}}>{fmtDateTime(order.createdAt)}</div><StatusBadge status={order.status} />
       </div>
+      {order.paymentStatus === 'Paid' && <div className="badge badge-green" style={{marginBottom:10}}>Paid online via {order.paymentProvider} · ref {order.paymentRef}</div>}
+      {order.paymentStatus === 'Pending' && <div style={{marginBottom:10, display:'flex', gap:8, alignItems:'center', flexWrap:'wrap'}}><span className="badge badge-amber">Online payment started — not confirmed</span><button className="btn btn-outline btn-sm" disabled={checking} onClick={checkPay}>{checking ? 'Checking…' : 'Check payment'}</button></div>}
       <div className="grid g2" style={{fontSize:13, marginBottom:14}}>
         <div><span style={{color:'var(--muted)'}}>Customer: </span><b>{order.customerName}</b></div>
         <div><span style={{color:'var(--muted)'}}>Phone: </span>{order.phone} {wa && <a href={'https://wa.me/' + wa} target="_blank" rel="noreferrer" style={{marginLeft:6, color:'var(--brand-2)', fontWeight:700}}>WhatsApp</a>}</div>
@@ -3468,7 +3525,7 @@ function OrderDetailModal({ order, onClose, onChanged }) {
           <Field label="Take stock from">
             <select className="input" value={locationId} onChange={e => setLocationId(e.target.value)}>{(locations || []).map(l => <option key={l.locationId} value={l.locationId}>{l.locationName}</option>)}</select>
           </Field>
-          <p style={{fontSize:12, color:'var(--muted)', margin:0}}>Converting creates an <b>unpaid</b> invoice and deducts stock. Record the payment when the customer pays.</p>
+          <p style={{fontSize:12, color:'var(--muted)', margin:0}}>{order.paymentStatus === 'Paid' ? <span>Converting creates an invoice already marked <b>paid</b> (online payment) and deducts stock.</span> : <span>Converting creates an <b>unpaid</b> invoice and deducts stock. Record the payment when the customer pays.</span>}</p>
         </div>
       )}
       {order.saleId && <p style={{fontSize:12.5, color:'var(--green)', marginTop:12}}>Converted to an invoice. Find it under Sales / Invoices.</p>}
@@ -3508,6 +3565,7 @@ function OrdersPage() {
           { key:'customerName', header:'Customer', render:r => <div><div style={{fontWeight:600}}>{r.customerName}</div><div style={{fontSize:11.5, color:'var(--muted)'}}>{r.phone}</div></div> },
           { key:'items', header:'Items', render:r => (r.items || []).map(i => i.quantity + '× ' + i.productName).join(', ') },
           { key:'total', header:'Total', render:r => fmt(r.total) },
+          { key:'paymentStatus', header:'Payment', render:r => r.paymentStatus === 'Paid' ? <span className="badge badge-green">Paid online</span> : r.paymentStatus === 'Pending' ? <span className="badge badge-amber">Awaiting</span> : <span style={{color:'var(--muted)', fontSize:12}}>Unpaid</span> },
           { key:'status', header:'Status', render:r => <StatusBadge status={r.status === 'Fulfilled' ? 'Completed' : r.status === 'New' ? 'Pending' : r.status === 'Confirmed' ? 'Ordered' : 'Voided'} /> },
         ]}
       />
@@ -4389,6 +4447,14 @@ function PublicStorePage({ slug }) {
   const [placed, setPlaced] = useState(null);
   const [form, setForm] = useState({ name:'', phone:'', email:'', address:'', notes:'', website:'' });
   const [saving, setSaving] = useState(false);
+  const retOrder = (() => { try { return new URLSearchParams(window.location.search).get('order') || ''; } catch (e) { return ''; } })();
+  const [ret, setRet] = useState(retOrder ? { state: 'checking' } : null);
+  const verifyReturn = async () => {
+    setRet({ state: 'checking' });
+    const r = await callServer('public.verifyPayment', { slug, orderId: retOrder });
+    setRet(r.success ? { state: r.data.paid ? 'paid' : 'unpaid', ...r.data } : { state: 'error', message: r.message });
+  };
+  useEffect(() => { if (retOrder) verifyReturn(); }, []);
   useEffect(() => { callServer('public.store', { slug }).then(res => { if (res.success) setStore(res.data); else setError(res.message || 'This store is not available.'); }); }, []);
 
   if (error) return <PublicShell title="Online store"><div className="card" style={{padding:24, textAlign:'center'}}><h3 style={{margin:'0 0 6px'}}>Store not available</h3><p style={{color:'var(--muted)', margin:0}}>{error}</p></div></PublicShell>;
@@ -4407,13 +4473,53 @@ function PublicStorePage({ slug }) {
   const setQty = (p, qty) => setCart(c => ({ ...c, [p.productId]: Math.max(0, Math.min(p.available, qty)) }));
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const place = async () => {
+  const startPay = async (orderId, email) => {
+    const r = await callServer('public.initPayment', { slug, orderId, email, returnUrl: window.location.origin + window.location.pathname });
+    if (r.success && r.data.url) { window.location.href = r.data.url; return true; }
+    return r.message || 'Could not start the payment.';
+  };
+  const place = async (payNow) => {
     if (!form.name.trim() || !form.phone.trim()) { toast('Please enter your name and phone number.', 'error'); return; }
+    if (payNow && !/^\S+@\S+\.\S+$/.test(form.email.trim())) { toast('Enter your email address to pay online.', 'error'); return; }
     setSaving(true);
     const res = await callServer('public.placeOrder', { slug, customer: { name: form.name, phone: form.phone, email: form.email, address: form.address }, notes: form.notes, website: form.website, items: lines.map(l => ({ productId: l.p.productId, quantity: l.qty })) });
+    if (res.success && payNow) {
+      const out = await startPay(res.data.orderId, form.email.trim());
+      if (out === true) return; // redirecting to the gateway
+      setSaving(false); setPlaced({ ...res.data, payError: out, email: form.email.trim() }); setCart({}); setCheckout(false); return;
+    }
     setSaving(false);
     if (res.success) { setPlaced(res.data); setCart({}); setCheckout(false); } else toast(res.message, 'error');
   };
+  const retryPay = async (orderId, email) => { setSaving(true); const out = await startPay(orderId, email); if (out !== true) { setSaving(false); toast(out, 'error'); } };
+
+  if (ret) {
+    const wa0 = waDigits(store.phone);
+    const done = () => { try { window.history.replaceState({}, '', window.location.pathname + '?store=' + encodeURIComponent(slug)); } catch (e) {} setRet(null); };
+    return (
+      <PublicShell title={store.businessName} logoUrl={store.logoUrl}>
+        <div className="card" style={{padding:24, maxWidth:520, margin:'0 auto', textAlign:'center'}}>
+          {ret.state === 'checking' && <React.Fragment><h3 style={{margin:'0 0 6px'}}>Confirming your payment…</h3><p style={{color:'var(--muted)', margin:0}}>Please wait, do not close this page.</p></React.Fragment>}
+          {ret.state === 'paid' && <React.Fragment>
+            <div style={{width:56, height:56, borderRadius:'50%', background:'#E4F5EC', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 12px'}}><I name="check" size={28} style={{color:'var(--green)'}} /></div>
+            <h3 style={{margin:'0 0 6px'}}>Payment received — thank you!</h3>
+            <p style={{margin:'0 0 14px', color:'var(--muted)', fontSize:13.5}}>Order <b className="mono">{ret.orderNumber}</b> ({money(ret.total)}) is paid. {ret.businessName} will contact you to arrange delivery.</p>
+            {wa0 && <a className="btn btn-gold" style={{justifyContent:'center'}} target="_blank" rel="noreferrer" href={'https://wa.me/' + wa0 + '?text=' + encodeURIComponent('Hello, I paid for order ' + ret.orderNumber + '.')}>Message us on WhatsApp</a>}
+          </React.Fragment>}
+          {ret.state === 'unpaid' && <React.Fragment>
+            <h3 style={{margin:'0 0 6px'}}>Payment not completed</h3>
+            <p style={{margin:'0 0 14px', color:'var(--muted)', fontSize:13.5}}>{ret.reason || 'We have not received your payment yet.'} Your order <b className="mono">{ret.orderNumber}</b> is saved.</p>
+            <div style={{display:'flex', gap:8, justifyContent:'center', flexWrap:'wrap'}}>
+              <button className="btn btn-gold" disabled={saving} onClick={() => retryPay(retOrder, '')}>{saving ? 'Opening…' : 'Try paying again'}</button>
+              <button className="btn btn-outline" onClick={verifyReturn}>I have paid — check again</button>
+            </div>
+          </React.Fragment>}
+          {ret.state === 'error' && <React.Fragment><h3 style={{margin:'0 0 6px'}}>Could not check payment</h3><p style={{color:'var(--muted)', margin:0}}>{ret.message}</p></React.Fragment>}
+          {ret.state !== 'checking' && <div style={{marginTop:12}}><button className="btn btn-outline btn-sm" onClick={done}>Back to store</button></div>}
+        </div>
+      </PublicShell>
+    );
+  }
 
   if (placed) {
     const wa = waDigits(store.phone);
@@ -4424,6 +4530,7 @@ function PublicStorePage({ slug }) {
           <h3 style={{margin:'0 0 6px'}}>Order received!</h3>
           <p style={{margin:'0 0 4px', fontSize:14}}>Your order number is <b className="mono">{placed.orderNumber}</b></p>
           <p style={{margin:'0 0 14px', color:'var(--muted)', fontSize:13.5}}>Total {money(placed.total)}. {store.businessName} will contact you shortly to confirm and arrange payment and delivery.</p>
+          {placed.payError && <div style={{margin:'0 0 14px'}}><p style={{color:'var(--red)', fontSize:13, margin:'0 0 8px'}}>{placed.payError}</p><button className="btn btn-primary" disabled={saving} onClick={() => retryPay(placed.orderId, placed.email)}>{saving ? 'Opening…' : 'Try paying online again'}</button></div>}
           {wa && <a className="btn btn-gold" style={{justifyContent:'center'}} target="_blank" rel="noreferrer" href={'https://wa.me/' + wa + '?text=' + encodeURIComponent('Hello, I just placed order ' + placed.orderNumber + ' on your online store.')}>Message us on WhatsApp</a>}
           <div style={{marginTop:12}}><button className="btn btn-outline btn-sm" onClick={() => setPlaced(null)}>Back to store</button></div>
         </div>
@@ -4478,7 +4585,8 @@ function PublicStorePage({ slug }) {
       {checkout && (
         <Modal title="Your order" onClose={() => setCheckout(false)} footer={<React.Fragment>
           <button className="btn btn-outline" onClick={() => setCheckout(false)}>Back</button>
-          <button className="btn btn-gold" disabled={saving} onClick={place}>{saving ? 'Sending…' : 'Confirm order — ' + money(total)}</button>
+          {store.payment && <button className="btn btn-gold" disabled={saving} onClick={() => place(true)}>{saving ? 'Please wait…' : 'Pay now — ' + money(total)}</button>}
+          {!(store.payment && store.payment.requirePayment) && <button className={'btn ' + (store.payment ? 'btn-outline' : 'btn-gold')} disabled={saving} onClick={() => place(false)}>{saving ? 'Sending…' : store.payment ? 'Order, pay later' : 'Confirm order — ' + money(total)}</button>}
         </React.Fragment>}>
           <div style={{marginBottom:12}}>
             {lines.map(l => <div key={l.p.productId} style={{display:'flex', justifyContent:'space-between', fontSize:13, padding:'4px 0'}}><span>{l.qty} × {l.p.productName}</span><span>{money(l.qty * l.p.price)}</span></div>)}
@@ -4491,11 +4599,11 @@ function PublicStorePage({ slug }) {
             <Field label="Your name *"><input className="input" value={form.name} onChange={e => setF('name', e.target.value)} /></Field>
             <Field label="Phone number *"><input className="input" type="tel" value={form.phone} onChange={e => setF('phone', e.target.value)} /></Field>
           </div>
-          <Field label="Email (for your confirmation)"><input className="input" type="email" value={form.email} onChange={e => setF('email', e.target.value)} /></Field>
+          <Field label={store.payment ? 'Email * (needed for online payment & receipt)' : 'Email (for your confirmation)'}><input className="input" type="email" value={form.email} onChange={e => setF('email', e.target.value)} /></Field>
           <Field label="Delivery address"><input className="input" value={form.address} onChange={e => setF('address', e.target.value)} /></Field>
           <Field label="Note (optional)"><input className="input" value={form.notes} onChange={e => setF('notes', e.target.value)} /></Field>
           <input type="text" tabIndex={-1} autoComplete="off" aria-hidden="true" value={form.website} onChange={e => setF('website', e.target.value)} style={{position:'absolute', left:'-9999px', width:1, height:1, opacity:0}} />
-          <p style={{fontSize:11.5, color:'var(--muted)', margin:0}}>No payment is taken now. {store.businessName} will confirm your order and share payment details.</p>
+          <p style={{fontSize:11.5, color:'var(--muted)', margin:0}}>{store.payment ? 'Pay securely online with card, bank transfer or USSD via ' + (store.payment.provider === 'paystack' ? 'Paystack' : 'Flutterwave') + '.' : 'No payment is taken now. ' + store.businessName + ' will confirm your order and share payment details.'}</p>
         </Modal>
       )}
     </PublicShell>

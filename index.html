@@ -1881,10 +1881,13 @@ function ShareLinksModal({ onClose, focus }) {
   const { user } = useApp();
   const { data, loading, reload } = useApiData('links.get', {}, []);
   const canToggle = user.role === 'Owner' || user.role === 'Administrator';
+  // Always build links from the address the app is actually opened on (e.g. the Vercel site),
+  // so they never point at the Apps Script URL even if PUBLIC_APP_URL isn't set on the backend.
+  const fixUrl = (u) => { try { const h = window.location.hostname; if (/script\.google|googleusercontent/.test(h) || !u) return u; return window.location.origin + '/' + String(u).substring(String(u).indexOf('?')); } catch (e) { return u; } };
   const rows = data ? [
-    { key:'customer', title:'Customer sign-up link', desc:'Customers open this link and add their own details. No login, no access to your app.', url:data.customerLink },
-    { key:'supplier', title:'Supplier sign-up link', desc:'Suppliers register themselves here. No login needed.', url:data.supplierLink },
-    { key:'store', title:'Online store / order link', desc:'Put this in your Facebook / Instagram / WhatsApp ads. Shows your products, prices and photos and lets people order.', url:data.storeLink },
+    { key:'customer', title:'Customer sign-up link', desc:'Customers open this link and add their own details. No login, no access to your app.', url:fixUrl(data.customerLink) },
+    { key:'supplier', title:'Supplier sign-up link', desc:'Suppliers register themselves here. No login needed.', url:fixUrl(data.supplierLink) },
+    { key:'store', title:'Online store / order link', desc:'Put this in your Facebook / Instagram / WhatsApp ads. Shows your products, prices and photos and lets people order.', url:fixUrl(data.storeLink) },
   ] : [];
   const copy = async (u) => { const ok = await copyText(u); toast(ok ? 'Link copied.' : 'Could not copy — select and copy it manually.', ok ? 'success' : 'error'); };
   const toggleStore = async () => {

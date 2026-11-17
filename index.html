@@ -247,6 +247,9 @@
 </head>
 <body>
 <div id="root"></div>
+<script>/* qrcode-generator 1.4.4 (MIT, Kazuhiko Arase) — inlined so QR codes work offline and without a CDN */
+var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],f={},c=function(t,r){o=function(t){for(var r=new Array(t),e=0;e<t;e+=1){r[e]=new Array(t);for(var n=0;n<t;n+=1)r[e][n]=null}return r}(i=4*e+17),l(0,0),l(i-7,0),l(0,i-7),s(),h(),d(t,r),e>=7&&v(t),null==a&&(a=p(e,n,u)),w(a,r)},l=function(t,r){for(var e=-1;e<=7;e+=1)if(!(t+e<=-1||i<=t+e))for(var n=-1;n<=7;n+=1)r+n<=-1||i<=r+n||(o[t+e][r+n]=0<=e&&e<=6&&(0==n||6==n)||0<=n&&n<=6&&(0==e||6==e)||2<=e&&e<=4&&2<=n&&n<=4)},h=function(){for(var t=8;t<i-8;t+=1)null==o[t][6]&&(o[t][6]=t%2==0);for(var r=8;r<i-8;r+=1)null==o[6][r]&&(o[6][r]=r%2==0)},s=function(){for(var t=B.getPatternPosition(e),r=0;r<t.length;r+=1)for(var n=0;n<t.length;n+=1){var i=t[r],a=t[n];if(null==o[i][a])for(var u=-2;u<=2;u+=1)for(var f=-2;f<=2;f+=1)o[i+u][a+f]=-2==u||2==u||-2==f||2==f||0==u&&0==f}},v=function(t){for(var r=B.getBCHTypeNumber(e),n=0;n<18;n+=1){var a=!t&&1==(r>>n&1);o[Math.floor(n/3)][n%3+i-8-3]=a}for(n=0;n<18;n+=1){a=!t&&1==(r>>n&1);o[n%3+i-8-3][Math.floor(n/3)]=a}},d=function(t,r){for(var e=n<<3|r,a=B.getBCHTypeInfo(e),u=0;u<15;u+=1){var f=!t&&1==(a>>u&1);u<6?o[u][8]=f:u<8?o[u+1][8]=f:o[i-15+u][8]=f}for(u=0;u<15;u+=1){f=!t&&1==(a>>u&1);u<8?o[8][i-u-1]=f:u<9?o[8][15-u-1+1]=f:o[8][15-u-1]=f}o[i-8][8]=!t},w=function(t,r){for(var e=-1,n=i-1,a=7,u=0,f=B.getMaskFunction(r),c=i-1;c>0;c-=2)for(6==c&&(c-=1);;){for(var g=0;g<2;g+=1)if(null==o[n][c-g]){var l=!1;u<t.length&&(l=1==(t[u]>>>a&1)),f(n,c-g)&&(l=!l),o[n][c-g]=l,-1==(a-=1)&&(u+=1,a=7)}if((n+=e)<0||i<=n){n-=e,e=-e;break}}},p=function(t,r,e){for(var n=A.getRSBlocks(t,r),o=b(),i=0;i<e.length;i+=1){var a=e[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var u=0;for(i=0;i<n.length;i+=1)u+=n[i].dataCount;if(o.getLengthInBits()>8*u)throw"code length overflow. ("+o.getLengthInBits()+">"+8*u+")";for(o.getLengthInBits()+4<=8*u&&o.put(0,4);o.getLengthInBits()%8!=0;)o.putBit(!1);for(;!(o.getLengthInBits()>=8*u||(o.put(236,8),o.getLengthInBits()>=8*u));)o.put(17,8);return function(t,r){for(var e=0,n=0,o=0,i=new Array(r.length),a=new Array(r.length),u=0;u<r.length;u+=1){var f=r[u].dataCount,c=r[u].totalCount-f;n=Math.max(n,f),o=Math.max(o,c),i[u]=new Array(f);for(var g=0;g<i[u].length;g+=1)i[u][g]=255&t.getBuffer()[g+e];e+=f;var l=B.getErrorCorrectPolynomial(c),h=k(i[u],l.getLength()-1).mod(l);for(a[u]=new Array(l.getLength()-1),g=0;g<a[u].length;g+=1){var s=g+h.getLength()-a[u].length;a[u][g]=s>=0?h.getAt(s):0}}var v=0;for(g=0;g<r.length;g+=1)v+=r[g].totalCount;var d=new Array(v),w=0;for(g=0;g<n;g+=1)for(u=0;u<r.length;u+=1)g<i[u].length&&(d[w]=i[u][g],w+=1);for(g=0;g<o;g+=1)for(u=0;u<r.length;u+=1)g<a[u].length&&(d[w]=a[u][g],w+=1);return d}(o,n)};f.addData=function(t,r){var e=null;switch(r=r||"Byte"){case"Numeric":e=M(t);break;case"Alphanumeric":e=x(t);break;case"Byte":e=m(t);break;case"Kanji":e=L(t);break;default:throw"mode:"+r}u.push(e),a=null},f.isDark=function(t,r){if(t<0||i<=t||r<0||i<=r)throw t+","+r;return o[t][r]},f.getModuleCount=function(){return i},f.make=function(){if(e<1){for(var t=1;t<40;t++){for(var r=A.getRSBlocks(t,n),o=b(),i=0;i<u.length;i++){var a=u[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var g=0;for(i=0;i<r.length;i++)g+=r[i].dataCount;if(o.getLengthInBits()<=8*g)break}e=t}c(!1,function(){for(var t=0,r=0,e=0;e<8;e+=1){c(!0,e);var n=B.getLostPoint(f);(0==e||t>n)&&(t=n,r=e)}return r}())},f.createTableTag=function(t,r){t=t||2;var e="";e+='<table style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: "+(r=void 0===r?4*t:r)+"px;",e+='">',e+="<tbody>";for(var n=0;n<f.getModuleCount();n+=1){e+="<tr>";for(var o=0;o<f.getModuleCount();o+=1)e+='<td style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: 0px;",e+=" width: "+t+"px;",e+=" height: "+t+"px;",e+=" background-color: ",e+=f.isDark(n,o)?"#000000":"#ffffff",e+=";",e+='"/>';e+="</tr>"}return e+="</tbody>",e+="</table>"},f.createSvgTag=function(t,r,e,n){var o={};"object"==typeof arguments[0]&&(t=(o=arguments[0]).cellSize,r=o.margin,e=o.alt,n=o.title),t=t||2,r=void 0===r?4*t:r,(e="string"==typeof e?{text:e}:e||{}).text=e.text||null,e.id=e.text?e.id||"qrcode-description":null,(n="string"==typeof n?{text:n}:n||{}).text=n.text||null,n.id=n.text?n.id||"qrcode-title":null;var i,a,u,c,g=f.getModuleCount()*t+2*r,l="";for(c="l"+t+",0 0,"+t+" -"+t+",0 0,-"+t+"z ",l+='<svg version="1.1" xmlns="http://www.w3.org/2000/svg"',l+=o.scalable?"":' width="'+g+'px" height="'+g+'px"',l+=' viewBox="0 0 '+g+" "+g+'" ',l+=' preserveAspectRatio="xMinYMin meet"',l+=n.text||e.text?' role="img" aria-labelledby="'+y([n.id,e.id].join(" ").trim())+'"':"",l+=">",l+=n.text?'<title id="'+y(n.id)+'">'+y(n.text)+"</title>":"",l+=e.text?'<description id="'+y(e.id)+'">'+y(e.text)+"</description>":"",l+='<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>',l+='<path d="',a=0;a<f.getModuleCount();a+=1)for(u=a*t+r,i=0;i<f.getModuleCount();i+=1)f.isDark(a,i)&&(l+="M"+(i*t+r)+","+u+c);return l+='" stroke="transparent" fill="black"/>',l+="</svg>"},f.createDataURL=function(t,r){t=t||2,r=void 0===r?4*t:r;var e=f.getModuleCount()*t+2*r,n=r,o=e-r;return I(e,e,function(r,e){if(n<=r&&r<o&&n<=e&&e<o){var i=Math.floor((r-n)/t),a=Math.floor((e-n)/t);return f.isDark(a,i)?0:1}return 1})},f.createImgTag=function(t,r,e){t=t||2,r=void 0===r?4*t:r;var n=f.getModuleCount()*t+2*r,o="";return o+="<img",o+=' src="',o+=f.createDataURL(t,r),o+='"',o+=' width="',o+=n,o+='"',o+=' height="',o+=n,o+='"',e&&(o+=' alt="',o+=y(e),o+='"'),o+="/>"};var y=function(t){for(var r="",e=0;e<t.length;e+=1){var n=t.charAt(e);switch(n){case"<":r+="&lt;";break;case">":r+="&gt;";break;case"&":r+="&amp;";break;case'"':r+="&quot;";break;default:r+=n}}return r};return f.createASCII=function(t,r){if((t=t||1)<2)return function(t){t=void 0===t?2:t;var r,e,n,o,i,a=1*f.getModuleCount()+2*t,u=t,c=a-t,g={"██":"█","█ ":"▀"," █":"▄","  ":" "},l={"██":"▀","█ ":"▀"," █":" ","  ":" "},h="";for(r=0;r<a;r+=2){for(n=Math.floor((r-u)/1),o=Math.floor((r+1-u)/1),e=0;e<a;e+=1)i="█",u<=e&&e<c&&u<=r&&r<c&&f.isDark(n,Math.floor((e-u)/1))&&(i=" "),u<=e&&e<c&&u<=r+1&&r+1<c&&f.isDark(o,Math.floor((e-u)/1))?i+=" ":i+="█",h+=t<1&&r+1>=c?l[i]:g[i];h+="\n"}return a%2&&t>0?h.substring(0,h.length-a-1)+Array(a+1).join("▀"):h.substring(0,h.length-1)}(r);t-=1,r=void 0===r?2*t:r;var e,n,o,i,a=f.getModuleCount()*t+2*r,u=r,c=a-r,g=Array(t+1).join("██"),l=Array(t+1).join("  "),h="",s="";for(e=0;e<a;e+=1){for(o=Math.floor((e-u)/t),s="",n=0;n<a;n+=1)i=1,u<=n&&n<c&&u<=e&&e<c&&f.isDark(o,Math.floor((n-u)/t))&&(i=0),s+=i?g:l;for(o=0;o<t;o+=1)h+=s+"\n"}return h.substring(0,h.length-1)},f.renderTo2dContext=function(t,r){r=r||2;for(var e=f.getModuleCount(),n=0;n<e;n++)for(var o=0;o<e;o++)t.fillStyle=f.isDark(n,o)?"black":"white",t.fillRect(n*r,o*r,r,r)},f};t.stringToBytes=(t.stringToBytesFuncs={default:function(t){for(var r=[],e=0;e<t.length;e+=1){var n=t.charCodeAt(e);r.push(255&n)}return r}}).default,t.createStringToBytes=function(t,r){var e=function(){for(var e=S(t),n=function(){var t=e.read();if(-1==t)throw"eof";return t},o=0,i={};;){var a=e.read();if(-1==a)break;var u=n(),f=n()<<8|n();i[String.fromCharCode(a<<8|u)]=f,o+=1}if(o!=r)throw o+" != "+r;return i}(),n="?".charCodeAt(0);return function(t){for(var r=[],o=0;o<t.length;o+=1){var i=t.charCodeAt(o);if(i<128)r.push(i);else{var a=e[t.charAt(o)];"number"==typeof a?(255&a)==a?r.push(a):(r.push(a>>>8),r.push(255&a)):r.push(n)}}return r}};var r,e,n,o,i,a=1,u=2,f=4,c=8,g={L:1,M:0,Q:3,H:2},l=0,h=1,s=2,v=3,d=4,w=5,p=6,y=7,B=(r=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],e=1335,n=7973,i=function(t){for(var r=0;0!=t;)r+=1,t>>>=1;return r},(o={}).getBCHTypeInfo=function(t){for(var r=t<<10;i(r)-i(e)>=0;)r^=e<<i(r)-i(e);return 21522^(t<<10|r)},o.getBCHTypeNumber=function(t){for(var r=t<<12;i(r)-i(n)>=0;)r^=n<<i(r)-i(n);return t<<12|r},o.getPatternPosition=function(t){return r[t-1]},o.getMaskFunction=function(t){switch(t){case l:return function(t,r){return(t+r)%2==0};case h:return function(t,r){return t%2==0};case s:return function(t,r){return r%3==0};case v:return function(t,r){return(t+r)%3==0};case d:return function(t,r){return(Math.floor(t/2)+Math.floor(r/3))%2==0};case w:return function(t,r){return t*r%2+t*r%3==0};case p:return function(t,r){return(t*r%2+t*r%3)%2==0};case y:return function(t,r){return(t*r%3+(t+r)%2)%2==0};default:throw"bad maskPattern:"+t}},o.getErrorCorrectPolynomial=function(t){for(var r=k([1],0),e=0;e<t;e+=1)r=r.multiply(k([1,C.gexp(e)],0));return r},o.getLengthInBits=function(t,r){if(1<=r&&r<10)switch(t){case a:return 10;case u:return 9;case f:case c:return 8;default:throw"mode:"+t}else if(r<27)switch(t){case a:return 12;case u:return 11;case f:return 16;case c:return 10;default:throw"mode:"+t}else{if(!(r<41))throw"type:"+r;switch(t){case a:return 14;case u:return 13;case f:return 16;case c:return 12;default:throw"mode:"+t}}},o.getLostPoint=function(t){for(var r=t.getModuleCount(),e=0,n=0;n<r;n+=1)for(var o=0;o<r;o+=1){for(var i=0,a=t.isDark(n,o),u=-1;u<=1;u+=1)if(!(n+u<0||r<=n+u))for(var f=-1;f<=1;f+=1)o+f<0||r<=o+f||0==u&&0==f||a==t.isDark(n+u,o+f)&&(i+=1);i>5&&(e+=3+i-5)}for(n=0;n<r-1;n+=1)for(o=0;o<r-1;o+=1){var c=0;t.isDark(n,o)&&(c+=1),t.isDark(n+1,o)&&(c+=1),t.isDark(n,o+1)&&(c+=1),t.isDark(n+1,o+1)&&(c+=1),0!=c&&4!=c||(e+=3)}for(n=0;n<r;n+=1)for(o=0;o<r-6;o+=1)t.isDark(n,o)&&!t.isDark(n,o+1)&&t.isDark(n,o+2)&&t.isDark(n,o+3)&&t.isDark(n,o+4)&&!t.isDark(n,o+5)&&t.isDark(n,o+6)&&(e+=40);for(o=0;o<r;o+=1)for(n=0;n<r-6;n+=1)t.isDark(n,o)&&!t.isDark(n+1,o)&&t.isDark(n+2,o)&&t.isDark(n+3,o)&&t.isDark(n+4,o)&&!t.isDark(n+5,o)&&t.isDark(n+6,o)&&(e+=40);var g=0;for(o=0;o<r;o+=1)for(n=0;n<r;n+=1)t.isDark(n,o)&&(g+=1);return e+=Math.abs(100*g/r/r-50)/5*10},o),C=function(){for(var t=new Array(256),r=new Array(256),e=0;e<8;e+=1)t[e]=1<<e;for(e=8;e<256;e+=1)t[e]=t[e-4]^t[e-5]^t[e-6]^t[e-8];for(e=0;e<255;e+=1)r[t[e]]=e;var n={glog:function(t){if(t<1)throw"glog("+t+")";return r[t]},gexp:function(r){for(;r<0;)r+=255;for(;r>=256;)r-=255;return t[r]}};return n}();function k(t,r){if(void 0===t.length)throw t.length+"/"+r;var e=function(){for(var e=0;e<t.length&&0==t[e];)e+=1;for(var n=new Array(t.length-e+r),o=0;o<t.length-e;o+=1)n[o]=t[o+e];return n}(),n={getAt:function(t){return e[t]},getLength:function(){return e.length},multiply:function(t){for(var r=new Array(n.getLength()+t.getLength()-1),e=0;e<n.getLength();e+=1)for(var o=0;o<t.getLength();o+=1)r[e+o]^=C.gexp(C.glog(n.getAt(e))+C.glog(t.getAt(o)));return k(r,0)},mod:function(t){if(n.getLength()-t.getLength()<0)return n;for(var r=C.glog(n.getAt(0))-C.glog(t.getAt(0)),e=new Array(n.getLength()),o=0;o<n.getLength();o+=1)e[o]=n.getAt(o);for(o=0;o<t.getLength();o+=1)e[o]^=C.gexp(C.glog(t.getAt(o))+r);return k(e,0).mod(t)}};return n}var A=function(){var t=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12,7,37,13],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],r=function(t,r){var e={};return e.totalCount=t,e.dataCount=r,e},e={};return e.getRSBlocks=function(e,n){var o=function(r,e){switch(e){case g.L:return t[4*(r-1)+0];case g.M:return t[4*(r-1)+1];case g.Q:return t[4*(r-1)+2];case g.H:return t[4*(r-1)+3];default:return}}(e,n);if(void 0===o)throw"bad rs block @ typeNumber:"+e+"/errorCorrectionLevel:"+n;for(var i=o.length/3,a=[],u=0;u<i;u+=1)for(var f=o[3*u+0],c=o[3*u+1],l=o[3*u+2],h=0;h<f;h+=1)a.push(r(c,l));return a},e}(),b=function(){var t=[],r=0,e={getBuffer:function(){return t},getAt:function(r){var e=Math.floor(r/8);return 1==(t[e]>>>7-r%8&1)},put:function(t,r){for(var n=0;n<r;n+=1)e.putBit(1==(t>>>r-n-1&1))},getLengthInBits:function(){return r},putBit:function(e){var n=Math.floor(r/8);t.length<=n&&t.push(0),e&&(t[n]|=128>>>r%8),r+=1}};return e},M=function(t){var r=a,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+2<r.length;)t.put(o(r.substring(n,n+3)),10),n+=3;n<r.length&&(r.length-n==1?t.put(o(r.substring(n,n+1)),4):r.length-n==2&&t.put(o(r.substring(n,n+2)),7))}},o=function(t){for(var r=0,e=0;e<t.length;e+=1)r=10*r+i(t.charAt(e));return r},i=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);throw"illegal char :"+t};return n},x=function(t){var r=u,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+1<r.length;)t.put(45*o(r.charAt(n))+o(r.charAt(n+1)),11),n+=2;n<r.length&&t.put(o(r.charAt(n)),6)}},o=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);if("A"<=t&&t<="Z")return t.charCodeAt(0)-"A".charCodeAt(0)+10;switch(t){case" ":return 36;case"$":return 37;case"%":return 38;case"*":return 39;case"+":return 40;case"-":return 41;case".":return 42;case"/":return 43;case":":return 44;default:throw"illegal char :"+t}};return n},m=function(r){var e=f,n=t.stringToBytes(r),o={getMode:function(){return e},getLength:function(t){return n.length},write:function(t){for(var r=0;r<n.length;r+=1)t.put(n[r],8)}};return o},L=function(r){var e=c,n=t.stringToBytesFuncs.SJIS;if(!n)throw"sjis not supported.";!function(){var t=n("友");if(2!=t.length||38726!=(t[0]<<8|t[1]))throw"sjis not supported."}();var o=n(r),i={getMode:function(){return e},getLength:function(t){return~~(o.length/2)},write:function(t){for(var r=o,e=0;e+1<r.length;){var n=(255&r[e])<<8|255&r[e+1];if(33088<=n&&n<=40956)n-=33088;else{if(!(57408<=n&&n<=60351))throw"illegal char at "+(e+1)+"/"+n;n-=49472}n=192*(n>>>8&255)+(255&n),t.put(n,13),e+=2}if(e<r.length)throw"illegal char at "+(e+1)}};return i},D=function(){var t=[],r={writeByte:function(r){t.push(255&r)},writeShort:function(t){r.writeByte(t),r.writeByte(t>>>8)},writeBytes:function(t,e,n){e=e||0,n=n||t.length;for(var o=0;o<n;o+=1)r.writeByte(t[o+e])},writeString:function(t){for(var e=0;e<t.length;e+=1)r.writeByte(t.charCodeAt(e))},toByteArray:function(){return t},toString:function(){var r="";r+="[";for(var e=0;e<t.length;e+=1)e>0&&(r+=","),r+=t[e];return r+="]"}};return r},S=function(t){var r=t,e=0,n=0,o=0,i={read:function(){for(;o<8;){if(e>=r.length){if(0==o)return-1;throw"unexpected end of file./"+o}var t=r.charAt(e);if(e+=1,"="==t)return o=0,-1;t.match(/^\s$/)||(n=n<<6|a(t.charCodeAt(0)),o+=6)}var i=n>>>o-8&255;return o-=8,i}},a=function(t){if(65<=t&&t<=90)return t-65;if(97<=t&&t<=122)return t-97+26;if(48<=t&&t<=57)return t-48+52;if(43==t)return 62;if(47==t)return 63;throw"c:"+t};return i},I=function(t,r,e){for(var n=function(t,r){var e=t,n=r,o=new Array(t*r),i={setPixel:function(t,r,n){o[r*e+t]=n},write:function(t){t.writeString("GIF87a"),t.writeShort(e),t.writeShort(n),t.writeByte(128),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(255),t.writeByte(255),t.writeByte(255),t.writeString(","),t.writeShort(0),t.writeShort(0),t.writeShort(e),t.writeShort(n),t.writeByte(0);var r=a(2);t.writeByte(2);for(var o=0;r.length-o>255;)t.writeByte(255),t.writeBytes(r,o,255),o+=255;t.writeByte(r.length-o),t.writeBytes(r,o,r.length-o),t.writeByte(0),t.writeString(";")}},a=function(t){for(var r=1<<t,e=1+(1<<t),n=t+1,i=u(),a=0;a<r;a+=1)i.add(String.fromCharCode(a));i.add(String.fromCharCode(r)),i.add(String.fromCharCode(e));var f,c,g,l=D(),h=(f=l,c=0,g=0,{write:function(t,r){if(t>>>r!=0)throw"length over";for(;c+r>=8;)f.writeByte(255&(t<<c|g)),r-=8-c,t>>>=8-c,g=0,c=0;g|=t<<c,c+=r},flush:function(){c>0&&f.writeByte(g)}});h.write(r,n);var s=0,v=String.fromCharCode(o[s]);for(s+=1;s<o.length;){var d=String.fromCharCode(o[s]);s+=1,i.contains(v+d)?v+=d:(h.write(i.indexOf(v),n),i.size()<4095&&(i.size()==1<<n&&(n+=1),i.add(v+d)),v=d)}return h.write(i.indexOf(v),n),h.write(e,n),h.flush(),l.toByteArray()},u=function(){var t={},r=0,e={add:function(n){if(e.contains(n))throw"dup key:"+n;t[n]=r,r+=1},size:function(){return r},indexOf:function(r){return t[r]},contains:function(r){return void 0!==t[r]}};return e};return i}(t,r),o=0;o<r;o+=1)for(var i=0;i<t;i+=1)n.setPixel(i,o,e(i,o));var a=D();n.write(a);for(var u=function(){var t=0,r=0,e=0,n="",o={},i=function(t){n+=String.fromCharCode(a(63&t))},a=function(t){if(t<0);else{if(t<26)return 65+t;if(t<52)return t-26+97;if(t<62)return t-52+48;if(62==t)return 43;if(63==t)return 47}throw"n:"+t};return o.writeByte=function(n){for(t=t<<8|255&n,r+=8,e+=1;r>=6;)i(t>>>r-6),r-=6},o.flush=function(){if(r>0&&(i(t<<6-r),t=0,r=0),e%3!=0)for(var o=3-e%3,a=0;a<o;a+=1)n+="="},o.toString=function(){return n},o}(),f=a.toByteArray(),c=0;c<f.length;c+=1)u.writeByte(f[c]);return u.flush(),"data:image/gif;base64,"+u};return t}();qrcode.stringToBytesFuncs["UTF-8"]=function(t){return function(t){for(var r=[],e=0;e<t.length;e++){var n=t.charCodeAt(e);n<128?r.push(n):n<2048?r.push(192|n>>6,128|63&n):n<55296||n>=57344?r.push(224|n>>12,128|n>>6&63,128|63&n):(e++,n=65536+((1023&n)<<10|1023&t.charCodeAt(e)),r.push(240|n>>18,128|n>>12&63,128|n>>6&63,128|63&n))}return r}(t)},function(t){"function"==typeof define&&define.amd?define([],t):"object"==typeof exports&&(module.exports=t())}(function(){return qrcode});
+</script>
 <script type="text/babel" data-presets="react">
 
 const { useState, useEffect, useRef, useMemo, useCallback, createContext, useContext } = React;
@@ -318,7 +321,7 @@ const APP_CONFIG = {
 
 // ============================== API CLIENT ==============================
 function callServer(action, payload) {
-  const token = window.__platformToken || (window.__session ? window.__session.token : null);
+  const token = window.__platformToken || window.__partnerToken || (window.__session ? window.__session.token : null);
 
   if (window.google && window.google.script && window.google.script.run) {
     // Default path: served directly by Apps Script's HtmlService.
@@ -809,6 +812,7 @@ const NAV = [
     { key:'users', label:'Users', icon:'users' },
     { key:'audit', label:'Audit Log', icon:'audit' },
     { key:'recyclebin', label:'Recycle Bin', icon:'trash' },
+    { key:'billing', label:'Subscription', icon:'wallet' },
     { key:'settings', label:'Settings', icon:'settings' },
   ]},
 ];
@@ -1075,7 +1079,7 @@ const FEATURES = [
   { icon:'users', title:'Role-based access', desc:'Owners, accountants, sales staff and store managers each see exactly what their job needs — nothing more.' },
 ];
 
-function LandingPage({ onGotoLogin, onGotoSignup, onGotoPlatformAdmin }) {
+function LandingPage({ onGotoLogin, onGotoSignup, onGotoPlatformAdmin, onGotoPartner }) {
   const { platformTheme } = useAppTheme();
   const appName = (platformTheme && platformTheme.appName) || 'Business360';
   const [tiers, setTiers] = useState(null);
@@ -1207,6 +1211,7 @@ function LandingPage({ onGotoLogin, onGotoSignup, onGotoPlatformAdmin }) {
             })}
           </div>
         )}
+        <OffersStrip onGotoSignup={onGotoSignup} />
         <p style={{textAlign:'center', fontSize:12.5, color:'var(--muted)', marginTop:24}}>
           Questions or ready to subscribe? <a href={`https://wa.me/${UPGRADE_WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer" style={{color:'var(--brand-2)', fontWeight:600}}>Chat on WhatsApp</a> or email <a href={`mailto:${UPGRADE_EMAIL}`} style={{color:'var(--brand-2)', fontWeight:600}}>{UPGRADE_EMAIL}</a>
         </p>
@@ -1230,6 +1235,7 @@ function LandingPage({ onGotoLogin, onGotoSignup, onGotoPlatformAdmin }) {
         </div>
         <div style={{display:'flex', alignItems:'center', gap:16}}>
           <span>bpadynamics@gmail.com</span>
+          <a onClick={onGotoPartner} style={{cursor:'pointer', color:'var(--muted)'}}>Partner Login</a>
           <a onClick={onGotoPlatformAdmin} style={{cursor:'pointer', color:'var(--muted)'}}>Platform Admin</a>
         </div>
       </div>
@@ -1336,14 +1342,14 @@ function TermsModal({ onClose }) {
   );
 }
 
-function SignupPage({ onSignup, onGotoLogin }) {
+function SignupPage({ onSignup, onGotoLogin, referralCode }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showTerms, setShowTerms] = useState(false);
   const [form, setForm] = useState({
     businessName:'', businessType:'Retail', ownerName:'', email:'', phone:'', password:'',
-    currency:'NGN', vatRate:'7.5', locationName:'Main Store', seedDemo:true, acceptedTerms:false
+    currency:'NGN', vatRate:'7.5', locationName:'Main Store', seedDemo:true, acceptedTerms:false, referralCode: referralCode || ''
   });
   const set = (k,v) => setForm(f => ({...f, [k]:v}));
 
@@ -1885,7 +1891,7 @@ function ShareLinksModal({ onClose, focus }) {
   const canToggle = user.role === 'Owner' || user.role === 'Administrator';
   // Always build links from the address the app is actually opened on (e.g. the Vercel site),
   // so they never point at the Apps Script URL even if PUBLIC_APP_URL isn't set on the backend.
-  const fixUrl = (u) => { try { const h = window.location.hostname; if (/script\.google|googleusercontent/.test(h) || !u) return u; return window.location.origin + '/' + String(u).substring(String(u).indexOf('?')); } catch (e) { return u; } };
+  const fixUrl = (u) => { try { if (!u) return u; return PUBLIC_APP_URL + '/' + String(u).substring(String(u).indexOf('?')); } catch (e) { return u; } };
   const rows = data ? [
     { key:'customer', title:'Customer sign-up link', desc:'Customers open this link and add their own details. No login, no access to your app.', url:fixUrl(data.customerLink) },
     { key:'supplier', title:'Supplier sign-up link', desc:'Suppliers register themselves here. No login needed.', url:fixUrl(data.supplierLink) },
@@ -1904,13 +1910,18 @@ function ShareLinksModal({ onClose, focus }) {
             <div key={r.key} className="card" style={{padding:14, marginBottom:12, borderColor: focus === r.key ? 'var(--brand)' : undefined}}>
               <div style={{fontWeight:800, fontSize:14, marginBottom:2}}>{r.title}</div>
               <div style={{fontSize:12.5, color:'var(--muted)', marginBottom:8}}>{r.desc}</div>
+              <div style={{display:'flex', gap:14, alignItems:'flex-start', flexWrap:'wrap'}}>
+              <QrImage text={r.url} size={118} />
+              <div style={{flex:1, minWidth:220}}>
               <input className="input mono" readOnly value={r.url} onFocus={e => e.target.select()} style={{fontSize:12, marginBottom:8}} />
               <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
                 <button className="btn btn-primary btn-sm" onClick={() => copy(r.url)}><I name="copy" size={13} />Copy link</button>
+                <button className="btn btn-outline btn-sm" onClick={() => downloadDataUrl(r.key + '-qr.png', qrPng(r.url))}><I name="download" size={13} />QR code</button>
                 <a className="btn btn-outline btn-sm" href={r.url} target="_blank" rel="noreferrer"><I name="link" size={13} />Open</a>
                 <a className="btn btn-outline btn-sm" target="_blank" rel="noreferrer" href={'https://wa.me/?text=' + encodeURIComponent(r.title + ': ' + r.url)}>Share on WhatsApp</a>
                 {r.key === 'store' && canToggle && <button className="btn btn-outline btn-sm" onClick={toggleStore}>{data.storeEnabled ? 'Switch store off' : 'Switch store on'}</button>}
               </div>
+              </div></div>
               {r.key === 'store' && !data.storeEnabled && <p style={{fontSize:12, color:'var(--red)', margin:'8px 0 0'}}>The store is currently off — visitors will see "not available".</p>}
             </div>
           ))}
@@ -3704,7 +3715,7 @@ function ScanPage() {
   };
 
   const isIn = direction === 'in';
-  const phoneLink = (() => { try { return window.location.origin + '/?scan=1'; } catch (e) { return ''; } })();
+  const phoneLink = (() => { try { return PUBLIC_APP_URL + '/?scan=1'; } catch (e) { return ''; } })();
   const showCard = !!(hit || missing);
 
   return (
@@ -3796,11 +3807,695 @@ function ScanPage() {
   );
 }
 
+
+// ============================== v5: APP URL, QR CODES, SUBSCRIPTIONS, MARKETING, PARTNERS ==============================
+const PUBLIC_APP_URL = 'https://buz360.bpadynamics.com.ng';
+const NGN = (n) => '₦' + Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
+const readParam = (k) => { try { return new URLSearchParams(window.location.search).get(k) || ''; } catch (e) { return ''; } };
+
+function drawQr(g, text, x, y, size) {
+  const qr = window.qrcode(0, 'M'); qr.addData(String(text)); qr.make();
+  const n = qr.getModuleCount(), cell = size / (n + 8); // 4-module quiet zone
+  g.fillStyle = '#fff'; g.fillRect(x, y, size, size); g.fillStyle = '#000';
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) g.fillRect(x + (c + 4) * cell, y + (r + 4) * cell, Math.ceil(cell), Math.ceil(cell));
+}
+function qrPng(text, px) {
+  const c = document.createElement('canvas'); c.width = c.height = px || 720;
+  const g = c.getContext('2d'); if (!g) return '';
+  drawQr(g, text, 0, 0, c.width); return c.toDataURL('image/png');
+}
+function downloadDataUrl(name, url) { if (!url) return; const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+function QrImage({ text, size = 140 }) {
+  const ref = useRef(null);
+  useEffect(() => { const c = ref.current; if (!c || !text) return; c.width = size * 2; c.height = size * 2; const g = c.getContext('2d'); if (!g) return; try { drawQr(g, text, 0, 0, size * 2); } catch (e) {} }, [text, size]);
+  return <canvas ref={ref} data-qr={text} style={{width:size, height:size, borderRadius:8, border:'1px solid var(--line)', background:'#fff', flexShrink:0}} />;
+}
+
+// ---------- flyers ----------
+const FLYER_THEMES = {
+  navy:     { label:'Navy & gold',   bg1:'#0B2A4A', bg2:'#1C5F9E', accent:'#D9A441', ink:'#10213A', text:'#FFFFFF', sub:'#C9D6E6' },
+  emerald:  { label:'Emerald',       bg1:'#053B2E', bg2:'#0F8F6B', accent:'#FDE68A', ink:'#053B2E', text:'#FFFFFF', sub:'#C7F0DF' },
+  sunset:   { label:'Sunset',        bg1:'#7C2D12', bg2:'#EA580C', accent:'#FEF3C7', ink:'#7C2D12', text:'#FFFFFF', sub:'#FFE4D0' },
+  midnight: { label:'Black & gold',  bg1:'#0B0B0F', bg2:'#2B2540', accent:'#F5C542', ink:'#0B0B0F', text:'#FFFFFF', sub:'#C9C6D8' },
+  rose:     { label:'Rose',          bg1:'#6B1030', bg2:'#DB2777', accent:'#FFE4EC', ink:'#6B1030', text:'#FFFFFF', sub:'#FBD3E2' },
+};
+const couponOfferText = (c) => c.discountType === 'fixed' ? NGN(c.discountValue) + ' OFF' : Number(c.discountValue) + '% OFF';
+function wrapText(g, text, x, y, maxW, lh, maxLines) {
+  const words = String(text || '').split(/\s+/).filter(Boolean); let line = '', lines = [];
+  words.forEach(w => { const t = line ? line + ' ' + w : w; if (g.measureText(t).width > maxW && line) { lines.push(line); line = w; } else line = t; });
+  if (line) lines.push(line);
+  lines = lines.slice(0, maxLines || 3);
+  lines.forEach((l, i) => g.fillText(l, x, y + i * lh));
+  return y + lines.length * lh;
+}
+function drawFlyer(canvas, f) {
+  const W = 1080, H = 1350; canvas.width = W; canvas.height = H;
+  const g = canvas.getContext('2d'); if (!g) return;
+  const th = FLYER_THEMES[f.theme] || FLYER_THEMES.navy;
+  const grad = g.createLinearGradient(0, 0, W, H); grad.addColorStop(0, th.bg1); grad.addColorStop(1, th.bg2);
+  g.fillStyle = grad; g.fillRect(0, 0, W, H);
+  g.globalAlpha = .08; g.fillStyle = '#fff'; g.beginPath(); g.arc(W - 90, 120, 320, 0, 7); g.fill(); g.beginPath(); g.arc(80, H - 260, 260, 0, 7); g.fill(); g.globalAlpha = 1;
+  g.textAlign = 'center'; const cx = W / 2; const F = 'Manrope, "Segoe UI", Arial, sans-serif';
+  g.fillStyle = th.accent; g.font = '800 34px ' + F; g.fillText('BPA BUSINESS360', cx, 96);
+  g.fillStyle = th.sub; g.font = '500 26px ' + F; g.fillText('Sales • Inventory • Invoices • Online Store • Reports', cx, 140);
+  g.fillStyle = th.text; g.font = '800 74px ' + F; let y = wrapText(g, (f.headline || 'Special offer').toUpperCase(), cx, 270, 920, 86, 3);
+  g.fillStyle = th.accent; g.font = '800 ' + (couponOfferText(f).length > 9 ? 150 : 190) + 'px ' + F; g.fillText(couponOfferText(f), cx, y + 150);
+  g.fillStyle = th.text; g.font = '600 34px ' + F; g.fillText('on your subscription', cx, y + 222);
+  g.fillStyle = th.sub; g.font = '500 36px ' + F; y = wrapText(g, f.subline || 'Run your whole business from one app.', cx, y + 305, 880, 48, 3);
+  const by = Math.max(y + 10, 730);
+  g.fillStyle = th.accent; const bw = 760, bh = 190, bx = cx - bw / 2; g.beginPath(); if (g.roundRect) g.roundRect(bx, by, bw, bh, 28); else g.rect(bx, by, bw, bh); g.fill();
+  g.fillStyle = th.ink; g.font = '700 30px ' + F; g.fillText('USE COUPON CODE', cx, by + 52);
+  let cf = 96; g.font = '800 ' + cf + 'px "Courier New", monospace'; while (cf > 40 && g.measureText(f.code || 'CODE').width > bw - 60) { cf -= 4; g.font = '800 ' + cf + 'px "Courier New", monospace'; }
+  g.fillText(f.code || 'CODE', cx, by + 148);
+  g.fillStyle = th.sub; g.font = '600 30px ' + F;
+  const parts = []; if (f.expiresAt) parts.push('Valid until ' + new Date(f.expiresAt).toLocaleDateString(undefined, { day:'numeric', month:'long', year:'numeric' })); else parts.push('Limited time offer');
+  if (f.termsLine) parts.push(f.termsLine); g.fillText(parts.join('  •  '), cx, by + bh + 52);
+  const url = f.appUrl || PUBLIC_APP_URL;
+  if (f.showQr !== false) { try { drawQr(g, url, 70, H - 300, 240); } catch (e) {} }
+  g.textAlign = f.showQr !== false ? 'left' : 'center'; const tx = f.showQr !== false ? 350 : cx;
+  g.fillStyle = th.text; g.font = '800 44px ' + F; g.fillText('Scan or visit to start', tx, H - 215);
+  g.fillStyle = th.accent; g.font = '800 40px ' + F; g.fillText(url.replace('https://', ''), tx, H - 160);
+  g.fillStyle = th.sub; g.font = '500 26px ' + F; g.fillText('Pay monthly, quarterly or up to 5 years', tx, H - 115);
+  g.fillText('WhatsApp 0810 807 6212 • bpadynamics@gmail.com', tx, H - 75);
+  g.textAlign = 'center';
+}
+function FlyerCanvas({ flyer, width = 340 }) {
+  const ref = useRef(null);
+  useEffect(() => { if (ref.current) drawFlyer(ref.current, flyer); }, [JSON.stringify(flyer)]);
+  return <canvas ref={ref} style={{width, maxWidth:'100%', aspectRatio:'1080 / 1350', borderRadius:12, boxShadow:'0 8px 28px rgba(0,0,0,.18)', background:'#eee'}} />;
+}
+const downloadFlyer = (flyer, name) => { const c = document.createElement('canvas'); drawFlyer(c, flyer); try { downloadDataUrl((name || flyer.code || 'flyer') + '-flyer.png', c.toDataURL('image/png')); } catch (e) {} };
+
+function PublicFlyerPage({ code }) {
+  const [state, setState] = useState({ loading: true });
+  useEffect(() => { callServer('public.flyer', { code }).then(r => setState(r.success ? { data: r.data } : { error: r.message || 'This offer is no longer available.' })); }, []);
+  if (state.loading) return <PublicShell title="Special offer"><Skeleton h={300} /></PublicShell>;
+  if (state.error) return <PublicShell title="Special offer"><div className="card" style={{padding:24, textAlign:'center'}}>{state.error}</div></PublicShell>;
+  const c = state.data.coupon; const flyer = { ...c, appUrl: state.data.appUrl };
+  return (
+    <div style={{display:'flex', flexDirection:'column', alignItems:'center', padding:12, gap:12, background:'var(--bg)', minHeight:'100vh'}}>
+      <FlyerCanvas flyer={flyer} width={420} />
+      <a className="btn btn-gold" href={state.data.appUrl + '/?signup=1'} target="_top" style={{justifyContent:'center'}}>Claim this offer — start free</a>
+      <div style={{fontSize:12, color:'var(--muted)'}}>Enter code <b className="mono">{c.code}</b> when you subscribe.</div>
+    </div>
+  );
+}
+
+function OffersStrip({ onGotoSignup }) {
+  const [d, setD] = useState(null);
+  useEffect(() => { callServer('public.offers', {}).then(r => { if (r.success) setD(r.data); }); }, []);
+  if (!d) return null;
+  const save = (d.termDiscounts || []).filter(t => t.percent > 0 && t.months > 1);
+  return (
+    <div style={{marginTop:28}}>
+      {save.length > 0 && (
+        <div style={{textAlign:'center', marginBottom:18}}>
+          <div style={{fontWeight:800, fontSize:14, marginBottom:8}}>Pay for longer, pay less</div>
+          <div style={{display:'flex', gap:8, flexWrap:'wrap', justifyContent:'center'}}>
+            {save.map(t => <span key={t.months} className="badge badge-green" style={{fontSize:12.5, padding:'6px 12px'}}>{t.label} · save {t.percent}%</span>)}
+          </div>
+        </div>
+      )}
+      {(d.coupons || []).length > 0 && (
+        <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(240px, 1fr))', gap:12, maxWidth:900, margin:'0 auto'}}>
+          {d.coupons.map(c => { const th = FLYER_THEMES[c.theme] || FLYER_THEMES.navy; return (
+            <div key={c.code} style={{borderRadius:14, padding:'16px 18px', color:th.text, background:'linear-gradient(135deg,' + th.bg1 + ',' + th.bg2 + ')', boxShadow:'0 6px 20px rgba(0,0,0,.12)'}}>
+              <div style={{fontSize:11, letterSpacing:'.08em', color:th.accent, fontWeight:800}}>LIMITED OFFER</div>
+              <div style={{fontWeight:800, fontSize:17, margin:'4px 0'}}>{c.headline || 'Special offer'}</div>
+              <div style={{fontSize:26, fontWeight:800, color:th.accent}}>{couponOfferText(c)}</div>
+              <div style={{fontSize:12.5, color:th.sub, margin:'4px 0 10px'}}>{c.subline}{c.expiresAt ? ' · until ' + fmtDate(c.expiresAt) : ''}</div>
+              <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', gap:8}}>
+                <span className="mono" style={{background:th.accent, color:th.ink, padding:'4px 10px', borderRadius:8, fontWeight:800, letterSpacing:'.05em'}}>{c.code}</span>
+                <button className="btn btn-sm" style={{background:'rgba(255,255,255,.18)', color:'#fff'}} onClick={onGotoSignup}>Claim →</button>
+              </div>
+            </div>
+          ); })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------- business: subscription / billing ----------
+function addMonthsLocal(d, n) { const x = new Date(d.getTime()); const day = x.getDate(); x.setDate(1); x.setMonth(x.getMonth() + n); x.setDate(Math.min(day, new Date(x.getFullYear(), x.getMonth() + 1, 0).getDate())); return x; }
+
+function BillingPage() {
+  const toast = useToast();
+  const { user, business } = useApp();
+  const { data, loading, reload } = useApiData('billing.plans', {}, []);
+  const [tier, setTier] = useState('');
+  const [months, setMonths] = useState(12);
+  const [code, setCode] = useState('');
+  const [applied, setApplied] = useState('');
+  const [quote, setQuote] = useState(null);
+  const [qErr, setQErr] = useState('');
+  const [busy, setBusy] = useState('');
+  const [result, setResult] = useState(null);
+  const canPay = user.role === 'Owner' || user.role === 'Administrator';
+  useEffect(() => { if (data && !tier && data.plans.length) setTier((data.plans.find(p => p.tierName === data.currentPlan) || data.plans[0]).tierName); }, [data]);
+  useEffect(() => {
+    if (!tier) return; let live = true;
+    callServer('billing.quote', { tierName: tier, months, couponCode: applied }).then(r => {
+      if (!live) return;
+      if (r.success) { setQuote(r.data); setQErr(''); } else { setQErr(r.message); if (applied) { setApplied(''); } }
+    });
+    return () => { live = false; };
+  }, [tier, months, applied]);
+  if (loading || !data) return <Skeleton h={240} />;
+  const days = data.expiresAt ? Math.ceil((new Date(data.expiresAt) - Date.now()) / 86400000) : null;
+  const start = (data.currentPlan === tier && data.expiresAt && new Date(data.expiresAt) > new Date()) ? new Date(data.expiresAt) : new Date();
+  const checkout = async (method) => {
+    setBusy(method);
+    const r = await callServer('billing.checkout', { tierName: tier, months, couponCode: applied, method });
+    setBusy('');
+    if (!r.success) { toast(r.message, 'error'); return; }
+    if (r.data.url) { window.location.href = r.data.url; return; }
+    if (r.data.paid) { toast('Plan activated.'); reload(); return; }
+    setResult(r.data); reload();
+  };
+  const checkPay = async (o) => { const r = await callServer('billing.checkPayment', { id: o.orderId }); if (r.success && r.data.paid) { toast('Payment confirmed — plan activated.'); reload(); } else toast(r.success ? (r.data.reason || 'Not paid yet.') : r.message, 'error'); };
+  const wa = 'https://wa.me/' + UPGRADE_WHATSAPP_NUMBER + '?text=' + encodeURIComponent('Hi BPA Dynamics, I have requested ' + tier + ' (' + (quote ? quote.termLabel : '') + ') for ' + business.businessName + (result ? ' — order ' + result.order.orderNumber : '') + '. Please share payment details.');
+  return (
+    <div>
+      <PageHeader title="Subscription" subtitle="Choose a plan and how long you want to pay for. Longer terms cost less." />
+      <div className="card" style={{padding:16, marginBottom:14, display:'flex', gap:14, flexWrap:'wrap', alignItems:'center', justifyContent:'space-between'}}>
+        <div><div style={{fontSize:12, color:'var(--muted)'}}>Current plan</div><div style={{fontWeight:800, fontSize:18}}>{data.currentPlan}</div></div>
+        <div><div style={{fontSize:12, color:'var(--muted)'}}>Active until</div><div style={{fontWeight:700}}>{data.expiresAt ? fmtDate(data.expiresAt) : '—'}{days !== null && <span style={{fontSize:12, color: days < 14 ? 'var(--red)' : 'var(--muted)', marginLeft:8}}>{days >= 0 ? days + ' day' + (days === 1 ? '' : 's') + ' left' : 'expired'}</span>}</div></div>
+      </div>
+      {!canPay && <div className="card" style={{padding:14, marginBottom:14, color:'var(--muted)', fontSize:13}}>Only the Owner or an Administrator can change the subscription.</div>}
+      <div className="card" style={{padding:18, marginBottom:14}}>
+        <div style={{fontWeight:800, marginBottom:10}}>1. Choose a plan</div>
+        <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(210px, 1fr))', gap:10}}>
+          {data.plans.map(p => (
+            <div key={p.tierName} onClick={() => setTier(p.tierName)} style={{cursor:'pointer', padding:'12px 14px', borderRadius:12, border:'2px solid ' + (tier === p.tierName ? 'var(--brand)' : 'var(--line)'), background: tier === p.tierName ? 'var(--paper)' : 'transparent'}}>
+              <div style={{fontWeight:800}}>{p.tierName}</div>
+              <div style={{fontWeight:800, fontSize:19, color:'var(--brand)'}}>{NGN(p.monthlyPrice)}<span style={{fontSize:11.5, fontWeight:500, color:'var(--muted)'}}> / month</span></div>
+              <div style={{fontSize:11.5, color:'var(--muted)', marginTop:4, lineHeight:1.35}}>{p.features}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="card" style={{padding:18, marginBottom:14}}>
+        <div style={{fontWeight:800, marginBottom:10}}>2. How long do you want to pay for?</div>
+        <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
+          {data.terms.map(t => (
+            <button key={t.months} className={'btn ' + (months === t.months ? 'btn-primary' : 'btn-outline')} onClick={() => setMonths(t.months)} style={{flexDirection:'column', alignItems:'center', gap:2, padding:'8px 14px'}}>
+              <span>{t.label}</span>{t.discountPercent > 0 ? <span style={{fontSize:11, color: months === t.months ? '#fff' : 'var(--green)', fontWeight:700}}>save {t.discountPercent}%</span> : <span style={{fontSize:11, opacity:.6}}>standard</span>}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="card" style={{padding:18, marginBottom:14}}>
+        <div style={{fontWeight:800, marginBottom:10}}>3. Coupon code (optional)</div>
+        <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
+          <input className="input mono" style={{maxWidth:240, textTransform:'uppercase'}} placeholder="ENTER CODE" value={code} onChange={e => setCode(e.target.value)} />
+          <button className="btn btn-outline" disabled={!code.trim()} onClick={() => setApplied(code.trim())}>Apply</button>
+          {applied && <button className="btn btn-outline" onClick={() => { setApplied(''); setCode(''); }}>Remove</button>}
+        </div>
+        {qErr && <div style={{color:'var(--red)', fontSize:12.5, marginTop:8}}>{qErr}</div>}
+        {quote && quote.couponCode && <div style={{color:'var(--green)', fontSize:12.5, marginTop:8}}>Coupon {quote.couponCode} applied — you save {NGN(quote.couponDiscount)}.</div>}
+      </div>
+      {quote && (
+        <div className="card" style={{padding:18, marginBottom:14}}>
+          <div style={{fontWeight:800, marginBottom:8}}>Summary</div>
+          {[[quote.tierName + ' × ' + quote.termLabel + ' (' + NGN(quote.monthlyPrice) + ' × ' + quote.months + ')', NGN(quote.listPrice)], quote.termDiscount > 0 && ['Longer-term saving (' + quote.termPercent + '%)', '−' + NGN(quote.termDiscount)], quote.couponDiscount > 0 && ['Coupon ' + quote.couponCode, '−' + NGN(quote.couponDiscount)]].filter(Boolean).map(([a, b], i) => (
+            <div key={i} style={{display:'flex', justifyContent:'space-between', fontSize:13, padding:'3px 0'}}><span>{a}</span><span>{b}</span></div>
+          ))}
+          <div className="divider" />
+          <div style={{display:'flex', justifyContent:'space-between', fontWeight:800, fontSize:18}}><span>Total</span><span>{NGN(quote.total)}</span></div>
+          <div style={{fontSize:12, color:'var(--muted)', marginTop:4}}>Active until {fmtDate(addMonthsLocal(start, quote.months))} · that is {NGN(quote.total / quote.months)} per month</div>
+          {canPay && (
+            <div style={{display:'flex', gap:8, flexWrap:'wrap', marginTop:14}}>
+              {data.onlinePay && <button className="btn btn-gold" disabled={!!busy} onClick={() => checkout('online')}>{busy === 'online' ? 'Opening…' : 'Pay online (card / transfer)'}</button>}
+              <button className={'btn ' + (data.onlinePay ? 'btn-outline' : 'btn-gold')} disabled={!!busy} onClick={() => checkout('transfer')}>{busy === 'transfer' ? 'Sending…' : 'Pay by bank transfer'}</button>
+            </div>
+          )}
+        </div>
+      )}
+      {result && (
+        <div className="card" style={{padding:18, marginBottom:14, borderColor:'var(--green)'}}>
+          <div style={{fontWeight:800, marginBottom:4}}>Request received — order {result.order.orderNumber}</div>
+          <div style={{fontSize:13, whiteSpace:'pre-wrap', marginBottom:10}}>{result.instructions}</div>
+          <a className="btn btn-primary btn-sm" href={wa} target="_blank" rel="noreferrer" style={{background:'#25D366'}}>Send proof on WhatsApp</a>
+          <div style={{fontSize:12, color:'var(--muted)', marginTop:8}}>Your plan is activated as soon as BPA Dynamics confirms your payment.</div>
+        </div>
+      )}
+      <div className="card" style={{padding:18}}>
+        <div style={{fontWeight:800, marginBottom:8}}>Billing history</div>
+        {data.orders.length === 0 ? <div style={{color:'var(--muted)', fontSize:13}}>No subscription payments yet.</div> : (
+          <table><thead><tr><th>Order</th><th>Plan</th><th>Period</th><th>Total</th><th>Status</th><th>Date</th><th></th></tr></thead>
+            <tbody>{data.orders.map(o => (
+              <tr key={o.orderId}><td className="mono">{o.orderNumber}</td><td>{o.tierName}</td><td>{o.months} mo{o.couponCode ? ' · ' + o.couponCode : ''}</td><td>{NGN(o.total)}</td>
+                <td><StatusBadge status={o.status} /></td><td>{fmtDate(o.createdAt)}</td>
+                <td>{o.status === 'Pending' && o.paymentMethod === 'Paystack' && <button className="btn btn-outline btn-sm" onClick={() => checkPay(o)}>Check payment</button>}</td></tr>
+            ))}</tbody></table>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SubscriptionReturnPage({ orderId }) {
+  const [r, setR] = useState({ state: 'checking' });
+  const verify = async () => { setR({ state: 'checking' }); const x = await callServer('public.verifySubscription', { orderId }); setR(x.success ? { state: x.data.paid ? 'paid' : 'unpaid', ...x.data } : { state: 'error', message: x.message }); };
+  useEffect(() => { verify(); }, []);
+  return (
+    <PublicShell title="Subscription payment">
+      <div className="card" style={{padding:24, maxWidth:520, margin:'0 auto', textAlign:'center'}}>
+        {r.state === 'checking' && <React.Fragment><h3 style={{margin:'0 0 6px'}}>Confirming your payment…</h3><p style={{color:'var(--muted)', margin:0}}>Please wait.</p></React.Fragment>}
+        {r.state === 'paid' && <React.Fragment><h3 style={{margin:'0 0 6px'}}>Payment received — thank you!</h3><p style={{color:'var(--muted)', margin:'0 0 14px', fontSize:13.5}}>{r.tierName} ({r.termLabel}) is now active{r.expiresAt ? ' until ' + fmtDate(r.expiresAt) : ''}. A confirmation email is on its way.</p></React.Fragment>}
+        {r.state === 'unpaid' && <React.Fragment><h3 style={{margin:'0 0 6px'}}>Payment not completed</h3><p style={{color:'var(--muted)', margin:'0 0 14px', fontSize:13.5}}>{r.reason || 'We have not received your payment yet.'}</p><button className="btn btn-outline" onClick={verify}>I have paid — check again</button></React.Fragment>}
+        {r.state === 'error' && <p style={{color:'var(--muted)'}}>{r.message}</p>}
+        {r.state !== 'checking' && <div style={{marginTop:14}}><a className="btn btn-primary" href={PUBLIC_APP_URL}>Go to Business360</a></div>}
+      </div>
+    </PublicShell>
+  );
+}
+
+// ---------- platform: marketing / coupons / flyers ----------
+const FLYER_TERM_CHOICES = [1, 3, 6, 12, 24, 36, 60];
+const dateInput = (iso) => { if (!iso) return ''; const d = new Date(iso); if (isNaN(d)) return ''; const p = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); };
+const startIso = (s) => s ? new Date(s + 'T00:00:00').toISOString() : '';
+const endIso = (s) => s ? new Date(s + 'T23:59:59').toISOString() : '';
+const inDays = (n) => { const d = new Date(Date.now() + n * 86400000); return dateInput(d.toISOString()); };
+const nextDate = (m, d) => { const now = new Date(); let y = now.getFullYear(); if (new Date(y, m - 1, d, 23, 59) < now) y++; return dateInput(new Date(y, m - 1, d).toISOString()); };
+const isOn = (v) => v === true || v === 'true';
+
+function couponIdeas() {
+  return [
+    { tag:'Launch', title:'Welcome offer', blurb:'Evergreen 10% for new signups. Put it on the website and every ad.', p:{ code:'WELCOME10', discountType:'percent', discountValue:10, headline:'Welcome to Business360', subline:'10% off your first subscription — run sales, stock and invoices from one app.', theme:'navy', showOnSite:true } },
+    { tag:'Seasonal', title:'Black Friday', blurb:'Biggest sale of the year. Push yearly+ plans.', p:{ code:'BLACKFRIDAY30', discountType:'percent', discountValue:30, appliesToMonths:'12,24,36,60', headline:'Black Friday', subline:'30% off any yearly, 2, 3 or 5-year plan. This week only.', theme:'midnight', startsAt:inDays(0), expiresAt:nextDate(11, 30), showOnSite:true } },
+    { tag:'Seasonal', title:'Christmas / end of year', blurb:'Close the year with clean books. Good for December ads.', p:{ code:'ENDOFYEAR20', discountType:'percent', discountValue:20, headline:'Start the year organised', subline:'20% off — get your books and stock in order before January.', theme:'emerald', startsAt:nextDate(12, 1) > inDays(0) ? inDays(0) : inDays(0), expiresAt:nextDate(12, 31), showOnSite:true } },
+    { tag:'Seasonal', title:'New Year, new books', blurb:'January resolution push for small businesses.', p:{ code:'NEWYEAR15', discountType:'percent', discountValue:15, appliesToMonths:'6,12,24,36,60', headline:'New year, new books', subline:'15% off any plan of 6 months or longer.', theme:'sunset', startsAt:nextDate(1, 1), expiresAt:nextDate(1, 31), showOnSite:false } },
+    { tag:'Urgency', title:'48-hour flash sale', blurb:'Short, sharp offer for WhatsApp status and Instagram stories.', p:{ code:'FLASH48', discountType:'percent', discountValue:15, headline:'48-hour flash sale', subline:'15% off any plan. Ends in 2 days.', theme:'rose', startsAt:inDays(0), expiresAt:inDays(2), showOnSite:true } },
+    { tag:'Growth', title:'Early bird — first 50', blurb:'Scarcity: limited to the first 50 businesses.', p:{ code:'EARLYBIRD50', discountType:'percent', discountValue:20, maxUses:50, headline:'First 50 businesses', subline:'20% off for the first 50 businesses to subscribe.', theme:'navy', showOnSite:true } },
+    { tag:'Growth', title:'Annual saver (fixed amount)', blurb:'Fixed naira off yearly+ plans; feels bigger than a small %.', p:{ code:'SAVE10K', discountType:'fixed', discountValue:10000, appliesToMonths:'12,24,36,60', headline:'Save ₦10,000', subline:'Take ₦10,000 off any yearly or longer plan.', theme:'emerald', showOnSite:true } },
+    { tag:'Referral', title:'Refer-a-friend reward', blurb:'Give existing customers a code to share; track uses per code.', p:{ code:'FRIEND5K', discountType:'fixed', discountValue:5000, headline:'A gift from a friend', subline:'₦5,000 off your first subscription.', theme:'rose', showOnSite:false } },
+    { tag:'Segments', title:'NGOs, churches & schools', blurb:'Mission-driven organisations. Limit uses, or create one per organisation and lock it to a business.', p:{ code:'COMMUNITY25', discountType:'percent', discountValue:25, maxUses:100, headline:'For NGOs, churches & schools', subline:'25% off — tools to run your organisation properly.', theme:'emerald', showOnSite:false } },
+    { tag:'Upgrade', title:'Upgrade booster', blurb:'Move Basic users up to Premium or Enterprise.', p:{ code:'UPGRADE15', discountType:'percent', discountValue:15, appliesToTiers:'Premium,Enterprise', headline:'Ready for more?', subline:'15% off when you upgrade to Premium or Enterprise.', theme:'navy', showOnSite:false } },
+    { tag:'Retention', title:'Loyalty renewal', blurb:'Lock to one business (choose it in the form) to reward a loyal customer or win back a lapsed one.', p:{ code:'LOYAL10', discountType:'percent', discountValue:10, headline:'Thank you for staying', subline:'10% off your renewal.', theme:'midnight', showOnSite:false } },
+    { tag:'Events', title:'Webinar / training attendees', blurb:'Give attendees a 7-day code after your session.', p:{ code:'WEBINAR20', discountType:'percent', discountValue:20, headline:'Thanks for joining us', subline:'20% off — valid for 7 days after the session.', theme:'sunset', startsAt:inDays(0), expiresAt:inDays(7), showOnSite:false } },
+  ];
+}
+
+function CouponFormModal({ coupon, preset, tiers, businesses, onClose, onSaved }) {
+  const toast = useToast();
+  const src = coupon || preset || {};
+  const [f, setF] = useState({ couponId: coupon ? coupon.couponId : '', code: src.code || '', description: src.description || '', discountType: src.discountType || 'percent', discountValue: src.discountValue || 10,
+    appliesToTiers: src.appliesToTiers || '', appliesToMonths: src.appliesToMonths || '', businessId: src.businessId || '', maxUses: src.maxUses || 0,
+    startsAt: dateInput(src.startsAt) || (preset && preset.startsAt) || '', expiresAt: dateInput(src.expiresAt) || (preset && preset.expiresAt) || '', status: src.status || 'Active', showOnSite: isOn(src.showOnSite),
+    headline: src.headline || '', subline: src.subline || '', theme: src.theme || 'navy' });
+  const [saving, setSaving] = useState(false);
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }));
+  const toggleCsv = (k, v) => { const l = String(f[k] || '').split(',').map(s => s.trim()).filter(Boolean); set(k, (l.indexOf(String(v)) > -1 ? l.filter(x => x !== String(v)) : l.concat([String(v)])).join(',')); };
+  const has = (k, v) => String(f[k] || '').split(',').map(s => s.trim()).indexOf(String(v)) > -1;
+  const save = async () => {
+    setSaving(true);
+    const r = await callServer('platform.saveCoupon', { ...f, startsAt: startIso(f.startsAt), expiresAt: endIso(f.expiresAt) });
+    setSaving(false);
+    if (r.success) { toast('Coupon saved.'); onSaved(r.data); onClose(); } else toast(r.message, 'error');
+  };
+  return (
+    <Modal title={coupon ? 'Edit coupon' : 'New coupon'} onClose={onClose} wide footer={<React.Fragment><button className="btn btn-outline" onClick={onClose}>Cancel</button><button className="btn btn-primary" disabled={saving} onClick={save}>{saving ? 'Saving…' : 'Save coupon'}</button></React.Fragment>}>
+      <div className="grid g3">
+        <Field label="Code"><input className="input mono" value={f.code} onChange={e => set('code', e.target.value.toUpperCase())} placeholder="WELCOME10" /></Field>
+        <Field label="Discount type"><select className="input" value={f.discountType} onChange={e => set('discountType', e.target.value)}><option value="percent">Percent (%)</option><option value="fixed">Fixed amount (₦)</option></select></Field>
+        <Field label={f.discountType === 'percent' ? 'Percent off' : 'Naira off'}><input className="input" type="number" min="0" value={f.discountValue} onChange={e => set('discountValue', e.target.value)} /></Field>
+      </div>
+      <div className="grid g3">
+        <Field label="Starts (optional)"><input className="input" type="date" value={f.startsAt} onChange={e => set('startsAt', e.target.value)} /></Field>
+        <Field label="Ends (optional)"><input className="input" type="date" value={f.expiresAt} onChange={e => set('expiresAt', e.target.value)} /></Field>
+        <Field label="Max uses (0 = unlimited)"><input className="input" type="number" min="0" value={f.maxUses} onChange={e => set('maxUses', e.target.value)} /></Field>
+      </div>
+      <Field label="Valid on plans (none ticked = all plans)"><div style={{display:'flex', gap:12, flexWrap:'wrap'}}>{(tiers || []).filter(t => Number(t.price) > 0).map(t => <label key={t.tierName} style={{fontSize:13, display:'flex', gap:5, alignItems:'center'}}><input type="checkbox" checked={has('appliesToTiers', t.tierName)} onChange={() => toggleCsv('appliesToTiers', t.tierName)} />{t.tierName}</label>)}</div></Field>
+      <Field label="Valid for terms (none ticked = all terms)"><div style={{display:'flex', gap:12, flexWrap:'wrap'}}>{FLYER_TERM_CHOICES.map(m => <label key={m} style={{fontSize:13, display:'flex', gap:5, alignItems:'center'}}><input type="checkbox" checked={has('appliesToMonths', m)} onChange={() => toggleCsv('appliesToMonths', m)} />{m === 1 ? 'Monthly' : m < 12 ? m + ' months' : (m / 12) + (m === 12 ? ' year' : ' years')}</label>)}</div></Field>
+      <Field label="Lock to one business (optional — for a coupon only that business can use)">
+        <select className="input" value={f.businessId} onChange={e => set('businessId', e.target.value)}><option value="">Anyone</option>{(businesses || []).map(b => <option key={b.businessId} value={b.businessId}>{b.businessName} ({b.email})</option>)}</select>
+      </Field>
+      <div className="grid g2">
+        <Field label="Flyer headline"><input className="input" value={f.headline} onChange={e => set('headline', e.target.value)} placeholder="Black Friday" /></Field>
+        <Field label="Flyer theme"><select className="input" value={f.theme} onChange={e => set('theme', e.target.value)}>{Object.keys(FLYER_THEMES).map(k => <option key={k} value={k}>{FLYER_THEMES[k].label}</option>)}</select></Field>
+      </div>
+      <Field label="Flyer sub-line"><input className="input" value={f.subline} onChange={e => set('subline', e.target.value)} placeholder="30% off any yearly plan. This week only." /></Field>
+      <div style={{display:'flex', gap:18, flexWrap:'wrap'}}>
+        <label style={{fontSize:13, display:'flex', gap:6, alignItems:'center'}}><input type="checkbox" checked={f.showOnSite} onChange={e => set('showOnSite', e.target.checked)} />Show on the public website</label>
+        <label style={{fontSize:13, display:'flex', gap:6, alignItems:'center'}}><input type="checkbox" checked={f.status === 'Active'} onChange={e => set('status', e.target.checked ? 'Active' : 'Paused')} />Active</label>
+      </div>
+    </Modal>
+  );
+}
+
+function FlyerDesigner({ coupons, tiers, reload }) {
+  const toast = useToast();
+  const live = coupons.filter(c => c.status === 'Active');
+  const [code, setCode] = useState(live[0] ? live[0].code : '');
+  const c = coupons.find(x => x.code === code) || live[0];
+  const [ov, setOv] = useState({});
+  useEffect(() => { setOv({}); }, [code]);
+  if (!c) return <div className="card"><EmptyState icon="reports" title="Create a coupon first" subtitle="Flyers are built from a coupon. Create one (or start from a suggested campaign)." /></div>;
+  const flyer = { code: c.code, discountType: c.discountType, discountValue: c.discountValue, expiresAt: c.expiresAt, headline: ov.headline !== undefined ? ov.headline : c.headline, subline: ov.subline !== undefined ? ov.subline : c.subline, theme: ov.theme || c.theme || 'navy', showQr: ov.showQr !== false, appUrl: PUBLIC_APP_URL };
+  const embed = '<iframe src="' + PUBLIC_APP_URL + '/?flyer=' + c.code + '" width="440" height="640" style="border:0;max-width:100%" loading="lazy" title="' + (flyer.headline || 'Offer') + '"></iframe>';
+  const link = PUBLIC_APP_URL + '/?flyer=' + c.code;
+  const copy = async (t) => { const ok = await copyText(t); toast(ok ? 'Copied.' : 'Could not copy.', ok ? 'success' : 'error'); };
+  const saveText = async (extra) => {
+    const r = await callServer('platform.saveCoupon', { ...c, headline: flyer.headline, subline: flyer.subline, theme: flyer.theme, showOnSite: isOn(c.showOnSite), ...extra });
+    if (r.success) { toast('Saved.'); reload(); } else toast(r.message, 'error');
+  };
+  return (
+    <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))', gap:16, alignItems:'start'}}>
+      <div className="card" style={{padding:16}}>
+        <Field label="Coupon"><select className="input" value={c.code} onChange={e => setCode(e.target.value)}>{coupons.map(x => <option key={x.couponId} value={x.code}>{x.code} — {couponOfferText(x)}{x.status !== 'Active' ? ' (paused)' : ''}</option>)}</select></Field>
+        <Field label="Headline"><input className="input" value={flyer.headline || ''} onChange={e => setOv(o => ({ ...o, headline: e.target.value }))} /></Field>
+        <Field label="Sub-line"><input className="input" value={flyer.subline || ''} onChange={e => setOv(o => ({ ...o, subline: e.target.value }))} /></Field>
+        <Field label="Theme"><select className="input" value={flyer.theme} onChange={e => setOv(o => ({ ...o, theme: e.target.value }))}>{Object.keys(FLYER_THEMES).map(k => <option key={k} value={k}>{FLYER_THEMES[k].label}</option>)}</select></Field>
+        <label style={{fontSize:13, display:'flex', gap:6, alignItems:'center', marginBottom:12}}><input type="checkbox" checked={flyer.showQr} onChange={e => setOv(o => ({ ...o, showQr: e.target.checked }))} />Include QR code to {PUBLIC_APP_URL.replace('https://', '')}</label>
+        <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
+          <button className="btn btn-gold" onClick={() => downloadFlyer(flyer, c.code)}><I name="download" size={14} />Download flyer (PNG)</button>
+          <button className="btn btn-outline" onClick={() => saveText({})}>Save text &amp; theme</button>
+        </div>
+        <div className="divider" />
+        <div style={{fontWeight:800, fontSize:13.5, marginBottom:6}}>Publish on the website</div>
+        <label style={{fontSize:13, display:'flex', gap:6, alignItems:'center', marginBottom:10}}><input type="checkbox" checked={isOn(c.showOnSite)} onChange={e => saveText({ showOnSite: e.target.checked })} />Show this offer on the landing page (live as soon as it is ticked)</label>
+        <Field label="Embed on any website (paste this HTML)"><textarea className="input mono" readOnly rows={3} value={embed} style={{fontSize:11.5}} onFocus={e => e.target.select()} /></Field>
+        <div style={{display:'flex', gap:8, flexWrap:'wrap'}}><button className="btn btn-outline btn-sm" onClick={() => copy(embed)}><I name="copy" size={13} />Copy embed code</button><button className="btn btn-outline btn-sm" onClick={() => copy(link)}><I name="link" size={13} />Copy flyer link</button><a className="btn btn-outline btn-sm" href={link} target="_blank" rel="noreferrer">Preview page</a></div>
+        <p style={{fontSize:11.5, color:'var(--muted)', margin:'10px 0 0'}}>The embedded flyer only displays while the coupon is active and not expired, so old offers never stay online by mistake.</p>
+      </div>
+      <div style={{display:'flex', justifyContent:'center'}}><FlyerCanvas flyer={flyer} width={380} /></div>
+    </div>
+  );
+}
+
+function PlatformMarketingPage() {
+  const toast = useToast();
+  const [tab, setTab] = useState('coupons');
+  const { data: coupons, loading, reload } = usePlatformData('platform.listCoupons', {}, []);
+  const { data: tiers } = usePlatformData('platform.listTiers', {}, []);
+  const { data: businesses } = usePlatformData('platform.listBusinesses', {}, []);
+  const [edit, setEdit] = useState(null); // {coupon?, preset?}
+  const del = async (c) => { const r = await callServer('platform.deleteCoupon', { id: c.couponId }); if (r.success) { toast('Coupon deleted.'); reload(); } else toast(r.message, 'error'); };
+  const toggle = async (c) => { const r = await callServer('platform.saveCoupon', { ...c, showOnSite: isOn(c.showOnSite), status: c.status === 'Active' ? 'Paused' : 'Active' }); if (r.success) reload(); else toast(r.message, 'error'); };
+  const tabs = [['coupons', 'Coupons'], ['ideas', 'Campaign ideas'], ['flyers', 'Flyers & embed'], ['billing', 'Terms & payments']];
+  const bizName = (id) => { const b = (businesses || []).find(x => x.businessId === id); return b ? b.businessName : id; };
+  return (
+    <div>
+      <PageHeader title="Marketing" subtitle="Coupons, campaign ideas, flyers and website offers" action={<button className="btn btn-gold" onClick={() => setEdit({})}><I name="plus" size={15} />New coupon</button>} />
+      <div style={{display:'flex', gap:8, flexWrap:'wrap', marginBottom:14}}>{tabs.map(([k, l]) => <button key={k} className={'btn btn-sm ' + (tab === k ? 'btn-primary' : 'btn-outline')} onClick={() => setTab(k)}>{l}</button>)}</div>
+      {tab === 'coupons' && (
+        <DataTable loading={loading} rows={coupons || []} rowKey="couponId" emptyIcon="reports" emptyTitle="No coupons yet." emptySubtitle="Create one, or start from a suggested campaign."
+          columns={[
+            { key:'code', header:'Code', render:r => <span className="mono" style={{fontWeight:800}}>{r.code}</span> },
+            { key:'offer', header:'Offer', render:r => couponOfferText(r) },
+            { key:'applies', header:'Applies to', render:r => <div style={{fontSize:12}}>{r.businessId ? <b>{bizName(r.businessId)} only</b> : (r.appliesToTiers || 'All plans')}<div style={{color:'var(--muted)'}}>{r.appliesToMonths ? r.appliesToMonths.split(',').join(', ') + ' mo' : 'All terms'}</div></div> },
+            { key:'uses', header:'Used', render:r => Number(r.usedCount || 0) + (Number(r.maxUses) > 0 ? ' / ' + r.maxUses : '') },
+            { key:'valid', header:'Valid', render:r => <span style={{fontSize:12}}>{r.startsAt ? fmtDate(r.startsAt) : 'Now'} → {r.expiresAt ? fmtDate(r.expiresAt) : 'No end'}</span> },
+            { key:'site', header:'Website', render:r => isOn(r.showOnSite) ? <span className="badge badge-green">Shown</span> : <span style={{color:'var(--muted)', fontSize:12}}>Hidden</span> },
+            { key:'status', header:'Status', render:r => <StatusBadge status={r.status} /> },
+            { key:'a', header:'', render:r => <div style={{display:'flex', gap:6, flexWrap:'wrap'}}><button className="btn btn-outline btn-sm" onClick={() => setEdit({ coupon: r })}>Edit</button><button className="btn btn-outline btn-sm" onClick={() => toggle(r)}>{r.status === 'Active' ? 'Pause' : 'Activate'}</button><button className="btn btn-outline btn-sm" onClick={() => setTab('flyers')}>Flyer</button><button className="btn btn-danger btn-sm" onClick={() => del(r)}>Delete</button></div> },
+          ]} />
+      )}
+      {tab === 'ideas' && (
+        <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:12}}>
+          {couponIdeas().map(i => (
+            <div key={i.p.code} className="card" style={{padding:16, display:'flex', flexDirection:'column', gap:6}}>
+              <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}><span className="badge badge-blue">{i.tag}</span><span className="mono" style={{fontWeight:800}}>{i.p.code}</span></div>
+              <div style={{fontWeight:800}}>{i.title} — {couponOfferText(i.p)}</div>
+              <div style={{fontSize:12.5, color:'var(--muted)', flex:1}}>{i.blurb}</div>
+              <button className="btn btn-gold btn-sm" onClick={() => setEdit({ preset: i.p })}>Use this idea</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {tab === 'flyers' && <FlyerDesigner coupons={coupons || []} tiers={tiers} reload={reload} />}
+      {tab === 'billing' && <BillingSettingsPanel />}
+      {edit && <CouponFormModal coupon={edit.coupon} preset={edit.preset} tiers={tiers} businesses={businesses} onClose={() => setEdit(null)} onSaved={() => reload()} />}
+    </div>
+  );
+}
+
+function BillingSettingsPanel() {
+  const toast = useToast();
+  const { data, loading, reload } = usePlatformData('platform.getBilling', {}, []);
+  const [disc, setDisc] = useState(null); const [instr, setInstr] = useState(null); const [key, setKey] = useState(''); const [saving, setSaving] = useState(false);
+  useEffect(() => { if (data) { setDisc(data.termDiscounts); setInstr(data.paymentInstructions); } }, [data]);
+  if (loading || !data || !disc) return <Skeleton h={200} />;
+  const save = async (extra) => { setSaving(true); const r = await callServer('platform.saveBilling', { termDiscounts: disc, paymentInstructions: instr, ...(extra || {}) }); setSaving(false); if (r.success) { toast('Saved.'); setKey(''); reload(); } else toast(r.message, 'error'); };
+  const labels = { 1:'Monthly', 3:'Quarterly (3 months)', 6:'6 months', 12:'1 year', 24:'2 years', 36:'3 years', 60:'5 years' };
+  return (
+    <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))', gap:16, alignItems:'start'}}>
+      <div className="card" style={{padding:18}}>
+        <h3 style={{margin:'0 0 4px', fontSize:14.5}}>Longer-term discounts</h3>
+        <p style={{fontSize:12.5, color:'var(--muted)', margin:'0 0 12px'}}>Automatic saving when a business pays for several months at once. Coupons stack on top of this.</p>
+        {data.terms.map(m => <div key={m} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'4px 0'}}><span style={{fontSize:13}}>{labels[m]}</span><span><input className="input" type="number" min="0" max="90" style={{width:80, padding:'5px 8px'}} value={disc[String(m)]} onChange={e => setDisc(d => ({ ...d, [String(m)]: e.target.value }))} /> %</span></div>)}
+      </div>
+      <div className="card" style={{padding:18}}>
+        <h3 style={{margin:'0 0 4px', fontSize:14.5}}>How businesses pay you</h3>
+        <Field label="Bank transfer instructions (shown after checkout)"><textarea className="input" rows={4} value={instr} onChange={e => setInstr(e.target.value)} placeholder={'Bank: …\nAccount name: BPA Dynamics\nAccount number: …\nSend proof on WhatsApp 0810 807 6212'} /></Field>
+        <Field label="Paystack secret key (for online subscription payments)" hint={data.onlinePayKeySet ? 'A key is saved. Paste a new one to replace it.' : 'Optional. Starts with sk_test_ or sk_live_. Stored on the server only.'}><input className="input" type="password" autoComplete="off" value={key} onChange={e => setKey(e.target.value)} placeholder={data.onlinePayKeySet ? '••••••••••••' : 'sk_live_…'} /></Field>
+        <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
+          <button className="btn btn-primary" disabled={saving} onClick={() => save(key ? { platformPaystackKey: key } : {})}>{saving ? 'Saving…' : 'Save'}</button>
+          {data.onlinePayKeySet && <button className="btn btn-outline" onClick={() => save({ clearPaystackKey: true })}>Remove key</button>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------- platform: subscription orders ----------
+function PlatformSubscriptionsPage() {
+  const toast = useToast();
+  const { data, loading, reload } = usePlatformData('platform.listSubscriptionOrders', {}, []);
+  const [pay, setPay] = useState(null); const [method, setMethod] = useState('Bank transfer'); const [ref, setRef] = useState(''); const [busy, setBusy] = useState(false);
+  const rows = data || [];
+  const paid = rows.filter(o => o.status === 'Paid');
+  const markPaid = async () => { setBusy(true); const r = await callServer('platform.markOrderPaid', { orderId: pay.orderId, method, ref }); setBusy(false); if (r.success) { toast('Marked paid — plan activated.'); setPay(null); setRef(''); reload(); } else toast(r.message, 'error'); };
+  const cancel = async (o) => { const r = await callServer('platform.cancelOrder', { orderId: o.orderId }); if (r.success) { toast('Cancelled.'); reload(); } else toast(r.message, 'error'); };
+  return (
+    <div>
+      <PageHeader title="Subscriptions" subtitle="Subscription requests and payments from businesses" />
+      <div className="grid g3" style={{marginBottom:14}}>
+        <KpiCard label="Awaiting payment" value={String(rows.filter(o => o.status === 'Pending').length)} accent="var(--amber)" />
+        <KpiCard label="Paid orders" value={String(paid.length)} accent="var(--green)" />
+        <KpiCard label="Revenue collected" value={NGN(paid.reduce((s, o) => s + Number(o.total || 0), 0))} />
+      </div>
+      <DataTable loading={loading} rows={rows} rowKey="orderId" emptyIcon="invoices" emptyTitle="No subscription orders yet."
+        columns={[
+          { key:'orderNumber', header:'Order', render:r => <span className="mono">{r.orderNumber}</span> },
+          { key:'businessName', header:'Business' },
+          { key:'plan', header:'Plan', render:r => r.tierName + ' · ' + r.months + ' mo' },
+          { key:'total', header:'Total', render:r => <div>{NGN(r.total)}{r.couponCode && <div style={{fontSize:11, color:'var(--muted)'}}>{r.couponCode} −{NGN(r.couponDiscount)}</div>}</div> },
+          { key:'status', header:'Status', render:r => <StatusBadge status={r.status} /> },
+          { key:'createdAt', header:'Date', render:r => fmtDate(r.createdAt) },
+          { key:'a', header:'', render:r => r.status === 'Pending' ? <div style={{display:'flex', gap:6}}><button className="btn btn-primary btn-sm" onClick={() => setPay(r)}>Mark paid</button><button className="btn btn-outline btn-sm" onClick={() => cancel(r)}>Cancel</button></div> : (r.status === 'Paid' ? <span style={{fontSize:12, color:'var(--muted)'}}>until {fmtDate(r.periodEnd)}</span> : null) },
+        ]} />
+      {pay && (
+        <Modal title={'Mark paid — ' + pay.orderNumber} onClose={() => setPay(null)} footer={<React.Fragment><button className="btn btn-outline" onClick={() => setPay(null)}>Cancel</button><button className="btn btn-primary" disabled={busy} onClick={markPaid}>{busy ? 'Saving…' : 'Confirm payment & activate'}</button></React.Fragment>}>
+          <p style={{fontSize:13, margin:'0 0 10px'}}>{pay.businessName} — {pay.tierName} for {pay.months} month(s), <b>{NGN(pay.total)}</b>. This activates the plan, extends the expiry{pay.partnerId ? ' and credits the partner’s commission' : ''}.</p>
+          <Field label="Payment method"><select className="input" value={method} onChange={e => setMethod(e.target.value)}>{['Bank transfer', 'Cash', 'Paystack', 'POS', 'Other'].map(m => <option key={m}>{m}</option>)}</select></Field>
+          <Field label="Reference (optional)"><input className="input" value={ref} onChange={e => setRef(e.target.value)} /></Field>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ---------- platform: partners ----------
+function PartnerFormModal({ partner, onClose, onSaved }) {
+  const toast = useToast();
+  const [f, setF] = useState({ partnerId: partner ? partner.partnerId : '', name: partner ? partner.name : '', email: partner ? partner.email : '', phone: partner ? partner.phone : '', commissionRate: partner ? partner.commissionRate : 10, status: partner ? partner.status : 'Active', payoutDetails: partner ? partner.payoutDetails : '', password: '' });
+  const [saving, setSaving] = useState(false); const [created, setCreated] = useState(null);
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }));
+  const save = async () => { setSaving(true); const r = await callServer('platform.savePartner', f); setSaving(false); if (!r.success) { toast(r.message, 'error'); return; } onSaved(); if (r.data.initialPassword) setCreated(r.data); else { toast('Partner saved.'); onClose(); } };
+  if (created) return (
+    <Modal title="Partner created" onClose={onClose} footer={<button className="btn btn-primary" onClick={onClose}>Done</button>}>
+      <p style={{fontSize:13}}>Login details were emailed to <b>{created.email}</b>. Save them now — the password is not shown again.</p>
+      <div className="card" style={{padding:12, fontSize:13}}><div>Login page: <span className="mono">{PUBLIC_APP_URL}/?partner=1</span></div><div>Email: <span className="mono">{created.email}</span></div><div>Password: <b className="mono">{created.initialPassword}</b></div><div>Referral link: <span className="mono">{PUBLIC_APP_URL}/?ref={created.referralCode}</span></div></div>
+    </Modal>
+  );
+  return (
+    <Modal title={partner ? 'Edit partner' : 'Add partner / reseller'} onClose={onClose} footer={<React.Fragment><button className="btn btn-outline" onClick={onClose}>Cancel</button><button className="btn btn-primary" disabled={saving} onClick={save}>{saving ? 'Saving…' : 'Save partner'}</button></React.Fragment>}>
+      <div className="grid g2"><Field label="Name"><input className="input" value={f.name} onChange={e => set('name', e.target.value)} /></Field><Field label="Phone"><input className="input" value={f.phone} onChange={e => set('phone', e.target.value)} /></Field></div>
+      <div className="grid g2"><Field label="Email (their login)"><input className="input" type="email" value={f.email} onChange={e => set('email', e.target.value)} /></Field><Field label="Agreed commission (%)"><input className="input" type="number" min="0" max="100" step="0.5" value={f.commissionRate} onChange={e => set('commissionRate', e.target.value)} /></Field></div>
+      <Field label={partner ? 'New password (leave blank to keep)' : 'Password (leave blank to auto-generate)'}><input className="input" type="text" autoComplete="off" value={f.password} onChange={e => set('password', e.target.value)} /></Field>
+      <Field label="Payout details (bank / account — for your reference)"><input className="input" value={f.payoutDetails} onChange={e => set('payoutDetails', e.target.value)} /></Field>
+      {partner && <label style={{fontSize:13, display:'flex', gap:6, alignItems:'center'}}><input type="checkbox" checked={f.status === 'Active'} onChange={e => set('status', e.target.checked ? 'Active' : 'Inactive')} />Active (inactive partners cannot log in or earn new commission)</label>}
+      <p style={{fontSize:12, color:'var(--muted)', margin:'10px 0 0'}}>Commission is calculated on every subscription payment from the businesses mapped to this partner. Changing the rate affects future payments only.</p>
+    </Modal>
+  );
+}
+
+function PartnerDetailModal({ partner, onClose, onChanged }) {
+  const toast = useToast();
+  const { data, loading, reload } = usePlatformData('platform.listCommissions', { partnerId: partner.partnerId }, [partner.partnerId]);
+  const [ref, setRef] = useState(''); const [busy, setBusy] = useState(false);
+  const pending = (data || []).filter(c => c.status === 'Pending');
+  const total = pending.reduce((s, c) => s + Number(c.commission), 0);
+  const settle = async () => { setBusy(true); const r = await callServer('platform.settleCommissions', { partnerId: partner.partnerId, payoutRef: ref }); setBusy(false); if (r.success) { toast('Payout of ' + NGN(r.data.total) + ' recorded.'); setRef(''); reload(); onChanged(); } else toast(r.message, 'error'); };
+  return (
+    <Modal title={partner.name + ' — commissions'} onClose={onClose} wide>
+      <div className="grid g3" style={{marginBottom:12}}><KpiCard label="Rate" value={partner.commissionRate + '%'} /><KpiCard label="Pending payout" value={NGN(total)} accent="var(--amber)" /><KpiCard label="Paid out" value={NGN((data || []).filter(c => c.status === 'Paid').reduce((s, c) => s + Number(c.commission), 0))} accent="var(--green)" /></div>
+      {pending.length > 0 && <div style={{display:'flex', gap:8, flexWrap:'wrap', marginBottom:12}}><input className="input" style={{maxWidth:240}} placeholder="Payout reference (optional)" value={ref} onChange={e => setRef(e.target.value)} /><button className="btn btn-gold" disabled={busy} onClick={settle}>{busy ? 'Saving…' : 'Mark ' + NGN(total) + ' as paid out'}</button></div>}
+      {loading ? <Skeleton h={100} /> : (data || []).length === 0 ? <div style={{color:'var(--muted)', fontSize:13}}>No commissions yet.</div> : (
+        <table><thead><tr><th>Date</th><th>Business</th><th>Payment</th><th>Rate</th><th>Commission</th><th>Status</th></tr></thead>
+          <tbody>{data.map(c => <tr key={c.commissionId}><td>{fmtDate(c.createdAt)}</td><td>{c.businessName}</td><td>{NGN(c.amountBase)}</td><td>{c.rate}%</td><td><b>{NGN(c.commission)}</b></td><td><StatusBadge status={c.status === 'Paid' ? 'Paid' : 'Pending'} />{c.payoutRef && <span style={{fontSize:11, color:'var(--muted)', marginLeft:6}}>{c.payoutRef}</span>}</td></tr>)}</tbody></table>
+      )}
+    </Modal>
+  );
+}
+
+function PlatformPartnersPage() {
+  const toast = useToast();
+  const [tab, setTab] = useState('partners');
+  const { data: partners, loading, reload } = usePlatformData('platform.listPartners', {}, []);
+  const { data: leads, reload: reloadLeads } = usePlatformData('platform.listLeads', {}, []);
+  const { data: businesses } = usePlatformData('platform.listBusinesses', {}, []);
+  const [edit, setEdit] = useState(null); const [detail, setDetail] = useState(null); const [mapLead, setMapLead] = useState(null); const [mapBiz, setMapBiz] = useState('');
+  const pname = (id) => { const p = (partners || []).find(x => x.partnerId === id); return p ? p.name : '—'; };
+  const sum = (f) => (partners || []).reduce((s, p) => s + Number(p[f] || 0), 0);
+  const updateLead = async (l, status, businessId) => { const r = await callServer('platform.updateLead', { leadId: l.leadId, status, businessId }); if (r.success) { toast('Updated.'); setMapLead(null); setMapBiz(''); reloadLeads(); reload(); } else toast(r.message, 'error'); };
+  return (
+    <div>
+      <PageHeader title="Partners & Resellers" subtitle="Your marketing team: clients they bring and the commission they earn" action={<button className="btn btn-gold" onClick={() => setEdit({})}><I name="plus" size={15} />Add partner</button>} />
+      <div className="grid g4" style={{marginBottom:14}}>
+        <KpiCard label="Partners" value={String((partners || []).length)} /><KpiCard label="Clients brought" value={String(sum('clientCount'))} />
+        <KpiCard label="Commission owed" value={NGN(sum('pending'))} accent="var(--amber)" /><KpiCard label="Commission paid" value={NGN(sum('paidOut'))} accent="var(--green)" />
+      </div>
+      <div style={{display:'flex', gap:8, marginBottom:14}}>{[['partners', 'Partners'], ['leads', 'Filed clients' + ((leads || []).filter(l => l.status === 'Submitted').length ? ' (' + (leads || []).filter(l => l.status === 'Submitted').length + ')' : '')]].map(([k, l]) => <button key={k} className={'btn btn-sm ' + (tab === k ? 'btn-primary' : 'btn-outline')} onClick={() => setTab(k)}>{l}</button>)}</div>
+      {tab === 'partners' && (
+        <DataTable loading={loading} rows={partners || []} rowKey="partnerId" emptyIcon="users" emptyTitle="No partners yet." emptySubtitle="Add a marketing partner to give them a dashboard and referral link."
+          columns={[
+            { key:'name', header:'Partner', render:r => <div><div style={{fontWeight:600}}>{r.name}</div><div style={{fontSize:11.5, color:'var(--muted)'}}>{r.email}</div></div> },
+            { key:'referralCode', header:'Code', render:r => <span className="mono">{r.referralCode}</span> },
+            { key:'commissionRate', header:'Rate', render:r => r.commissionRate + '%' },
+            { key:'clientCount', header:'Clients' },
+            { key:'revenueBrought', header:'Revenue', render:r => NGN(r.revenueBrought) },
+            { key:'pending', header:'Owed', render:r => <b>{NGN(r.pending)}</b> },
+            { key:'paidOut', header:'Paid', render:r => NGN(r.paidOut) },
+            { key:'status', header:'Status', render:r => <StatusBadge status={r.status} /> },
+            { key:'a', header:'', render:r => <div style={{display:'flex', gap:6}}><button className="btn btn-outline btn-sm" onClick={() => setDetail(r)}>Commissions</button><button className="btn btn-outline btn-sm" onClick={() => setEdit({ partner: r })}>Edit</button></div> },
+          ]} />
+      )}
+      {tab === 'leads' && (
+        <DataTable rows={leads || []} rowKey="leadId" emptyIcon="customers" emptyTitle="No filed clients." emptySubtitle="When a partner files a client it appears here for you to map."
+          columns={[
+            { key:'partnerId', header:'Partner', render:r => pname(r.partnerId) },
+            { key:'businessName', header:'Business', render:r => <div><div style={{fontWeight:600}}>{r.businessName}</div><div style={{fontSize:11.5, color:'var(--muted)'}}>{[r.contactName, r.email, r.phone].filter(Boolean).join(' · ')}</div></div> },
+            { key:'notes', header:'Notes' },
+            { key:'status', header:'Status', render:r => <StatusBadge status={r.status === 'Mapped' ? 'Active' : r.status === 'Rejected' ? 'Voided' : 'Pending'} /> },
+            { key:'a', header:'', render:r => r.status === 'Submitted' ? <div style={{display:'flex', gap:6}}><button className="btn btn-primary btn-sm" onClick={() => setMapLead(r)}>Map to business</button><button className="btn btn-outline btn-sm" onClick={() => updateLead(r, 'Rejected')}>Reject</button></div> : null },
+          ]} />
+      )}
+      {edit && <PartnerFormModal partner={edit.partner} onClose={() => setEdit(null)} onSaved={reload} />}
+      {detail && <PartnerDetailModal partner={detail} onClose={() => setDetail(null)} onChanged={reload} />}
+      {mapLead && (
+        <Modal title={'Map "' + mapLead.businessName + '"'} onClose={() => setMapLead(null)} footer={<React.Fragment><button className="btn btn-outline" onClick={() => setMapLead(null)}>Cancel</button><button className="btn btn-primary" disabled={!mapBiz} onClick={() => updateLead(mapLead, 'Mapped', mapBiz)}>Map business to {pname(mapLead.partnerId)}</button></React.Fragment>}>
+          <p style={{fontSize:13, margin:'0 0 10px'}}>If this business has already signed up, choose it. (If they sign up later with the same email they are mapped automatically.)</p>
+          <Field label="Business"><select className="input" value={mapBiz} onChange={e => setMapBiz(e.target.value)}><option value="">Choose…</option>{(businesses || []).map(b => <option key={b.businessId} value={b.businessId}>{b.businessName} ({b.email})</option>)}</select></Field>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ---------- partner portal ----------
+function PartnerLoginPage({ onLogin, onBack }) {
+  const [email, setEmail] = useState(''); const [password, setPassword] = useState(''); const [loading, setLoading] = useState(false); const [error, setError] = useState('');
+  const submit = async (e) => { e.preventDefault(); setLoading(true); setError(''); const r = await callServer('partner.login', { email, password }); setLoading(false); if (r.success) onLogin(r.data); else setError(r.message || 'Login failed.'); };
+  return (
+    <div className="auth-wrap"><div className="auth-card">
+      <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:22}}><BrandMark size={40} fontSize={17} /><div><div style={{fontFamily:'Manrope', fontWeight:800, fontSize:17}}>Partner Portal</div><div style={{fontSize:11, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.06em'}}>Business360 resellers</div></div></div>
+      <form onSubmit={submit}>
+        <Field label="Email"><input className="input" type="email" required value={email} onChange={e => setEmail(e.target.value)} /></Field>
+        <Field label="Password"><input className="input" type="password" required value={password} onChange={e => setPassword(e.target.value)} /></Field>
+        {error && <div style={{background:'#FCEBE7', color:'var(--red)', fontSize:12.5, padding:'9px 12px', borderRadius:8, marginBottom:14}}>{error}</div>}
+        <button className="btn btn-primary" type="submit" style={{width:'100%', justifyContent:'center', padding:'11px'}} disabled={loading}>{loading ? 'Signing in…' : 'Sign In'}</button>
+      </form>
+      <div style={{textAlign:'center', marginTop:18, fontSize:13, color:'var(--muted)'}}><a onClick={onBack} style={{color:'var(--brand-2)', fontWeight:600, cursor:'pointer'}}>← Back to Business360</a></div>
+    </div></div>
+  );
+}
+
+function PartnerWorkspace({ session, onLogout }) {
+  const toast = useToast();
+  const { data, loading, reload } = useApiData('partner.dashboard', {}, []);
+  const [f, setF] = useState({ businessName:'', contactName:'', email:'', phone:'', notes:'' }); const [saving, setSaving] = useState(false);
+  useIdleLogout(onLogout);
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }));
+  const file = async () => { setSaving(true); const r = await callServer('partner.fileClient', f); setSaving(false); if (r.success) { toast('Client filed — BPA Dynamics will confirm it.'); setF({ businessName:'', contactName:'', email:'', phone:'', notes:'' }); reload(); } else toast(r.message, 'error'); };
+  const copy = async (t) => { const ok = await copyText(t); toast(ok ? 'Link copied.' : 'Could not copy.', ok ? 'success' : 'error'); };
+  return (
+    <div style={{minHeight:'100vh', background:'var(--bg)'}}>
+      <div className="topbar" style={{position:'sticky', top:0, zIndex:20}}>
+        <div style={{display:'flex', alignItems:'center', gap:10}}><BrandMark size={30} fontSize={13} /><div><div style={{fontWeight:800, fontSize:14}}>Partner Portal</div><div style={{fontSize:11.5, color:'var(--muted)'}}>{session.partner.name}</div></div></div>
+        <div style={{display:'flex', gap:8, alignItems:'center'}}><ThemeToggle /><button className="btn btn-outline btn-sm" onClick={onLogout}><I name="logout" size={14} />Log out</button></div>
+      </div>
+      <div style={{maxWidth:1050, margin:'0 auto', padding:'18px 16px 60px'}}>
+        {loading || !data ? <Skeleton h={300} /> : (
+          <React.Fragment>
+            <div className="grid g4" style={{marginBottom:14}}>
+              <KpiCard label="Clients brought" value={String(data.clientCount)} sub={data.payingClients + ' paying · ' + data.trialClients + ' on trial'} />
+              <KpiCard label="Revenue you brought" value={NGN(data.revenueBrought)} />
+              <KpiCard label={'Total earned (' + data.partner.commissionRate + '%)'} value={NGN(data.earned)} accent="var(--brand)" />
+              <KpiCard label="Owed to you" value={NGN(data.pending)} sub={'Paid out so far: ' + NGN(data.paidOut)} accent="var(--amber)" />
+            </div>
+            <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))', gap:14, marginBottom:14}}>
+              <div className="card" style={{padding:16}}>
+                <div style={{fontWeight:800, marginBottom:4}}>Your referral link</div>
+                <div style={{fontSize:12.5, color:'var(--muted)', marginBottom:10}}>Businesses that sign up through this link or QR code are automatically yours.</div>
+                <div style={{display:'flex', gap:14, alignItems:'center', flexWrap:'wrap'}}>
+                  <QrImage text={data.referralLink} size={130} />
+                  <div style={{flex:1, minWidth:200}}>
+                    <input className="input mono" readOnly value={data.referralLink} onFocus={e => e.target.select()} style={{fontSize:12, marginBottom:8}} />
+                    <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
+                      <button className="btn btn-primary btn-sm" onClick={() => copy(data.referralLink)}><I name="copy" size={13} />Copy</button>
+                      <a className="btn btn-outline btn-sm" target="_blank" rel="noreferrer" href={'https://wa.me/?text=' + encodeURIComponent('Run your business with Business360 — sales, stock, invoices and an online store in one app: ' + data.referralLink)}>WhatsApp</a>
+                      <button className="btn btn-outline btn-sm" onClick={() => downloadDataUrl('my-referral-qr.png', qrPng(data.referralLink))}><I name="download" size={13} />QR</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="card" style={{padding:16}}>
+                <div style={{fontWeight:800, marginBottom:4}}>File a client</div>
+                <div style={{fontSize:12.5, color:'var(--muted)', marginBottom:8}}>Met a business that is not signed up yet? File them here. When they register with this email they are linked to you automatically; otherwise BPA Dynamics maps them.</div>
+                <div className="grid g2"><Field label="Business name *"><input className="input" value={f.businessName} onChange={e => set('businessName', e.target.value)} /></Field><Field label="Contact person"><input className="input" value={f.contactName} onChange={e => set('contactName', e.target.value)} /></Field></div>
+                <div className="grid g2"><Field label="Email"><input className="input" type="email" value={f.email} onChange={e => set('email', e.target.value)} /></Field><Field label="Phone"><input className="input" value={f.phone} onChange={e => set('phone', e.target.value)} /></Field></div>
+                <Field label="Notes"><input className="input" value={f.notes} onChange={e => set('notes', e.target.value)} /></Field>
+                <button className="btn btn-gold" disabled={saving || !f.businessName.trim()} onClick={file}>{saving ? 'Filing…' : 'File client'}</button>
+              </div>
+            </div>
+            <div className="card" style={{padding:16, marginBottom:14}}>
+              <div style={{fontWeight:800, marginBottom:8}}>Your clients</div>
+              {data.clients.length === 0 ? <div style={{color:'var(--muted)', fontSize:13}}>No clients yet. Share your link to get started.</div> : (
+                <div style={{overflowX:'auto'}}><table><thead><tr><th>Business</th><th>Plan</th><th>Status</th><th>Signed up</th><th>Active until</th><th>They paid</th><th>You earned</th></tr></thead>
+                  <tbody>{data.clients.map(c => <tr key={c.businessId}><td style={{fontWeight:600}}>{c.businessName}</td><td>{c.plan}</td><td><StatusBadge status={c.status} /></td><td>{fmtDate(c.signedUpAt)}</td><td>{c.expiresAt ? fmtDate(c.expiresAt) : '—'}</td><td>{NGN(c.totalPaid)}</td><td><b>{NGN(c.commissionEarned)}</b></td></tr>)}</tbody></table></div>
+              )}
+            </div>
+            <div className="card" style={{padding:16, marginBottom:14}}>
+              <div style={{fontWeight:800, marginBottom:8}}>Commission statement</div>
+              {data.commissions.length === 0 ? <div style={{color:'var(--muted)', fontSize:13}}>Commission appears here every time one of your clients pays a subscription.</div> : (
+                <div style={{overflowX:'auto'}}><table><thead><tr><th>Date</th><th>Business</th><th>Payment</th><th>Rate</th><th>Commission</th><th>Status</th></tr></thead>
+                  <tbody>{data.commissions.map(c => <tr key={c.commissionId}><td>{fmtDate(c.createdAt)}</td><td>{c.businessName}</td><td>{NGN(c.amountBase)}</td><td>{c.rate}%</td><td><b>{NGN(c.commission)}</b></td><td><StatusBadge status={c.status === 'Paid' ? 'Paid' : 'Pending'} />{c.status === 'Paid' && c.paidAt && <span style={{fontSize:11, color:'var(--muted)', marginLeft:6}}>{fmtDate(c.paidAt)}{c.payoutRef ? ' · ' + c.payoutRef : ''}</span>}</td></tr>)}</tbody></table></div>
+              )}
+            </div>
+            {data.leads.length > 0 && (
+              <div className="card" style={{padding:16}}>
+                <div style={{fontWeight:800, marginBottom:8}}>Clients you filed</div>
+                <div style={{overflowX:'auto'}}><table><thead><tr><th>Business</th><th>Contact</th><th>Filed</th><th>Status</th></tr></thead>
+                  <tbody>{data.leads.map(l => <tr key={l.leadId}><td style={{fontWeight:600}}>{l.businessName}</td><td>{[l.contactName, l.email, l.phone].filter(Boolean).join(' · ')}</td><td>{fmtDate(l.createdAt)}</td><td>{l.status === 'Mapped' ? <span className="badge badge-green">Linked to you</span> : l.status === 'Rejected' ? <span className="badge badge-red">Rejected</span> : <span className="badge badge-amber">Awaiting confirmation</span>}</td></tr>)}</tbody></table></div>
+              </div>
+            )}
+          </React.Fragment>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
 const PAGES = {
   dashboard: DashboardPage, sales: SalesPage, orders: OrdersPage, scan: ScanPage, products: ProductsPage, inventory: InventoryPage,
   customers: CustomersPage, suppliers: SuppliersPage, purchases: PurchasesPage, returns: ReturnsPage,
   invoices: InvoicesPage, expenses: ExpensesPage, income: IncomePage, bookkeeping: BookkeepingPage,
-  reports: ReportsPage, users: UsersPage, audit: AuditLogPage, settings: SettingsPage, recyclebin: RecycleBinPage,
+  reports: ReportsPage, users: UsersPage, audit: AuditLogPage, settings: SettingsPage, recyclebin: RecycleBinPage, billing: BillingPage,
 };
 
 // ============================== APP ROOT ==============================
@@ -3987,6 +4682,9 @@ const PLATFORM_NAV = [
   { key:'dashboard', label:'Overview', icon:'dashboard' },
   { key:'businesses', label:'Businesses', icon:'building' },
   { key:'tiers', label:'Subscription Tiers', icon:'layers' },
+  { key:'subscriptions', label:'Subscriptions', icon:'invoices' },
+  { key:'marketing', label:'Marketing', icon:'chart' },
+  { key:'partners', label:'Partners', icon:'users' },
   { key:'appearance', label:'Appearance', icon:'palette' },
 ];
 
@@ -4032,6 +4730,9 @@ function PlatformAdminWorkspace({ session, onLogout }) {
           {page === 'dashboard' && <PlatformDashboardPage />}
           {page === 'businesses' && <PlatformBusinessesPage />}
           {page === 'tiers' && <PlatformTiersPage />}
+          {page === 'subscriptions' && <PlatformSubscriptionsPage />}
+          {page === 'marketing' && <PlatformMarketingPage />}
+          {page === 'partners' && <PlatformPartnersPage />}
           {page === 'appearance' && <PlatformAppearancePage />}
         </div>
       </div>
@@ -4164,6 +4865,8 @@ function PlatformBusinessesPage() {
   const toast = useToast();
   const { data: businesses, loading, reload } = usePlatformData('platform.listBusinesses', {}, []);
   const { data: tiers } = usePlatformData('platform.listTiers', {}, []);
+  const { data: partnerList } = usePlatformData('platform.listPartners', {}, []);
+  const assignPartner = async (b, partnerId) => { const res = await callServer('platform.assignBusiness', { businessId: b.businessId, partnerId }); if (res.success) { toast(partnerId ? 'Mapped to partner.' : 'Partner removed.'); reload(); } else toast(res.message, 'error'); };
   const [purgeTarget, setPurgeTarget] = useState(null);
   const [purging, setPurging] = useState(false);
   const [suspendTarget, setSuspendTarget] = useState(null);
@@ -4201,6 +4904,13 @@ function PlatformBusinessesPage() {
             <select className="input" style={{padding:'5px 8px', fontSize:12}} value={r.subscriptionPlan} onChange={e=>changeTier(r, e.target.value)}>
               {(tiers||[]).map(t=><option key={t.tierId} value={t.tierName}>{t.tierName}</option>)}
               {!(tiers||[]).some(t=>t.tierName===r.subscriptionPlan) && <option value={r.subscriptionPlan}>{r.subscriptionPlan}</option>}
+            </select>
+          )},
+          { key:'expiry', header:'Plan ends', render:r => r.subscriptionExpiresAt ? fmtDate(r.subscriptionExpiresAt) : '—' },
+          { key:'partnerId', header:'Partner', render:r => (
+            <select className="input" style={{padding:'5px 8px', fontSize:12}} value={r.partnerId || ''} onChange={e=>assignPartner(r, e.target.value)}>
+              <option value="">— none —</option>
+              {(partnerList||[]).map(p=><option key={p.partnerId} value={p.partnerId}>{p.name}</option>)}
             </select>
           )},
           { key:'status', header:'Status', render:r=><StatusBadge status={r.status} /> },
@@ -4474,7 +5184,7 @@ function PublicStorePage({ slug }) {
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const startPay = async (orderId, email) => {
-    const r = await callServer('public.initPayment', { slug, orderId, email, returnUrl: window.location.origin + window.location.pathname });
+    const r = await callServer('public.initPayment', { slug, orderId, email, returnUrl: PUBLIC_APP_URL + '/' });
     if (r.success && r.data.url) { window.location.href = r.data.url; return true; }
     return r.message || 'Could not start the payment.';
   };
@@ -4612,7 +5322,8 @@ function PublicStorePage({ slug }) {
 
 function App() {
   const [session, setSession] = useState(null);
-  const [screen, setScreen] = useState('landing'); // landing | login | signup | platformLogin
+  const [screen, setScreen] = useState(readParam('partner') ? 'partnerLogin' : (readParam('ref') || readParam('signup')) ? 'signup' : 'landing'); // landing | login | signup | platformLogin | partnerLogin
+  const [partnerSession, setPartnerSession] = useState(null);
   const [platformSession, setPlatformSession] = useState(null);
   const [dark, setDark] = useState(false);
   const [platformTheme, setPlatformTheme] = useState(null);
@@ -4633,15 +5344,28 @@ function App() {
   const logout = () => { window.__session = null; setSession(null); setScreen('landing'); };
   const platformLogout = () => { window.__platformToken = null; setPlatformSession(null); setScreen('landing'); };
   const handlePlatformAuthed = (data) => { window.__platformToken = data.token; setPlatformSession(data); };
+  const partnerLogout = () => { window.__partnerToken = null; setPartnerSession(null); setScreen('landing'); };
+  const handlePartnerAuthed = (data) => { window.__partnerToken = data.token; setPartnerSession(data); };
 
   // Public, no-login pages opened from shared links: ?join=customer|supplier&b=TOKEN  and  ?store=SLUG
   const urlParams = useMemo(() => { try { return new URLSearchParams(window.location.search); } catch (e) { return new URLSearchParams(''); } }, []);
   const joinKind = urlParams.get('join'), joinKey = urlParams.get('b'), storeSlug = urlParams.get('store');
-  if (storeSlug || (joinKind && joinKey)) {
+  const flyerCode = urlParams.get('flyer'), subpayId = urlParams.get('subpay');
+  if (storeSlug || (joinKind && joinKey) || flyerCode || subpayId) {
     return (
       <ThemeCtx.Provider value={themeValue}>
         <ToastProvider>
-          {storeSlug ? <PublicStorePage slug={storeSlug} /> : <PublicJoinPage kind={joinKind === 'supplier' ? 'supplier' : 'customer'} token={joinKey} />}
+          {flyerCode ? <PublicFlyerPage code={flyerCode} /> : subpayId ? <SubscriptionReturnPage orderId={subpayId} /> : storeSlug ? <PublicStorePage slug={storeSlug} /> : <PublicJoinPage kind={joinKind === 'supplier' ? 'supplier' : 'customer'} token={joinKey} />}
+        </ToastProvider>
+      </ThemeCtx.Provider>
+    );
+  }
+
+  if (partnerSession) {
+    return (
+      <ThemeCtx.Provider value={themeValue}>
+        <ToastProvider>
+          <PartnerWorkspace session={partnerSession} onLogout={partnerLogout} />
         </ToastProvider>
       </ThemeCtx.Provider>
     );
@@ -4661,9 +5385,10 @@ function App() {
     return (
       <ThemeCtx.Provider value={themeValue}>
         <ToastProvider>
-          {screen === 'landing' && <LandingPage onGotoLogin={() => setScreen('login')} onGotoSignup={() => setScreen('signup')} onGotoPlatformAdmin={() => setScreen('platformLogin')} />}
+          {screen === 'landing' && <LandingPage onGotoLogin={() => setScreen('login')} onGotoSignup={() => setScreen('signup')} onGotoPlatformAdmin={() => setScreen('platformLogin')} onGotoPartner={() => setScreen('partnerLogin')} />}
           {screen === 'login' && <LoginPage onLogin={handleAuthed} onGotoSignup={() => setScreen('signup')} />}
-          {screen === 'signup' && <SignupPage onSignup={handleAuthed} onGotoLogin={() => setScreen('login')} />}
+          {screen === 'signup' && <SignupPage onSignup={handleAuthed} onGotoLogin={() => setScreen('login')} referralCode={readParam('ref')} />}
+          {screen === 'partnerLogin' && <PartnerLoginPage onLogin={handlePartnerAuthed} onBack={() => setScreen('landing')} />}
           {screen === 'platformLogin' && <PlatformLoginPage onLogin={handlePlatformAuthed} onBack={() => setScreen('landing')} />}
         </ToastProvider>
       </ThemeCtx.Provider>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <base target="_top" />
-<title>BPA Business360</title>
+<title>Business360</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
@@ -177,6 +177,9 @@
   .landing-nav .navlinks{display:flex; gap:28px; font-size:13.5px; font-weight:600; color:var(--ink-2);}
   .landing-nav .navlinks a{cursor:pointer;}
   .landing-nav .navlinks a:hover{color:var(--brand);}
+  .landing-nav .navlinks a{text-decoration:none;}
+  .landing-nav .navlinks a.active{color:var(--brand); font-weight:800;}
+  .landing-footer a{text-decoration:none;}
   @media(max-width:760px){.landing-nav .navlinks{display:none;}}
 
   .hero{position:relative; background:linear-gradient(160deg, var(--sidebar) 0%, #0A1830 62%, #0A1E3D 100%); color:#fff; overflow:hidden; padding:0 5vw;}
@@ -736,13 +739,13 @@ function LineChartSvg({ data, xKey, yKey, color='#1C5F9E', height=200 }) {
   );
 }
 
-function DonutChartSvg({ data, size=180 }) {
+function DonutChartSvg({ data, size=180, centerLabel='categories', fmtVal, emptyTitle='No sales yet', emptySub='Category breakdown appears once you record sales.' }) {
   const colors = ['#12406B','#D9A441','#1E8A5F','#C4432B','#6E5AA6','#1C5F9E','#B8860B','#4B5A70'];
   const total = data.reduce((s,d) => s + Number(d.value||0), 0) || 1;
   let acc = 0;
   const r = size/2 - 14, cx = size/2, cy = size/2;
   const circumference = 2 * Math.PI * r;
-  if (!data.length) return <EmptyState icon="chart" title="No sales yet" subtitle="Category breakdown appears once you record sales." />;
+  if (!data.length) return <EmptyState icon="chart" title={emptyTitle} subtitle={emptySub} />;
   return (
     <div style={{display:'flex', alignItems:'center', gap:20, flexWrap:'wrap'}}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
@@ -757,13 +760,13 @@ function DonutChartSvg({ data, size=180 }) {
           })}
         </g>
         <text x={cx} y={cy-2} textAnchor="middle" fontSize="15" fontWeight="800" fill="var(--ink)">{data.length}</text>
-        <text x={cx} y={cy+14} textAnchor="middle" fontSize="9.5" fill="var(--muted)">categories</text>
+        <text x={cx} y={cy+14} textAnchor="middle" fontSize="9.5" fill="var(--muted)">{centerLabel}</text>
       </svg>
       <div style={{display:'flex', flexDirection:'column', gap:7, fontSize:12.5}}>
         {data.slice(0,6).map((d,i) => (
           <div key={i} style={{display:'flex', alignItems:'center', gap:7}}>
             <span style={{width:9, height:9, borderRadius:3, background:colors[i%colors.length], display:'inline-block'}} />
-            <span style={{color:'var(--muted)'}}>{d.name}</span>
+            <span style={{color:'var(--muted)'}}>{d.name}{fmtVal ? <b style={{color:'var(--ink)', marginLeft:6}}>{fmtVal(d.value)}</b> : null}</span>
           </div>
         ))}
       </div>
@@ -771,7 +774,7 @@ function DonutChartSvg({ data, size=180 }) {
   );
 }
 
-function BarListChart({ data, valueKey, labelKey }) {
+function BarListChart({ data, valueKey, labelKey, fmtVal }) {
   const max = Math.max(1, ...data.map(d => Number(d[valueKey])||0));
   return (
     <div style={{display:'flex', flexDirection:'column', gap:12}}>
@@ -779,7 +782,7 @@ function BarListChart({ data, valueKey, labelKey }) {
         <div key={i}>
           <div style={{display:'flex', justifyContent:'space-between', fontSize:12.5, marginBottom:4}}>
             <span style={{fontWeight:600}}>{d[labelKey]}</span>
-            <span style={{color:'var(--muted)'}}>{d[valueKey]}</span>
+            <span style={{color:'var(--muted)'}}>{fmtVal ? fmtVal(d[valueKey]) : d[valueKey]}</span>
           </div>
           <div style={{height:7, background:'#EEF0F5', borderRadius:6, overflow:'hidden'}}>
             <div style={{height:'100%', width:(Number(d[valueKey])/max*100)+'%', background:'linear-gradient(90deg, var(--brand), var(--brand-2))', borderRadius:6}} />
@@ -835,8 +838,7 @@ const ROLE_FEATURES = GATED_FEATURES.concat(['orders']); // features a Super Adm
 const FEATURE_LABELS = {};
 NAV.forEach(g => g.items.forEach(it => { FEATURE_LABELS[it.key] = it.label; }));
 
-const UPGRADE_WHATSAPP_NUMBER = '2348108076212'; // international format, no leading +
-const UPGRADE_EMAIL = 'bpadynamics@gmail.com';
+
 
 function UpgradeModal({ featureKey, onClose }) {
   const { business, plan } = useApp();
@@ -846,9 +848,9 @@ function UpgradeModal({ featureKey, onClose }) {
   const featureLabel = FEATURE_LABELS[featureKey] || 'this feature';
 
   const waMessage = encodeURIComponent(
-    `Hi BPA Dynamics, I'd like to upgrade "${business.businessName}" (currently on the ${plan ? plan.planName : business.subscriptionPlan} plan) to unlock ${featureLabel}.`
+    `Hi ${curBrand_().company}, I'd like to upgrade "${business.businessName}" (currently on the ${plan ? plan.planName : business.subscriptionPlan} plan) to unlock ${featureLabel}.`
   );
-  const waLink = `https://wa.me/${UPGRADE_WHATSAPP_NUMBER}?text=${waMessage}`;
+  const waLink = `https://wa.me/${curBrand_().whatsapp}?text=${waMessage}`;
 
   const sendEmail = async () => {
     setSending(true);
@@ -866,7 +868,7 @@ function UpgradeModal({ featureKey, onClose }) {
         </div>
         <h3 style={{margin:'0 0 6px'}}>{featureLabel} isn't on your plan</h3>
         <p style={{fontSize:13, color:'var(--muted)', margin:0}}>
-          You're currently on <b>{plan ? plan.planName : business.subscriptionPlan}</b>. Reach out to BPA Dynamics to upgrade and unlock {featureLabel.toLowerCase()}.
+          You're currently on <b>{plan ? plan.planName : business.subscriptionPlan}</b>. Reach out to {curBrand_().company} to upgrade and unlock {featureLabel.toLowerCase()}.
         </p>
       </div>
       <div style={{display:'flex', flexDirection:'column', gap:10}}>
@@ -874,7 +876,7 @@ function UpgradeModal({ featureKey, onClose }) {
           <I name="sales" size={15} />Message us on WhatsApp
         </a>
         <button className="btn btn-gold" disabled={sending || sent} onClick={sendEmail}>
-          <I name="invoices" size={15} />{sent ? 'Email Sent' : (sending ? 'Sending…' : 'Send Email to ' + UPGRADE_EMAIL)}
+          <I name="invoices" size={15} />{sent ? 'Email Sent' : (sending ? 'Sending…' : 'Send Email to ' + curBrand_().email)}
         </button>
       </div>
       <p style={{fontSize:11, color:'var(--muted)', textAlign:'center', margin:'14px 0 0'}}>The email button sends automatically — no need to type anything.</p>
@@ -1074,6 +1076,72 @@ function DemoLoginPanel({ onLogin }) {
 }
 
 // ============================== LANDING PAGE ==============================
+// ============================== BRAND (everything the platform owner can customise) ==============================
+function parseJsonList_(s, fallback) { try { const a = typeof s === 'string' ? JSON.parse(s) : s; return Array.isArray(a) && a.length ? a : fallback; } catch (e) { return fallback; } }
+const DEFAULT_STATS = [{ n:'22', l:'Business modules' }, { n:'20+', l:'Linked data tables' }, { n:'7', l:'Role-based logins' }, { n:'Any', l:'Currency & VAT rate' }];
+const DEFAULT_TRUST = ['No card required', 'Any currency, any VAT rate', 'Try it with a demo login'];
+function brandFrom_(t) {
+  t = t || {};
+  const appName = t.appName || 'Business360', company = t.companyName || 'BPA Dynamics';
+  const v = (k, d) => (t[k] !== undefined && t[k] !== null && String(t[k]).trim() !== '') ? t[k] : d;
+  return {
+    appName, company, tagline: v('tagline', ''), logoUrl: t.logoUrl || '', faviconUrl: t.faviconUrl || '', email: v('supportEmail', 'bpadynamics@gmail.com'), whatsapp: v('supportWhatsapp', '2348108076212'),
+    heroBadge: v('heroBadge', 'Built for African SMEs'), heroTitle: v('heroTitle', 'Run your sales, stock and books from'), heroHighlight: v('heroHighlight', 'one ledger.'),
+    heroSub: v('heroSub', appName + ' replaces the scattered notebooks and spreadsheets with one system for sales, inventory and bookkeeping — in your currency, at your VAT rate.'),
+    heroTrust: parseJsonList_(t.heroTrust, DEFAULT_TRUST), stats: parseJsonList_(t.stats, DEFAULT_STATS),
+    featuresTitle: v('featuresTitle', 'Stop reconciling five different notebooks'), featuresSub: v('featuresSub', 'Sales, stock and money move together — so a sale here updates inventory there, and your books, automatically.'),
+    features: parseJsonList_(t.features, null), whyPoints: parseJsonList_(t.whyPoints, null),
+    whyTitle: v('whyTitle', 'Built for how African SMEs actually trade'), whySub: v('whySub', 'One system that follows the sale from the shelf to the bank, without five spreadsheets in between.'),
+    pricingTitle: v('pricingTitle', 'Pick the plan that fits your business'), pricingSub: v('pricingSub', 'Every plan runs on the same ' + appName + ' — upgrade any time as you grow. Talk to us to get set up.'),
+    ctaTitle: v('ctaTitle', 'See it running in under a minute'), ctaSub: v('ctaSub', 'Log in as an Owner, an Accountant, or a Sales Staff member on a shared demo business — no signup needed.'),
+    footerNote: v('footerNote', ''), loginTitle: v('loginTitle', 'Welcome back'), loginSub: v('loginSub', 'Sign in to your business workspace.'),
+  };
+}
+function useBrand() { const { platformTheme } = useAppTheme(); return brandFrom_(platformTheme); }
+function BrandTitle({ sub }) {
+  const B = useBrand();
+  return (
+    <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:22}}>
+      <BrandMark size={40} fontSize={17} />
+      <div>
+        <div style={{fontFamily:'Manrope', fontWeight:800, fontSize:17}}>{B.appName}</div>
+        <div style={{fontSize:11, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.06em'}}>{sub || ('by ' + B.company)}</div>
+      </div>
+    </div>
+  );
+}
+
+// ============================== ROUTER (hash-based multi-page navigation) ==============================
+// Every screen has its own address, e.g. #/features, #/pricing, #/login, #/app/sales, #/platform/partners.
+// The browser Back/Forward buttons, refresh and bookmarks all work. Old ?store= / ?join= / ?flyer= links are unaffected.
+function hashPath() { try { return String(window.location.hash || '').replace(/^#\/?/, '').split('?')[0].replace(/\/+$/, ''); } catch (e) { return ''; } }
+function setHashPath(path, replace) {
+  const h = '#/' + String(path || '').replace(/^\/+/, '');
+  try { if (replace) { window.history.replaceState(null, '', window.location.pathname + window.location.search + h); window.dispatchEvent(new Event('hashchange')); } else window.location.hash = h; } catch (e) {}
+}
+function navigateTo(path) { setHashPath(path, false); try { window.scrollTo(0, 0); } catch (e) {} }
+function useHashPath() {
+  const [p, setP] = useState(hashPath());
+  useEffect(() => { const f = () => setP(hashPath()); window.addEventListener('hashchange', f); return () => window.removeEventListener('hashchange', f); }, []);
+  return p;
+}
+// A page switcher whose value lives in the address bar: #/<prefix>/<page>
+function useRoutedPage(prefix, def, valid) {
+  const read = () => { const p = hashPath(); if (p.indexOf(prefix + '/') !== 0) return null; const k = p.slice(prefix.length + 1).split('/')[0]; return (k && (!valid || valid.indexOf(k) !== -1)) ? k : null; };
+  const [page, setPageState] = useState(() => read() || def);
+  useEffect(() => {
+    if (!read()) setHashPath(prefix + '/' + page, true);
+    const f = () => { const r = read(); if (r) setPageState(r); };
+    window.addEventListener('hashchange', f); return () => window.removeEventListener('hashchange', f);
+  }, []);
+  const setPage = (p) => { setPageState(p); setHashPath(prefix + '/' + p, false); };
+  return [page, setPage];
+}
+function useDocTitle(title) { useEffect(() => { try { document.title = title; } catch (e) {} }, [title]); }
+function NavLink({ to, children, className, style, onClick }) {
+  return <a href={'#/' + to} className={className} style={style} onClick={onClick}>{children}</a>;
+}
+
 const FEATURES = [
   { icon:'sales', title:'Sales & POS', desc:'A fast checkout for the counter — barcode search, discounts, VAT and change, calculated automatically on every sale.' },
   { icon:'inventory', title:'Multi-location Inventory', desc:'Stock levels across every branch or warehouse, with reorder alerts before you run out.' },
@@ -1083,25 +1151,40 @@ const FEATURES = [
   { icon:'users', title:'Role-based access', desc:'Owners, accountants, sales staff and store managers each see exactly what their job needs — nothing more.' },
 ];
 
-function LandingPage({ onGotoLogin, onGotoSignup, onGotoPlatformAdmin, onGotoPartner }) {
-  const { platformTheme } = useAppTheme();
-  const appName = (platformTheme && platformTheme.appName) || 'Business360';
+const WHY_POINTS = [
+  { icon:'sales', title:'Sell the way you already do', desc:'Retail and wholesale prices, invoice discounts, coupons, and pick up or delivery with your own delivery fees.' },
+  { icon:'cart', title:'An online store with payments', desc:'Share one link or QR code. Customers order, and pay with Paystack or Flutterwave straight into your own account.' },
+  { icon:'inventory', title:'Stock you can trust', desc:'Every sale, purchase and return moves inventory across all your locations. Scan barcodes with a phone camera.' },
+  { icon:'bookkeeping', title:'Books that keep themselves', desc:'Expenses can be tied to the order or invoice they were for, so you see real profit per job. VAT is worked out for you.' },
+  { icon:'users', title:'Your team, with the right access', desc:'Owner, manager, sales, inventory and accountant logins. Staff discounts are capped by you.' },
+  { icon:'reports', title:'Reports with pictures', desc:'Sales, profit, cash flow and who owes you, as charts and tables you can export to Excel or PDF.' },
+];
+
+function LandingPage({ route = '', onGotoLogin, onGotoSignup, onGotoPlatformAdmin, onGotoPartner }) {
+  const B = useBrand();
+  const appName = B.appName;
+  const featureList = B.features || FEATURES, whyList = B.whyPoints || WHY_POINTS;
   const [tiers, setTiers] = useState(null);
   useEffect(() => { callServer('platform.publicTiers', {}).then(res => { if (res.success) setTiers(res.data); }); }, []);
+  useEffect(() => { try { window.scrollTo(0, 0); } catch (e) {} }, [route]);
+  const titles = { '': appName + (B.tagline ? ' — ' + B.tagline : ' — sales, stock and books in one place'), features: 'Features — ' + appName, pricing: 'Pricing — ' + appName, about: 'Why ' + appName };
+  useDocTitle(titles[route] || appName);
+  const navCls = (r) => route === r ? 'active' : '';
   return (
     <div className="landing">
       <div className="landing-nav">
-        <div style={{display:'flex', alignItems:'center', gap:10}}>
+        <a href="#/" style={{display:'flex', alignItems:'center', gap:10, textDecoration:'none', color:'inherit'}}>
           <BrandMark size={34} fontSize={15} />
           <div>
             <div style={{fontFamily:'Manrope', fontWeight:800, fontSize:15}}>{appName}</div>
-            <div style={{fontSize:9.5, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.07em'}}>by BPA Dynamics</div>
+            <div style={{fontSize:9.5, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.07em'}}>by {B.company}</div>
           </div>
-        </div>
+        </a>
         <div className="navlinks">
-          <a onClick={() => document.getElementById('lp-features').scrollIntoView({behavior:'smooth'})}>Features</a>
-          <a onClick={() => document.getElementById('lp-pricing').scrollIntoView({behavior:'smooth'})}>Pricing</a>
-          <a onClick={() => document.getElementById('lp-about').scrollIntoView({behavior:'smooth'})}>Why {appName}</a>
+          <NavLink to="" className={navCls('')}>Home</NavLink>
+          <NavLink to="features" className={navCls('features')}>Features</NavLink>
+          <NavLink to="pricing" className={navCls('pricing')}>Pricing</NavLink>
+          <NavLink to="about" className={navCls('about')}>Why {appName}</NavLink>
         </div>
         <div style={{display:'flex', gap:10, alignItems:'center'}}>
           <ThemeToggle />
@@ -1110,22 +1193,22 @@ function LandingPage({ onGotoLogin, onGotoSignup, onGotoPlatformAdmin, onGotoPar
         </div>
       </div>
 
+      {route === '' && (
+      <React.Fragment>
       <div className="hero">
         <div className="ledger-lines" />
         <div className="ledger-rule" />
         <div className="hero-inner">
           <div>
-            <div className="eyebrow"><I name="check" size={12} />Built for African SMEs</div>
-            <h1>Run your sales, stock and books from <em>one ledger.</em></h1>
-            <p className="hero-sub">Business360 replaces the scattered notebooks and spreadsheets with one system for sales, inventory and bookkeeping — in your currency, at your VAT rate.</p>
+            <div className="eyebrow"><I name="check" size={12} />{B.heroBadge}</div>
+            <h1>{B.heroTitle} <em>{B.heroHighlight}</em></h1>
+            <p className="hero-sub">{B.heroSub}</p>
             <div className="hero-ctas">
               <button className="btn btn-gold" onClick={onGotoLogin}><I name="logout" size={15} style={{transform:'scaleX(-1)'}} />Log In</button>
               <button className="btn btn-outline" style={{background:'transparent', borderColor:'rgba(255,255,255,.28)', color:'#fff'}} onClick={onGotoSignup}>Create Your Business<I name="arrowRight" size={15} /></button>
             </div>
             <div className="hero-trust">
-              <span><I name="check" size={13} style={{color:'var(--gold)'}} />No card required</span>
-              <span><I name="check" size={13} style={{color:'var(--gold)'}} />Any currency, any VAT rate</span>
-              <span><I name="check" size={13} style={{color:'var(--gold)'}} />Try it with a demo login</span>
+              {B.heroTrust.map((x, i) => <span key={i}><I name="check" size={13} style={{color:'var(--gold)'}} />{x}</span>)}
             </div>
           </div>
 
@@ -1162,20 +1245,22 @@ function LandingPage({ onGotoLogin, onGotoSignup, onGotoPlatformAdmin, onGotoPar
       <div className="stats-strip">
         <div className="ledger-lines" />
         <div className="stats-inner">
-          {[['22','Business modules'],['20+','Linked data tables'],['7','Role-based logins'],['—','Fixed to one currency']].map(([n,l],i) => (
-            <div key={i}><div className="stat-num">{n}</div><div className="stat-lbl">{l}</div></div>
+          {B.stats.map((s, i) => (
+            <div key={i}><div className="stat-num">{s.n}</div><div className="stat-lbl">{s.l}</div></div>
           ))}
         </div>
       </div>
+      </React.Fragment>
+      )}
 
-      <div id="lp-features" className="section">
+      {(route === '' || route === 'features') && <div id="lp-features" className="section">
         <div className="section-head">
           <div className="eyebrow">Everything in one place</div>
-          <h2>Stop reconciling five different notebooks</h2>
-          <p>Sales, stock and money move together — so a sale here updates inventory there, and your books, automatically.</p>
+          <h2>{B.featuresTitle}</h2>
+          <p>{B.featuresSub}</p>
         </div>
         <div className="feat-grid">
-          {FEATURES.map((f,i) => (
+          {(route === '' ? featureList.slice(0, 6) : featureList).map((f,i) => (
             <div key={i} className="feat-card">
               <div className="feat-icon"><I name={f.icon} size={20} /></div>
               <h3>{f.title}</h3>
@@ -1183,13 +1268,14 @@ function LandingPage({ onGotoLogin, onGotoSignup, onGotoPlatformAdmin, onGotoPar
             </div>
           ))}
         </div>
-      </div>
+        {route === '' && <div style={{textAlign:'center', marginTop:22}}><NavLink to="features" className="btn btn-outline">See all features<I name="arrowRight" size={14} /></NavLink></div>}
+      </div>}
 
-      <div id="lp-pricing" className="section" style={{paddingTop:0}}>
+      {route === 'pricing' && <div id="lp-pricing" className="section" style={{paddingTop:24}}>
         <div className="section-head">
           <div className="eyebrow">Simple pricing</div>
-          <h2>Pick the plan that fits your business</h2>
-          <p>Every plan runs on the same Business360 — upgrade any time as you grow. Talk to us to get set up.</p>
+          <h2>{B.pricingTitle}</h2>
+          <p>{B.pricingSub}</p>
         </div>
         {!tiers ? (
           <div style={{textAlign:'center', color:'var(--muted)', fontSize:13}}>Loading plans…</div>
@@ -1217,28 +1303,52 @@ function LandingPage({ onGotoLogin, onGotoSignup, onGotoPlatformAdmin, onGotoPar
         )}
         <OffersStrip onGotoSignup={onGotoSignup} />
         <p style={{textAlign:'center', fontSize:12.5, color:'var(--muted)', marginTop:24}}>
-          Questions or ready to subscribe? <a href={`https://wa.me/${UPGRADE_WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer" style={{color:'var(--brand-2)', fontWeight:600}}>Chat on WhatsApp</a> or email <a href={`mailto:${UPGRADE_EMAIL}`} style={{color:'var(--brand-2)', fontWeight:600}}>{UPGRADE_EMAIL}</a>
+          Questions or ready to subscribe? <a href={`https://wa.me/${B.whatsapp}`} target="_blank" rel="noopener noreferrer" style={{color:'var(--brand-2)', fontWeight:600}}>Chat on WhatsApp</a> or email <a href={`mailto:${B.email}`} style={{color:'var(--brand-2)', fontWeight:600}}>{B.email}</a>
         </p>
-      </div>
+      </div>}
 
-      <div id="lp-about" className="section" style={{paddingTop:0}}>
+      {route === '' && <div className="section" style={{paddingTop:0, textAlign:'center'}}>
+        <div className="section-head" style={{marginBottom:14}}>
+          <div className="eyebrow">Simple pricing</div>
+          <h2>Start free, upgrade when you grow</h2>
+          <p>Pay monthly, quarterly or up to 5 years ahead — longer plans cost less.</p>
+        </div>
+        <NavLink to="pricing" className="btn btn-gold">See plans &amp; prices<I name="arrowRight" size={14} /></NavLink>
+      </div>}
+
+      {route === 'about' && <div className="section" style={{paddingBottom:0}}>
+        <div className="section-head">
+          <div className="eyebrow">Why {appName}</div>
+          <h2>{B.whyTitle}</h2>
+          <p>{B.whySub}</p>
+        </div>
+        <div className="feat-grid">
+          {whyList.map((f,i) => (
+            <div key={i} className="feat-card"><div className="feat-icon"><I name={f.icon} size={20} /></div><h3>{f.title}</h3><p>{f.desc}</p></div>
+          ))}
+        </div>
+      </div>}
+
+      {(route === '' || route === 'about' || route === 'features') && <div id="lp-about" className="section" style={{paddingTop:24}}>
         <div className="cta-band">
-          <h2>See it running in under a minute</h2>
-          <p>Log in as an Owner, an Accountant, or a Sales Staff member on a shared demo business — no signup needed.</p>
+          <h2>{B.ctaTitle}</h2>
+          <p>{B.ctaSub}</p>
           <div style={{display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap'}}>
             <button className="btn btn-gold" onClick={onGotoLogin}>Try the Demo</button>
             <button className="btn btn-outline" style={{background:'transparent', borderColor:'rgba(255,255,255,.3)', color:'#fff'}} onClick={onGotoSignup}>Create Your Business</button>
           </div>
         </div>
-      </div>
+      </div>}
 
       <div className="landing-footer">
         <div style={{display:'flex', alignItems:'center', gap:8}}>
           <BrandMark size={26} fontSize={12} />
-          <span><b>{appName}</b> by BPA Dynamics</span>
+          <span><b>{appName}</b> by {B.company}{B.footerNote ? ' · ' + B.footerNote : ''}</span>
         </div>
         <div style={{display:'flex', alignItems:'center', gap:16}}>
-          <span>bpadynamics@gmail.com</span>
+          <span>{B.email}</span>
+          <NavLink to="features" style={{color:'var(--muted)'}}>Features</NavLink>
+          <NavLink to="pricing" style={{color:'var(--muted)'}}>Pricing</NavLink>
           <a onClick={onGotoPartner} style={{cursor:'pointer', color:'var(--muted)'}}>Partner Login</a>
           <a onClick={onGotoPlatformAdmin} style={{cursor:'pointer', color:'var(--muted)'}}>Platform Admin</a>
         </div>
@@ -1247,6 +1357,7 @@ function LandingPage({ onGotoLogin, onGotoSignup, onGotoPlatformAdmin, onGotoPar
   );
 }
 
+function LoginHeading() { const B = useBrand(); return <React.Fragment><h2 style={{margin:'0 0 4px', fontSize:20}}>{B.loginTitle}</h2><p style={{margin:'0 0 22px', fontSize:13, color:'var(--muted)'}}>{B.loginSub}</p></React.Fragment>; }
 function LoginPage({ onLogin, onGotoSignup }) {
 
   const [email, setEmail] = useState('');
@@ -1267,15 +1378,8 @@ function LoginPage({ onLogin, onGotoSignup }) {
     <div className="auth-wrap">
       <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
       <div className="auth-card">
-        <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:22}}>
-          <div className="brand-mark" style={{width:40, height:40, fontSize:17}}>B</div>
-          <div>
-            <div style={{fontFamily:'Manrope', fontWeight:800, fontSize:17}}>Business360</div>
-            <div style={{fontSize:11, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.06em'}}>by BPA Dynamics</div>
-          </div>
-        </div>
-        <h2 style={{margin:'0 0 4px', fontSize:20}}>Welcome back</h2>
-        <p style={{margin:'0 0 22px', fontSize:13, color:'var(--muted)'}}>Sign in to your business workspace.</p>
+        <BrandTitle />
+        <LoginHeading />
         <form onSubmit={submit}>
           <Field label="Email address">
             <input className="input" type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@business.com" />
@@ -1289,7 +1393,7 @@ function LoginPage({ onLogin, onGotoSignup }) {
           </button>
         </form>
         <div style={{textAlign:'center', marginTop:18, fontSize:13, color:'var(--muted)'}}>
-          New to Business360? <a onClick={onGotoSignup} style={{color:'var(--brand-2)', fontWeight:600, cursor:'pointer'}}>Create your business</a>
+          New to {useBrand().appName}? <a onClick={onGotoSignup} style={{color:'var(--brand-2)', fontWeight:600, cursor:'pointer'}}>Create your business</a>
         </div>
       </div>
       <DemoLoginPanel onLogin={onLogin} />
@@ -1313,34 +1417,34 @@ function TermsModal({ onClose }) {
         <p style={{color:'var(--muted)', fontSize:11.5}}>Last updated: {new Date().getFullYear()}</p>
 
         <h4 style={{fontSize:13, margin:'16px 0 6px'}}>1. Acceptance of Terms</h4>
-        <p>By creating a business account on Business360 ("the Service"), operated by BPA Dynamics, you agree to be bound by these Terms & Conditions. If you do not agree, do not create an account or use the Service.</p>
+        <p>By creating a business account on {curBrand_().appName} ("the Service"), operated by {curBrand_().company}, you agree to be bound by these Terms & Conditions. If you do not agree, do not create an account or use the Service.</p>
 
         <h4 style={{fontSize:13, margin:'16px 0 6px'}}>2. The Service</h4>
-        <p>Business360 provides sales, inventory, and bookkeeping tools for small and medium businesses. Features, storage limits, and available modules depend on your subscription plan and may change from time to time.</p>
+        <p>{curBrand_().appName} provides sales, inventory, and bookkeeping tools for small and medium businesses. Features, storage limits, and available modules depend on your subscription plan and may change from time to time.</p>
 
         <h4 style={{fontSize:13, margin:'16px 0 6px'}}>3. Your Account & Data</h4>
         <p>You are responsible for the accuracy of the business, product, customer, and financial data you enter, for keeping your login credentials confidential, and for all activity carried out under your account by users you invite. You retain ownership of your business data at all times.</p>
 
         <h4 style={{fontSize:13, margin:'16px 0 6px'}}>4. Acceptable Use</h4>
-        <p>You agree not to use the Service for unlawful purposes, to store or transmit fraudulent, harmful, or infringing content, to attempt to bypass usage limits or security controls, or to resell access to the Service without written permission from BPA Dynamics.</p>
+        <p>You agree not to use the Service for unlawful purposes, to store or transmit fraudulent, harmful, or infringing content, to attempt to bypass usage limits or security controls, or to resell access to the Service without written permission from {curBrand_().company}.</p>
 
         <h4 style={{fontSize:13, margin:'16px 0 6px'}}>5. Subscriptions, Plans & Payment</h4>
-        <p>Certain features are gated by subscription tier. Upgrading, downgrading, billing terms, and pricing are arranged directly with BPA Dynamics. Accounts may be suspended for non-payment or other reasons described in these Terms, with notice sent to the business's registered email.</p>
+        <p>Certain features are gated by subscription tier. Upgrading, downgrading, billing terms, and pricing are arranged directly with {curBrand_().company}. Accounts may be suspended for non-payment or other reasons described in these Terms, with notice sent to the business's registered email.</p>
 
         <h4 style={{fontSize:13, margin:'16px 0 6px'}}>6. Suspension & Termination</h4>
-        <p>BPA Dynamics may suspend or terminate an account for violations of these Terms, non-payment, fraudulent or suspicious activity, abuse of platform resources, or at the business owner's request. Where reasonably possible, the business will be notified of the reason by email.</p>
+        <p>{curBrand_().company} may suspend or terminate an account for violations of these Terms, non-payment, fraudulent or suspicious activity, abuse of platform resources, or at the business owner's request. Where reasonably possible, the business will be notified of the reason by email.</p>
 
         <h4 style={{fontSize:13, margin:'16px 0 6px'}}>7. Data Deletion</h4>
-        <p>Deleted records are retained in the Recycle Bin for recovery until permanently purged by an authorized user. BPA Dynamics is not responsible for data loss resulting from actions taken within your own account.</p>
+        <p>Deleted records are retained in the Recycle Bin for recovery until permanently purged by an authorized user. {curBrand_().company} is not responsible for data loss resulting from actions taken within your own account.</p>
 
         <h4 style={{fontSize:13, margin:'16px 0 6px'}}>8. Limitation of Liability</h4>
-        <p>The Service is provided "as is" without warranties of any kind. BPA Dynamics is not liable for indirect, incidental, or consequential damages arising from use of the Service, including business decisions made based on data or reports generated within it.</p>
+        <p>The Service is provided "as is" without warranties of any kind. {curBrand_().company} is not liable for indirect, incidental, or consequential damages arising from use of the Service, including business decisions made based on data or reports generated within it.</p>
 
         <h4 style={{fontSize:13, margin:'16px 0 6px'}}>9. Changes to These Terms</h4>
         <p>These Terms may be updated from time to time. Continued use of the Service after changes take effect constitutes acceptance of the revised Terms.</p>
 
         <h4 style={{fontSize:13, margin:'16px 0 6px'}}>10. Contact</h4>
-        <p>Questions about these Terms can be sent to bpadynamics@gmail.com.</p>
+        <p>Questions about these Terms can be sent to {curBrand_().email}.</p>
       </div>
     </Modal>
   );
@@ -1370,10 +1474,10 @@ function SignupPage({ onSignup, onGotoLogin, referralCode }) {
     <div className="auth-wrap">
       <div className="auth-card" style={{maxWidth:480}}>
         <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:18}}>
-          <div className="brand-mark" style={{width:40, height:40, fontSize:17}}>B</div>
+          <BrandMark size={40} fontSize={17} />
           <div>
-            <div style={{fontFamily:'Manrope', fontWeight:800, fontSize:17}}>Business360</div>
-            <div style={{fontSize:11, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.06em'}}>by BPA Dynamics</div>
+            <div style={{fontFamily:'Manrope', fontWeight:800, fontSize:17}}>{useBrand().appName}</div>
+            <div style={{fontSize:11, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.06em'}}>by {useBrand().company}</div>
           </div>
         </div>
         <div style={{display:'flex', gap:6, marginBottom:20}}>
@@ -1612,7 +1716,8 @@ function ProductFormModal({ onClose, onSaved, categories, product }) {
   const pickImage = async (e) => { const f = e.target.files && e.target.files[0]; if (!f) return; try { setImg(await resizeImage(f)); } catch (err) { toast(err.message, 'error'); } };
   const set = (k,v) => setForm(f => ({...f, [k]:v}));
   const submit = async () => {
-    if (!form.productName || !form.sellingPrice) { toast('Product name and selling price are required.', 'error'); return; }
+    if (!form.productName || !form.sellingPrice) { toast('Product name and retail price are required.', 'error'); return; }
+    if (Number(form.wholesalePrice) > Number(form.sellingPrice)) { toast('Wholesale price should not be higher than the retail price.', 'error'); return; }
     setSaving(true);
     const res = product
       ? await callServer('products.update', { id: product.productId, data: form })
@@ -1646,9 +1751,10 @@ function ProductFormModal({ onClose, onSaved, categories, product }) {
       </div>
       <div className="grid g3">
         <Field label="Cost price"><input className="input" type="number" value={form.costPrice} onChange={e=>set('costPrice', e.target.value)} /></Field>
-        <Field label="Selling price"><input className="input" type="number" value={form.sellingPrice} onChange={e=>set('sellingPrice', e.target.value)} /></Field>
-        <Field label="Reorder level"><input className="input" type="number" value={form.reorderLevel} onChange={e=>set('reorderLevel', e.target.value)} /></Field>
+        <Field label="Retail price *" hint={Number(form.costPrice) > 0 && Number(form.sellingPrice) > 0 ? 'Margin ' + Math.round((1 - Number(form.costPrice) / Number(form.sellingPrice)) * 100) + '%' : 'Normal selling price'}><input className="input" type="number" value={form.sellingPrice} onChange={e=>set('sellingPrice', e.target.value)} /></Field>
+        <Field label="Wholesale price" hint={Number(form.wholesalePrice) > 0 && Number(form.sellingPrice) > 0 ? Math.round((1 - Number(form.wholesalePrice) / Number(form.sellingPrice)) * 100) + '% below retail' : 'Optional — used for Wholesale sales'}><input className="input" type="number" value={form.wholesalePrice || ''} onChange={e=>set('wholesalePrice', e.target.value)} /></Field>
       </div>
+      <Field label="Reorder level"><input className="input" type="number" value={form.reorderLevel} onChange={e=>set('reorderLevel', e.target.value)} /></Field>
       {!product && <Field label="Opening stock (primary location)"><input className="input" type="number" value={form.openingStock} onChange={e=>set('openingStock', e.target.value)} /></Field>}
       <Field label="Description (shown in your online store)"><input className="input" value={form.description || ''} onChange={e=>set('description', e.target.value)} placeholder="Short description for customers" /></Field>
       <div style={{display:'flex', gap:14, alignItems:'center', marginBottom:14, flexWrap:'wrap'}}>
@@ -1671,6 +1777,53 @@ function ProductFormModal({ onClose, onSaved, categories, product }) {
   );
 }
 
+function PriceEditorModal({ products, onClose, onSaved }) {
+  const toast = useToast();
+  const [q, setQ] = useState('');
+  const [rows, setRows] = useState(() => products.map(p => ({ id: p.productId, name: p.productName, sku: p.sku, cost: String(p.costPrice ?? ''), retail: String(p.sellingPrice ?? ''), wholesale: Number(p.wholesalePrice) > 0 ? String(p.wholesalePrice) : '', o: { cost: String(p.costPrice ?? ''), retail: String(p.sellingPrice ?? ''), wholesale: Number(p.wholesalePrice) > 0 ? String(p.wholesalePrice) : '' } })));
+  const [pct, setPct] = useState('10');
+  const [saving, setSaving] = useState(false);
+  const setRow = (id, k, v) => setRows(rs => rs.map(r => r.id === id ? { ...r, [k]: v } : r));
+  const r2 = (n) => String(Math.round(n * 100) / 100);
+  const bulk = (fn) => setRows(rs => rs.map(r => fn(r)));
+  const dirty = rows.filter(r => r.cost !== r.o.cost || r.retail !== r.o.retail || r.wholesale !== r.o.wholesale);
+  const shown = rows.filter(r => !q || r.name.toLowerCase().includes(q.toLowerCase()) || String(r.sku).toLowerCase().includes(q.toLowerCase()));
+  const save = async () => {
+    const bad = dirty.find(r => Number(r.wholesale) > Number(r.retail) && Number(r.wholesale) > 0);
+    if (bad) { toast('Wholesale price is higher than retail for ' + bad.name + '.', 'error'); return; }
+    setSaving(true);
+    const res = await callServer('products.bulkPrices', { items: dirty.map(r => ({ id: r.id, costPrice: r.cost, sellingPrice: r.retail, wholesalePrice: r.wholesale === '' ? 0 : r.wholesale })) });
+    setSaving(false);
+    if (res.success) { toast(res.data.updated + ' product price' + (res.data.updated === 1 ? '' : 's') + ' updated.'); onSaved(); onClose(); } else toast(res.message, 'error');
+  };
+  const cell = { padding:'4px 6px' };
+  return (
+    <Modal title="Edit prices" onClose={onClose} wide footer={<React.Fragment>
+      <span style={{fontSize:12.5, color:'var(--muted)', marginRight:'auto'}}>{dirty.length} changed</span>
+      <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+      <button className="btn btn-gold" disabled={saving || !dirty.length} onClick={save}>{saving ? 'Saving…' : 'Save prices'}</button>
+    </React.Fragment>}>
+      <div style={{display:'flex', gap:8, flexWrap:'wrap', alignItems:'center', marginBottom:10, padding:10, background:'var(--bg)', borderRadius:9}}>
+        <span style={{fontSize:12.5, fontWeight:700}}>Quick set:</span>
+        <input className="input" type="number" min="0" style={{width:72}} value={pct} onChange={e => setPct(e.target.value)} /><span style={{fontSize:12.5}}>%</span>
+        <button className="btn btn-outline btn-sm" onClick={() => bulk(r => Number(r.retail) > 0 ? { ...r, wholesale: r2(Number(r.retail) * (1 - Number(pct) / 100)) } : r)}>Wholesale = retail minus {pct || 0}%</button>
+        <button className="btn btn-outline btn-sm" onClick={() => bulk(r => Number(r.cost) > 0 ? { ...r, retail: r2(Number(r.cost) * (1 + Number(pct) / 100)) } : r)}>Retail = cost plus {pct || 0}%</button>
+        <button className="btn btn-outline btn-sm" onClick={() => bulk(r => Number(r.retail) > 0 ? { ...r, retail: r2(Number(r.retail) * (1 + Number(pct) / 100)) } : r)}>Raise retail {pct || 0}%</button>
+      </div>
+      <input className="input" placeholder="Search products…" value={q} onChange={e => setQ(e.target.value)} style={{marginBottom:8, maxWidth:300}} />
+      <div style={{maxHeight:380, overflow:'auto'}}>
+        <table><thead><tr><th>Product</th><th>Cost</th><th>Retail</th><th>Wholesale</th></tr></thead>
+          <tbody>{shown.map(r => (
+            <tr key={r.id} style={r.cost !== r.o.cost || r.retail !== r.o.retail || r.wholesale !== r.o.wholesale ? { background:'#FFF8E6' } : null}>
+              <td style={cell}>{r.name}</td>
+              {['cost','retail','wholesale'].map(k => <td key={k} style={cell}><input className="input" type="number" min="0" style={{width:110, padding:'5px 8px'}} value={r[k]} placeholder={k === 'wholesale' ? '—' : ''} onChange={e => setRow(r.id, k, e.target.value)} /></td>)}
+            </tr>))}</tbody></table>
+      </div>
+      <p style={{fontSize:11.5, color:'var(--muted)', marginBottom:0}}>Leave wholesale blank to sell that product at the retail price on wholesale sales.</p>
+    </Modal>
+  );
+}
+
 function ProductsPage({ command, clearCommand }) {
   const fmt = useCurrency();
   const toast = useToast();
@@ -1680,6 +1833,7 @@ function ProductsPage({ command, clearCommand }) {
   const [editing, setEditing] = useState(null);
   const [query, setQuery] = useState('');
   const [delRow, setDelRow] = useState(null);
+  const [showPrices, setShowPrices] = useState(false);
 
   useEffect(() => { if (command === 'new') { setEditing(null); setShowForm(true); clearCommand(); } }, [command]);
 
@@ -1689,7 +1843,10 @@ function ProductsPage({ command, clearCommand }) {
   return (
     <div>
       <PageHeader title="Products" subtitle="Manage your product catalogue" action={
-        <button className="btn btn-primary" onClick={() => { setEditing(null); setShowForm(true); }}><I name="plus" size={15} />Add Product</button>
+        <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
+          <button className="btn btn-outline" onClick={() => setShowPrices(true)}><I name="tag" size={15} />Edit prices</button>
+          <button className="btn btn-primary" onClick={() => { setEditing(null); setShowForm(true); }}><I name="plus" size={15} />Add Product</button>
+        </div>
       } />
       <div style={{marginBottom:14, maxWidth:320}}>
         <input className="input" placeholder="Search products or SKU…" value={query} onChange={e=>setQuery(e.target.value)} />
@@ -1703,7 +1860,8 @@ function ProductsPage({ command, clearCommand }) {
           { key:'productName', header:'Product', render:r => <div style={{display:'flex', alignItems:'center', gap:10}}><div style={{width:38, height:38, borderRadius:8, overflow:'hidden', background:'var(--bg)', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center'}}>{r.imageUrl ? <img src={r.imageUrl} alt="" loading="lazy" style={{width:'100%', height:'100%', objectFit:'cover'}} /> : <I name="package" size={16} style={{opacity:.4}} />}</div><div><div style={{fontWeight:600}}>{r.productName}</div><div style={{fontSize:11.5, color:'var(--muted)'}} className="mono">{r.sku}</div></div></div> },
           { key:'category', header:'Category', render:r => catMap[r.categoryId] || '—' },
           { key:'costPrice', header:'Cost', render:r => fmt(r.costPrice) },
-          { key:'sellingPrice', header:'Price', render:r => fmt(r.sellingPrice) },
+          { key:'sellingPrice', header:'Retail', render:r => fmt(r.sellingPrice) },
+          { key:'wholesalePrice', header:'Wholesale', render:r => Number(r.wholesalePrice) > 0 ? fmt(r.wholesalePrice) : <span style={{color:'var(--muted)'}}>—</span> },
           { key:'online', header:'Online', render:r => r.showOnline === false ? <span className="badge badge-slate">Hidden</span> : <span className="badge badge-blue">Listed</span> },
           { key:'status', header:'Status', render:r => <StatusBadge status={r.status} /> },
           { key:'actions', header:'', render:r => (
@@ -1715,6 +1873,7 @@ function ProductsPage({ command, clearCommand }) {
         ]}
       />
       {showForm && <ProductFormModal categories={categories||[]} product={editing} onClose={() => setShowForm(false)} onSaved={reload} />}
+      {showPrices && <PriceEditorModal products={products||[]} onClose={() => setShowPrices(false)} onSaved={reload} />}
       {delRow && <DeleteWithReasonDialog title="Delete product" itemLabel={delRow.productName} onClose={() => setDelRow(null)}
         onConfirm={async (reason) => { const res = await callServer('products.delete', { id: delRow.productId, reason }); if (res.success) { toast('Product moved to recycle bin.'); reload(); } else toast(res.message, 'error'); }} />}
     </div>
@@ -3025,6 +3184,15 @@ function ExpensesPage({ command, clearCommand }) {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [delRow, setDelRow] = useState(null);
+  const [saleId, setSaleId] = useState(null);
+  const [orderView, setOrderView] = useState(null);
+  const openLinked = async (r) => {
+    if (r.linkedType === 'Sale') { setSaleId(r.linkedId); return; }
+    const res = await callServer('orders.list', {});
+    const o = res.success ? (res.data || []).find(x => x.orderId === r.linkedId) : null;
+    if (!o) { toast('Order not found.', 'error'); return; }
+    if (o.saleId) setSaleId(o.saleId); else setOrderView(o);
+  };
   useEffect(() => { if (command==='new') { setEditing(null); setShowForm(true); clearCommand(); } }, [command]);
   return (
     <div>
@@ -3032,8 +3200,11 @@ function ExpensesPage({ command, clearCommand }) {
       <DataTable loading={loading} rows={expenses} rowKey="expenseId"
         emptyIcon="expenses" emptyTitle="No expenses recorded." emptySubtitle="Track rent, salaries, utilities and more."
         columns={[
-          { key:'expenseDate', header:'Date', render:r=>fmtDate(r.expenseDate) }, { key:'category', header:'Category', render:r=><StatusBadge status="slate" /> },
-          { key:'description', header:'Description' }, { key:'amount', header:'Amount', render:r=>fmt(r.amount) }, { key:'paymentMethod', header:'Method' },
+          { key:'expenseDate', header:'Date', render:r=>fmtDate(r.expenseDate) }, { key:'category', header:'Category', render:r=><span className="badge badge-slate">{r.category}</span> },
+          { key:'description', header:'Description' },
+          { key:'linkedLabel', header:'For order / invoice', render:r => r.linkedId
+            ? <a style={{color:'var(--brand-2)', fontWeight:700, cursor:'pointer'}} title="View" onClick={e => { e.stopPropagation(); openLinked(r); }}><I name={r.linkedType === 'Sale' ? 'invoices' : 'cart'} size={12} /> {r.linkedLabel || r.linkedId}</a>
+            : <span style={{color:'var(--muted)'}}>—</span> }, { key:'amount', header:'Amount', render:r=>fmt(r.amount) }, { key:'paymentMethod', header:'Method' },
           { key:'actions', header:'', render:r => (
             <div style={{display:'flex', gap:6}}>
               <button className="icon-btn" onClick={()=>{setEditing(r); setShowForm(true);}}><I name="edit" size={14}/></button>
@@ -3043,6 +3214,8 @@ function ExpensesPage({ command, clearCommand }) {
         ]}
       />
       {showForm && <ExpenseFormModal expense={editing} onClose={()=>setShowForm(false)} onSaved={reload} />}
+      {saleId && <SaleDetailModal id={saleId} onChanged={reload} onClose={()=>setSaleId(null)} />}
+      {orderView && <OrderDetailModal order={orderView} onChanged={reload} onClose={()=>setOrderView(null)} />}
       {delRow && <DeleteWithReasonDialog title="Delete expense" itemLabel={delRow.description || delRow.category} onClose={() => setDelRow(null)}
         onConfirm={async (reason) => { const res = await callServer('expenses.delete', { id: delRow.expenseId, reason }); if (res.success) { toast('Expense moved to recycle bin.'); reload(); } else toast(res.message, 'error'); }} />}
     </div>
@@ -3309,7 +3482,103 @@ function InvoicesPage() {
 }
 
 // ============================== REPORTS ==============================
+function compactNum(n) { n = Number(n) || 0; const a = Math.abs(n); return a >= 1e9 ? (n/1e9).toFixed(1) + 'B' : a >= 1e6 ? (n/1e6).toFixed(1) + 'M' : a >= 1e3 ? (n/1e3).toFixed(a >= 1e4 ? 0 : 1) + 'k' : String(Math.round(n)); }
+function GroupedBarSvg({ data, series, height = 240 }) {
+  const w = 680, padL = 44, padB = 26, padT = 12;
+  if (!data.length) return <EmptyState icon="chart" title="No activity in this period" subtitle="Record sales and expenses to see the trend." />;
+  const vals = data.flatMap(d => series.map(s => Number(d[s.key]) || 0));
+  const max = Math.max(1, ...vals), min = Math.min(0, ...vals), span = (max - min) || 1;
+  const ih = height - padT - padB, iw = w - padL - 8;
+  const y = v => padT + (max - v) / span * ih, zero = y(0);
+  const gw = iw / data.length, bw = Math.max(4, Math.min(26, (gw * 0.72) / series.length));
+  const ticks = [0, .25, .5, .75, 1].map(f => min + span * f);
+  return (
+    <div>
+      <div style={{display:'flex', gap:14, marginBottom:6, flexWrap:'wrap'}}>
+        {series.map(s => <span key={s.key} style={{display:'flex', alignItems:'center', gap:6, fontSize:12, color:'var(--muted)'}}><span style={{width:10, height:10, borderRadius:3, background:s.color}} />{s.label}</span>)}
+      </div>
+      <svg viewBox={`0 0 ${w} ${height}`} style={{width:'100%', height:'auto'}} role="img" aria-label="Sales, expenses and profit by period">
+        {ticks.map((tk, i) => <g key={i}><line x1={padL} x2={w - 8} y1={y(tk)} y2={y(tk)} stroke="#E8EBF2" strokeDasharray={i ? '3 3' : ''} /><text x={padL - 6} y={y(tk) + 3} fontSize="9.5" fill="#9AA4B5" textAnchor="end">{compactNum(tk)}</text></g>)}
+        {data.map((d, i) => {
+          const gx = padL + i * gw + (gw - bw * series.length) / 2;
+          return (
+            <g key={i}>
+              {series.map((s, j) => { const v = Number(d[s.key]) || 0, yy = y(v); return <rect key={s.key} x={gx + j * bw} y={Math.min(yy, zero)} width={bw - 2} height={Math.max(1, Math.abs(zero - yy))} rx="3" fill={s.color}><title>{d.label} — {s.label}: {Math.round(v).toLocaleString()}</title></rect>; })}
+              {(data.length <= 12 || i % Math.ceil(data.length / 10) === 0) && <text x={padL + i * gw + gw / 2} y={height - 8} fontSize="9.5" fill="#9AA4B5" textAnchor="middle">{d.label}</text>}
+            </g>);
+        })}
+      </svg>
+    </div>
+  );
+}
+function ChartCard({ title, sub, children, span }) {
+  return (
+    <div className="card" style={{padding:'16px 18px', gridColumn: span ? 'span ' + span : undefined, minWidth:0}}>
+      <div style={{fontWeight:800, fontSize:13.5}}>{title}</div>
+      {sub && <div style={{fontSize:11.5, color:'var(--muted)', marginBottom:10}}>{sub}</div>}
+      <div style={{marginTop: sub ? 0 : 10}}>{children}</div>
+    </div>
+  );
+}
+function ReportsOverview({ data, fmt }) {
+  const k = data.kpis;
+  const money = v => fmt(v);
+  const prof = k.netProfit >= 0;
+  return (
+    <div>
+      <div className="grid g4" style={{marginBottom:14}}>
+        <KpiCard label="Revenue" value={money(k.revenue)} sub={k.orders + ' sale' + (k.orders === 1 ? '' : 's') + ' · avg ' + money(k.avgOrder)} accent="var(--brand-2)" />
+        <KpiCard label="Gross profit" value={money(k.grossProfit)} sub={k.revenue > 0 ? Math.round(k.grossProfit / k.revenue * 100) + '% margin' : ''} accent="var(--green)" />
+        <KpiCard label="Expenses" value={money(k.expenses)} sub={k.orderExpenses > 0 ? money(k.orderExpenses) + ' on orders/invoices' : ''} accent="var(--amber)" />
+        <KpiCard label="Net profit" value={money(k.netProfit)} sub={prof ? 'After all expenses' : 'Running at a loss'} accent={prof ? 'var(--green)' : 'var(--red)'} />
+      </div>
+      <div className="grid g4" style={{marginBottom:14}}>
+        <KpiCard label="Discounts given" value={money(k.discountsGiven)} />
+        <KpiCard label="Delivery income" value={money(k.deliveryIncome)} />
+        <KpiCard label="Customers owe you" value={money(k.outstanding)} accent={k.outstanding > 0 ? 'var(--red)' : undefined} />
+        <KpiCard label="Avg. sale" value={money(k.avgOrder)} />
+      </div>
+      <div className="grid" style={{gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))', gap:14}}>
+        <ChartCard title="Sales, expenses & profit" sub={data.granularity === 'day' ? 'By day' : 'By month'} span={2}>
+          <GroupedBarSvg data={data.trend} series={[{ key:'sales', label:'Sales', color:'#1C5F9E' }, { key:'expenses', label:'Expenses', color:'#D9A441' }, { key:'profit', label:'Profit', color:'#1E8A5F' }]} />
+        </ChartCard>
+        <ChartCard title="Top products" sub="By revenue (before VAT)">
+          {data.topProducts.length ? <BarListChart data={data.topProducts} labelKey="name" valueKey="revenue" fmtVal={money} /> : <EmptyState icon="chart" title="No products sold" subtitle="Your best sellers appear here." />}
+        </ChartCard>
+        <ChartCard title="Sales by category">
+          <DonutChartSvg data={data.byCategory} fmtVal={money} />
+        </ChartCard>
+        <ChartCard title="Payment status" sub="Value of invoices">
+          <DonutChartSvg data={data.paymentStatus} centerLabel="statuses" fmtVal={money} emptyTitle="No invoices" emptySub="Payment status appears after your first sale." />
+        </ChartCard>
+        <ChartCard title="Where your money goes" sub="Expenses by category">
+          <DonutChartSvg data={data.expenseByCategory} centerLabel="categories" fmtVal={money} emptyTitle="No expenses" emptySub="Record expenses to see the split." />
+        </ChartCard>
+        <ChartCard title="Retail vs wholesale">
+          <DonutChartSvg data={data.bySaleType} centerLabel="types" fmtVal={money} emptyTitle="No sales" emptySub="" />
+        </ChartCard>
+        <ChartCard title="Pick up vs delivery" sub="Number of sales">
+          <DonutChartSvg data={data.byFulfilment} centerLabel="modes" fmtVal={v => v} emptyTitle="No sales" emptySub="" />
+        </ChartCard>
+        <ChartCard title="Money owed to you" sub="Unpaid balances by age">
+          {data.aging.some(a => a.value > 0) ? <BarListChart data={data.aging} labelKey="name" valueKey="value" fmtVal={money} /> : <p style={{margin:0, fontSize:13, color:'var(--green)'}}>Nothing outstanding. Every invoice is paid.</p>}
+        </ChartCard>
+      </div>
+    </div>
+  );
+}
+function ReportSummary({ active, data, fmt }) {
+  const cards = active === 'sales' ? [['Total sales', fmt(data.total)], ['Number of sales', data.count]]
+    : active === 'profit' ? [['Revenue', fmt(data.revenue)], ['Cost of goods', fmt(data.cogs)], ['Gross profit', fmt(data.grossProfit)], ['Expenses', fmt(data.operatingExpenses)], ['Net profit', fmt(data.netProfit)], ['Discounts given', fmt(data.discountsGiven || 0)]]
+    : active === 'cashflow' ? [['Money in', fmt(data.inflow)], ['Money out', fmt(data.outflow)], ['Net cash', fmt(data.net)]]
+    : active === 'vat' ? [['VAT collected', fmt(data.vatCollected)], ['VAT paid', fmt(data.vatPaid)], ['Net VAT payable', fmt(data.netVatPayable)]]
+    : (active === 'receivables' || active === 'payables') ? [['Total outstanding', fmt(data.totalOutstanding)]] : [];
+  if (!cards.length) return null;
+  return <div className="grid g4" style={{marginBottom:14}}>{cards.map(([l, v], i) => <KpiCard key={i} label={l} value={v} />)}</div>;
+}
+
 const REPORT_LIST = [
+  { key:'overview', label:'Overview & charts', icon:'chart' },
   { key:'sales', label:'Sales Report', icon:'sales' }, { key:'profit', label:'Profit Report', icon:'wallet' },
   { key:'inventory', label:'Inventory / Stock Valuation', icon:'inventory' }, { key:'cashflow', label:'Cash Flow Report', icon:'bookkeeping' },
   { key:'vat', label:'VAT Report', icon:'reports' }, { key:'receivables', label:'Accounts Receivable', icon:'invoices' },
@@ -3319,13 +3588,13 @@ const REPORT_LIST = [
 function ReportsPage() {
   const fmt = useCurrency();
   const toast = useToast();
-  const [active, setActive] = useState('sales');
+  const [active, setActive] = useState('overview');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [key, setKey] = useState(0);
   const [exporting, setExporting] = useState('');
 
-  const action = active==='sales' ? 'reports.sales' : active==='profit' ? 'reports.profit' : active==='inventory' ? 'reports.inventory'
+  const action = active==='overview' ? 'reports.overview' : active==='sales' ? 'reports.sales' : active==='profit' ? 'reports.profit' : active==='inventory' ? 'reports.inventory'
     : active==='cashflow' ? 'reports.cashflow' : active==='vat' ? 'reports.vat' : active==='receivables' ? 'reports.receivables' : 'reports.payables';
   const { data, loading } = useApiData(action, { from, to }, [active, key]);
 
@@ -3345,7 +3614,7 @@ function ReportsPage() {
 
   return (
     <div>
-      <PageHeader title="Reports Centre" subtitle="Business reports with date filtering and export" />
+      <PageHeader title="Reports Centre" subtitle="Charts, business reports, date filtering and export" />
       <div className="reports-layout">
         <div className="card" style={{padding:10}}>
           {REPORT_LIST.map(r => (
@@ -3357,13 +3626,15 @@ function ReportsPage() {
         <div>
           <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-end', flexWrap:'wrap', gap:10}}>
             <DateRangeBar from={from} to={to} setFrom={setFrom} setTo={setTo} onApply={()=>setKey(k=>k+1)} />
-            <div style={{display:'flex', gap:8, marginBottom:14}}>
+            {active !== 'overview' && <div style={{display:'flex', gap:8, marginBottom:14}}>
               <button className="btn btn-outline btn-sm" disabled={!!exporting} onClick={()=>exportAs('csv')}><I name="download" size={13}/>{exporting==='csv'?'…':'CSV'}</button>
               <button className="btn btn-outline btn-sm" disabled={!!exporting} onClick={()=>exportAs('excel')}><I name="download" size={13}/>{exporting==='excel'?'…':'Excel'}</button>
               <button className="btn btn-outline btn-sm" disabled={!!exporting} onClick={()=>exportAs('pdf')}><I name="download" size={13}/>{exporting==='pdf'?'…':'PDF'}</button>
-            </div>
+            </div>}
           </div>
-          {loading || !data ? <Skeleton h={200} /> : rows.length === 0 ? (
+          {active === 'overview' ? (loading || !data ? <Skeleton h={300} /> : <ReportsOverview data={data} fmt={fmt} />) : null}
+          {active !== 'overview' && data && !loading && <ReportSummary active={active} data={data} fmt={fmt} />}
+          {active === 'overview' ? null : loading || !data ? <Skeleton h={200} /> : rows.length === 0 ? (
             <div className="card"><EmptyState icon="reports" title="No data for this period" subtitle="Try widening your date range or check back after recording transactions." /></div>
           ) : (
             <div className="card" style={{overflowX:'auto', width:'100%', maxWidth:'100%', WebkitOverflowScrolling:'touch'}}>
@@ -3575,9 +3846,9 @@ function OrderSetupPanel() {
       <div className="card" style={{padding:24, maxWidth:600, marginBottom:16}}>
         <h3 style={{margin:'0 0 4px', fontSize:14.5}}>Pick up &amp; delivery</h3>
         <p style={{fontSize:12.5, color:'var(--muted)', margin:'0 0 14px'}}>What customers can choose when they order online, and what your staff can choose at the till.</p>
-        <Toggle k="pickupEnabled" label="Allow pick up" hint="Customer collects from you." />
+        {Toggle({k:'pickupEnabled', label:'Allow pick up', hint:'Customer collects from you.'})}
         {f.pickupEnabled && <Field label="Pick-up address (shown to customers)"><input className="input" value={f.pickupAddress} onChange={e => set('pickupAddress', e.target.value)} placeholder="e.g. Shop 12, Computer Village, Ikeja" /></Field>}
-        <Toggle k="deliveryEnabled" label="Allow delivery" hint="Customer picks a delivery location; its fee is added to the total." />
+        {Toggle({k:'deliveryEnabled', label:'Allow delivery', hint:'Customer picks a delivery location; its fee is added to the total.'})}
       </div>
       <div className="card" style={{padding:24, maxWidth:600, marginBottom:16}}>
         <h3 style={{margin:'0 0 4px', fontSize:14.5}}>Delivery locations &amp; fees</h3>
@@ -3882,18 +4153,50 @@ function UsersPage() {
 }
 
 // ============================== AUDIT LOG ==============================
-function AuditLogPage() {
-  const { data: logs, loading } = useApiData('auditlogs.list', {}, []);
+function WhoCell({ r }) {
+  const isPlat = r.userRole === 'Platform Admin';
   return (
     <div>
-      <PageHeader title="Audit Log" subtitle="A record of important actions across your business" />
-      <DataTable loading={loading} rows={logs} rowKey="logId"
-        emptyIcon="audit" emptyTitle="No activity recorded yet." emptySubtitle="Actions like sales, edits and deletions will show up here."
+      <div style={{fontWeight:600}}>{r.userName || 'System'}</div>
+      <div style={{fontSize:11, color: isPlat ? '#7c2d12' : 'var(--muted)'}}>{r.userRole || ''}</div>
+    </div>
+  );
+}
+
+function AuditLogPage() {
+  const [f, setF] = useState({ q: '', userId: '', module: '', from: '', to: '' });
+  const { data, loading } = useApiData('auditlogs.list', f, [f.q, f.userId, f.module, f.from, f.to]);
+  const rows = data && data.rows ? data.rows : [];
+  const people = data && data.people ? data.people : [];
+  const modules = Array.from(new Set(rows.map(r => r.module).filter(Boolean))).sort();
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }));
+  return (
+    <div>
+      <PageHeader title="Audit Log" subtitle="Who did what, and when, across your business" />
+      <div style={{display:'flex', gap:8, flexWrap:'wrap', marginBottom:12}}>
+        <input className="input" style={{maxWidth:220}} placeholder="Search action or details…" value={f.q} onChange={e => set('q', e.target.value)} />
+        <select className="input" style={{maxWidth:200}} value={f.userId} onChange={e => set('userId', e.target.value)}>
+          <option value="">Everyone</option>
+          {people.map(p => <option key={p.userId} value={p.userId}>{p.name}{p.role ? ' — ' + p.role : ''}</option>)}
+        </select>
+        <select className="input" style={{maxWidth:170}} value={f.module} onChange={e => set('module', e.target.value)}>
+          <option value="">All modules</option>
+          {modules.map(m => <option key={m} value={m}>{m}</option>)}
+        </select>
+        <input className="input" type="date" style={{maxWidth:150}} value={f.from} onChange={e => set('from', e.target.value)} title="From" />
+        <input className="input" type="date" style={{maxWidth:150}} value={f.to} onChange={e => set('to', e.target.value)} title="To" />
+      </div>
+      <DataTable loading={loading} rows={rows} rowKey="logId"
+        emptyIcon="audit" emptyTitle="No activity found." emptySubtitle="Actions like sales, edits and deletions will show up here."
         columns={[
-          { key:'timestamp', header:'When', render:r=>fmtDateTime(r.timestamp) }, { key:'action', header:'Action', render:r=><div style={{fontWeight:600}}>{r.action}</div> },
-          { key:'module', header:'Module', render:r=><StatusBadge status="slate" /> }, { key:'description', header:'Details' },
+          { key:'timestamp', header:'When', render:r=>fmtDateTime(r.timestamp) },
+          { key:'who', header:'Who', render:r=><WhoCell r={r} /> },
+          { key:'action', header:'Action', render:r=><div style={{fontWeight:600}}>{r.action}</div> },
+          { key:'module', header:'Module', render:r=>r.module ? <span className="badge badge-slate">{r.module}</span> : '—' },
+          { key:'description', header:'Details' },
         ]}
       />
+      {data && data.truncated && <div style={{fontSize:12, color:'var(--muted)', marginTop:8}}>Showing the latest 500 entries. Narrow the filters to see older ones.</div>}
     </div>
   );
 }
@@ -4335,7 +4638,7 @@ function drawFlyer(canvas, f) {
   g.fillStyle = grad; g.fillRect(0, 0, W, H);
   g.globalAlpha = .08; g.fillStyle = '#fff'; g.beginPath(); g.arc(W - 90, 120, 320, 0, 7); g.fill(); g.beginPath(); g.arc(80, H - 260, 260, 0, 7); g.fill(); g.globalAlpha = 1;
   g.textAlign = 'center'; const cx = W / 2; const F = 'Manrope, "Segoe UI", Arial, sans-serif';
-  g.fillStyle = th.accent; g.font = '800 34px ' + F; g.fillText('BPA BUSINESS360', cx, 96);
+  g.fillStyle = th.accent; g.font = '800 34px ' + F; g.fillText(((window.__B && window.__B.appName) || 'Business360').toUpperCase(), cx, 96);
   g.fillStyle = th.sub; g.font = '500 26px ' + F; g.fillText('Sales • Inventory • Invoices • Online Store • Reports', cx, 140);
   g.fillStyle = th.text; g.font = '800 74px ' + F; let y = wrapText(g, (f.headline || 'Special offer').toUpperCase(), cx, 270, 920, 86, 3);
   g.fillStyle = th.accent; g.font = '800 ' + (couponOfferText(f).length > 9 ? 150 : 190) + 'px ' + F; g.fillText(couponOfferText(f), cx, y + 150);
@@ -4355,7 +4658,7 @@ function drawFlyer(canvas, f) {
   g.fillStyle = th.text; g.font = '800 44px ' + F; g.fillText('Scan or visit to start', tx, H - 215);
   g.fillStyle = th.accent; g.font = '800 40px ' + F; g.fillText(url.replace('https://', ''), tx, H - 160);
   g.fillStyle = th.sub; g.font = '500 26px ' + F; g.fillText('Pay monthly, quarterly or up to 5 years', tx, H - 115);
-  g.fillText('WhatsApp 0810 807 6212 • bpadynamics@gmail.com', tx, H - 75);
+  g.fillText('WhatsApp ' + curBrand_().whatsapp.replace(/^234/, '0') + ' • ' + curBrand_().email, tx, H - 75);
   g.textAlign = 'center';
 }
 function FlyerCanvas({ flyer, width = 340 }) {
@@ -4453,7 +4756,7 @@ function BillingPage() {
     setResult(r.data); reload();
   };
   const checkPay = async (o) => { const r = await callServer('billing.checkPayment', { id: o.orderId }); if (r.success && r.data.paid) { toast('Payment confirmed — plan activated.'); reload(); } else toast(r.success ? (r.data.reason || 'Not paid yet.') : r.message, 'error'); };
-  const wa = 'https://wa.me/' + UPGRADE_WHATSAPP_NUMBER + '?text=' + encodeURIComponent('Hi BPA Dynamics, I have requested ' + tier + ' (' + (quote ? quote.termLabel : '') + ') for ' + business.businessName + (result ? ' — order ' + result.order.orderNumber : '') + '. Please share payment details.');
+  const wa = 'https://wa.me/' + curBrand_().whatsapp + '?text=' + encodeURIComponent('Hi ' + curBrand_().company + ', I have requested ' + tier + ' (' + (quote ? quote.termLabel : '') + ') for ' + business.businessName + (result ? ' — order ' + result.order.orderNumber : '') + '. Please share payment details.');
   return (
     <div>
       <PageHeader title="Subscription" subtitle="Choose a plan and how long you want to pay for. Longer terms cost less." />
@@ -4516,7 +4819,7 @@ function BillingPage() {
           <div style={{fontWeight:800, marginBottom:4}}>Request received — order {result.order.orderNumber}</div>
           <div style={{fontSize:13, whiteSpace:'pre-wrap', marginBottom:10}}>{result.instructions}</div>
           <a className="btn btn-primary btn-sm" href={wa} target="_blank" rel="noreferrer" style={{background:'#25D366'}}>Send proof on WhatsApp</a>
-          <div style={{fontSize:12, color:'var(--muted)', marginTop:8}}>Your plan is activated as soon as BPA Dynamics confirms your payment.</div>
+          <div style={{fontSize:12, color:'var(--muted)', marginTop:8}}>Your plan is activated as soon as {curBrand_().company} confirms your payment.</div>
         </div>
       )}
       <div className="card" style={{padding:18}}>
@@ -4545,7 +4848,7 @@ function SubscriptionReturnPage({ orderId }) {
         {r.state === 'paid' && <React.Fragment><h3 style={{margin:'0 0 6px'}}>Payment received — thank you!</h3><p style={{color:'var(--muted)', margin:'0 0 14px', fontSize:13.5}}>{r.tierName} ({r.termLabel}) is now active{r.expiresAt ? ' until ' + fmtDate(r.expiresAt) : ''}. A confirmation email is on its way.</p></React.Fragment>}
         {r.state === 'unpaid' && <React.Fragment><h3 style={{margin:'0 0 6px'}}>Payment not completed</h3><p style={{color:'var(--muted)', margin:'0 0 14px', fontSize:13.5}}>{r.reason || 'We have not received your payment yet.'}</p><button className="btn btn-outline" onClick={verify}>I have paid — check again</button></React.Fragment>}
         {r.state === 'error' && <p style={{color:'var(--muted)'}}>{r.message}</p>}
-        {r.state !== 'checking' && <div style={{marginTop:14}}><a className="btn btn-primary" href={PUBLIC_APP_URL}>Go to Business360</a></div>}
+        {r.state !== 'checking' && <div style={{marginTop:14}}><a className="btn btn-primary" href={PUBLIC_APP_URL}>Go to {curBrand_().appName}</a></div>}
       </div>
     </PublicShell>
   );
@@ -4881,25 +5184,27 @@ function PartnerLoginPage({ onLogin, onBack }) {
   const submit = async (e) => { e.preventDefault(); setLoading(true); setError(''); const r = await callServer('partner.login', { email, password }); setLoading(false); if (r.success) onLogin(r.data); else setError(r.message || 'Login failed.'); };
   return (
     <div className="auth-wrap"><div className="auth-card">
-      <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:22}}><BrandMark size={40} fontSize={17} /><div><div style={{fontFamily:'Manrope', fontWeight:800, fontSize:17}}>Partner Portal</div><div style={{fontSize:11, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.06em'}}>Business360 resellers</div></div></div>
+      <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:22}}><BrandMark size={40} fontSize={17} /><div><div style={{fontFamily:'Manrope', fontWeight:800, fontSize:17}}>Partner Portal</div><div style={{fontSize:11, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.06em'}}>{useBrand().appName} resellers</div></div></div>
       <form onSubmit={submit}>
         <Field label="Email"><input className="input" type="email" required value={email} onChange={e => setEmail(e.target.value)} /></Field>
         <Field label="Password"><input className="input" type="password" required value={password} onChange={e => setPassword(e.target.value)} /></Field>
         {error && <div style={{background:'#FCEBE7', color:'var(--red)', fontSize:12.5, padding:'9px 12px', borderRadius:8, marginBottom:14}}>{error}</div>}
         <button className="btn btn-primary" type="submit" style={{width:'100%', justifyContent:'center', padding:'11px'}} disabled={loading}>{loading ? 'Signing in…' : 'Sign In'}</button>
       </form>
-      <div style={{textAlign:'center', marginTop:18, fontSize:13, color:'var(--muted)'}}><a onClick={onBack} style={{color:'var(--brand-2)', fontWeight:600, cursor:'pointer'}}>← Back to Business360</a></div>
+      <div style={{textAlign:'center', marginTop:18, fontSize:13, color:'var(--muted)'}}><a onClick={onBack} style={{color:'var(--brand-2)', fontWeight:600, cursor:'pointer'}}>← Back to {useBrand().appName}</a></div>
     </div></div>
   );
 }
 
 function PartnerWorkspace({ session, onLogout }) {
   const toast = useToast();
+  useEffect(() => { if (hashPath() !== 'partner/portal') setHashPath('partner/portal', true); }, []);
+  useDocTitle('Partner Portal');
   const { data, loading, reload } = useApiData('partner.dashboard', {}, []);
   const [f, setF] = useState({ businessName:'', contactName:'', email:'', phone:'', notes:'' }); const [saving, setSaving] = useState(false);
   useIdleLogout(onLogout);
   const set = (k, v) => setF(x => ({ ...x, [k]: v }));
-  const file = async () => { setSaving(true); const r = await callServer('partner.fileClient', f); setSaving(false); if (r.success) { toast('Client filed — BPA Dynamics will confirm it.'); setF({ businessName:'', contactName:'', email:'', phone:'', notes:'' }); reload(); } else toast(r.message, 'error'); };
+  const file = async () => { setSaving(true); const r = await callServer('partner.fileClient', f); setSaving(false); if (r.success) { toast('Client filed — ' + curBrand_().company + ' will confirm it.'); setF({ businessName:'', contactName:'', email:'', phone:'', notes:'' }); reload(); } else toast(r.message, 'error'); };
   const copy = async (t) => { const ok = await copyText(t); toast(ok ? 'Link copied.' : 'Could not copy.', ok ? 'success' : 'error'); };
   return (
     <div style={{minHeight:'100vh', background:'var(--bg)'}}>
@@ -4934,7 +5239,7 @@ function PartnerWorkspace({ session, onLogout }) {
               </div>
               <div className="card" style={{padding:16}}>
                 <div style={{fontWeight:800, marginBottom:4}}>File a client</div>
-                <div style={{fontSize:12.5, color:'var(--muted)', marginBottom:8}}>Met a business that is not signed up yet? File them here. When they register with this email they are linked to you automatically; otherwise BPA Dynamics maps them.</div>
+                <div style={{fontSize:12.5, color:'var(--muted)', marginBottom:8}}>Met a business that is not signed up yet? File them here. When they register with this email they are linked to you automatically; otherwise {curBrand_().company} maps them.</div>
                 <div className="grid g2"><Field label="Business name *"><input className="input" value={f.businessName} onChange={e => set('businessName', e.target.value)} /></Field><Field label="Contact person"><input className="input" value={f.contactName} onChange={e => set('contactName', e.target.value)} /></Field></div>
                 <div className="grid g2"><Field label="Email"><input className="input" type="email" value={f.email} onChange={e => set('email', e.target.value)} /></Field><Field label="Phone"><input className="input" value={f.phone} onChange={e => set('phone', e.target.value)} /></Field></div>
                 <Field label="Notes"><input className="input" value={f.notes} onChange={e => set('notes', e.target.value)} /></Field>
@@ -5011,8 +5316,8 @@ function useIdleLogout(onIdle) {
   }, [onIdle]);
 }
 
-function Workspace({ session, onLogout, setSession }) {
-  const [page, setPage] = useState(() => { try { return new URLSearchParams(window.location.search).get('scan') ? 'scan' : 'dashboard'; } catch (e) { return 'dashboard'; } });
+function Workspace({ session, onLogout, setSession, support }) {
+  const [page, setPage] = useRoutedPage('app', (() => { try { return new URLSearchParams(window.location.search).get('scan') ? 'scan' : 'dashboard'; } catch (e) { return 'dashboard'; } })(), Object.keys(PAGES));
   const [command, setCommand] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cmdkOpen, setCmdkOpen] = useState(false);
@@ -5073,6 +5378,13 @@ function Workspace({ session, onLogout, setSession }) {
         <Sidebar page={effectivePage} setPage={goToPage} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
         {mobileOpen && <div onClick={()=>setMobileOpen(false)} style={{position:'fixed', inset:0, background:'rgba(0,0,0,.3)', zIndex:35}} />}
         <div className="main">
+          {support && (
+            <div role="status" data-testid="support-banner" style={{background:'#7c2d12', color:'#fff', padding:'8px 16px', display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', fontSize:13, position:'sticky', top:0, zIndex:40}}>
+              <I name="shield" size={15} />
+              <span style={{flex:1}}><b>Support mode</b> — you are inside <b>{business.businessName}</b> as platform admin {support.name}. Everything you do is recorded in the audit log under your name.</span>
+              <button className="btn btn-sm" style={{background:'#fff', color:'#7c2d12'}} onClick={support.onExit}>Exit support mode</button>
+            </div>
+          )}
           <Topbar onMenu={() => setMobileOpen(true)} onSearch={() => setCmdkOpen(true)} />
           <div className="content">
             <Page command={effectivePage==='bookkeeping' ? tabCommand : command} clearCommand={() => { setCommand(null); setTabCommand(null); }} dispatch={dispatchCommand} />
@@ -5093,8 +5405,14 @@ function Workspace({ session, onLogout, setSession }) {
 const ThemeCtx = createContext(null);
 function useAppTheme() { return useContext(ThemeCtx); }
 
+function curBrand_() { return window.__B || brandFrom_({}); }
 function applyBrandColors_(theme) {
   if (!theme) return;
+  window.__B = brandFrom_(theme);
+  try {
+    var ic = document.querySelector('link[rel="icon"]'); var href = theme.faviconUrl || theme.logoUrl;
+    if (href) { if (!ic) { ic = document.createElement('link'); ic.rel = 'icon'; document.head.appendChild(ic); } ic.href = href; }
+  } catch (e) {}
   var root = document.documentElement;
   if (theme.primaryColor) root.style.setProperty('--brand', theme.primaryColor);
   if (theme.secondaryColor) root.style.setProperty('--brand-2', theme.secondaryColor);
@@ -5140,7 +5458,7 @@ function PlatformLoginPage({ onLogin, onBack }) {
           <div className="brand-mark" style={{width:40, height:40, fontSize:17, background:'linear-gradient(135deg,#4B5A70,#1C2536)'}}><I name="shield" size={18} /></div>
           <div>
             <div style={{fontFamily:'Manrope', fontWeight:800, fontSize:17}}>Platform Admin</div>
-            <div style={{fontSize:11, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.06em'}}>Business360 Super Admin</div>
+            <div style={{fontSize:11, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.06em'}}>{useBrand().appName} Super Admin</div>
           </div>
         </div>
         <form onSubmit={submit}>
@@ -5150,7 +5468,7 @@ function PlatformLoginPage({ onLogin, onBack }) {
           <button className="btn btn-primary" type="submit" style={{width:'100%', justifyContent:'center', padding:'11px'}} disabled={loading}>{loading?'Signing in…':'Sign In'}</button>
         </form>
         <div style={{textAlign:'center', marginTop:18, fontSize:13, color:'var(--muted)'}}>
-          <a onClick={onBack} style={{color:'var(--brand-2)', fontWeight:600, cursor:'pointer'}}>← Back to Business360</a>
+          <a onClick={onBack} style={{color:'var(--brand-2)', fontWeight:600, cursor:'pointer'}}>← Back to {useBrand().appName}</a>
         </div>
       </div>
     </div>
@@ -5164,13 +5482,16 @@ const PLATFORM_NAV = [
   { key:'subscriptions', label:'Subscriptions', icon:'invoices' },
   { key:'marketing', label:'Marketing', icon:'chart' },
   { key:'partners', label:'Partners', icon:'users' },
-  { key:'appearance', label:'Appearance', icon:'palette' },
+  { key:'audit', label:'Audit log', icon:'audit' },
+  { key:'appearance', label:'Website & brand', icon:'palette' },
+  { key:'account', label:'My account', icon:'shield' },
 ];
 
-function PlatformAdminWorkspace({ session, onLogout }) {
-  const [page, setPage] = useState('dashboard');
+function PlatformAdminWorkspace({ session, onLogout, onProfileUpdated }) {
+  const [page, setPage] = useRoutedPage('platform', 'dashboard', PLATFORM_NAV.map(n => n.key));
   const { dark, toggleDark } = useAppTheme();
   useIdleLogout(onLogout);
+  useDocTitle((PLATFORM_NAV.find(n => n.key === page) || {}).label + ' — Platform Admin');
   return (
     <div className="app-shell">
       <div className="sidebar">
@@ -5190,13 +5511,13 @@ function PlatformAdminWorkspace({ session, onLogout }) {
           ))}
         </div>
         <div className="sidebar-foot">
-          <div className="user-chip" onClick={onLogout} title="Log out" style={{cursor:'pointer'}}>
+          <div className="user-chip" title="My account & password" style={{cursor:'pointer'}} onClick={() => setPage('account')}>
             <div className="avatar">{initials(session.admin.name)}</div>
             <div style={{flex:1, minWidth:0}}>
               <div style={{color:'#fff', fontSize:12.5, fontWeight:600}}>{session.admin.name}</div>
               <div style={{fontSize:11, color:'#7C90AE'}}>Super Admin</div>
             </div>
-            <I name="logout" size={15} />
+            <span title="Log out" onClick={(e) => { e.stopPropagation(); onLogout(); }} style={{display:'flex'}}><I name="logout" size={15} /></span>
           </div>
         </div>
       </div>
@@ -5212,8 +5533,57 @@ function PlatformAdminWorkspace({ session, onLogout }) {
           {page === 'subscriptions' && <PlatformSubscriptionsPage />}
           {page === 'marketing' && <PlatformMarketingPage />}
           {page === 'partners' && <PlatformPartnersPage />}
+          {page === 'audit' && <PlatformAuditPage />}
           {page === 'appearance' && <PlatformAppearancePage />}
+          {page === 'account' && <PlatformAccountPage session={session} onUpdated={onProfileUpdated} />}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function PlatformAccountPage({ session, onUpdated }) {
+  const toast = useToast();
+  const [prof, setProf] = useState({ name: session.admin.name, email: session.admin.email });
+  const [pw, setPw] = useState({ currentPassword: '', newPassword: '', confirm: '' });
+  const [busy, setBusy] = useState('');
+  const [show, setShow] = useState(false);
+  const saveProfile = async () => {
+    setBusy('profile');
+    const r = await callServer('platform.updateProfile', prof);
+    setBusy('');
+    if (r.success) { toast('Profile updated.'); onUpdated && onUpdated(r.data); } else toast(r.message, 'error');
+  };
+  const changePw = async () => {
+    if (!pw.currentPassword || !pw.newPassword) { toast('Enter your current password and a new one.', 'error'); return; }
+    if (pw.newPassword !== pw.confirm) { toast('The two new passwords do not match.', 'error'); return; }
+    setBusy('pw');
+    const r = await callServer('platform.changePassword', { currentPassword: pw.currentPassword, newPassword: pw.newPassword });
+    setBusy('');
+    if (r.success) { toast('Password changed. Use it the next time you log in.'); setPw({ currentPassword: '', newPassword: '', confirm: '' }); } else toast(r.message, 'error');
+  };
+  const strength = (p) => { let s = 0; if (p.length >= 8) s++; if (p.length >= 12) s++; if (/[A-Z]/.test(p) && /[a-z]/.test(p)) s++; if (/[0-9]/.test(p)) s++; if (/[^A-Za-z0-9]/.test(p)) s++; return s; };
+  const st = strength(pw.newPassword);
+  return (
+    <div>
+      <PageHeader title="My account" subtitle="Your platform owner profile and password" />
+      <div className="card" style={{padding:24, maxWidth:560, marginBottom:16}}>
+        <h3 style={{margin:'0 0 12px', fontSize:14.5}}>Profile</h3>
+        <Field label="Name"><input className="input" value={prof.name} onChange={e => setProf(p => ({ ...p, name: e.target.value }))} /></Field>
+        <Field label="Login email"><input className="input" type="email" value={prof.email} onChange={e => setProf(p => ({ ...p, email: e.target.value }))} /></Field>
+        <button className="btn btn-primary" disabled={busy === 'profile'} onClick={saveProfile}>{busy === 'profile' ? 'Saving…' : 'Save profile'}</button>
+      </div>
+      <div className="card" style={{padding:24, maxWidth:560}}>
+        <h3 style={{margin:'0 0 4px', fontSize:14.5}}>Change password</h3>
+        <p style={{fontSize:12.5, color:'var(--muted)', margin:'0 0 14px'}}>At least 8 characters with letters and numbers. You stay logged in on this device.</p>
+        <Field label="Current password"><input className="input" type={show ? 'text' : 'password'} autoComplete="current-password" value={pw.currentPassword} onChange={e => setPw(p => ({ ...p, currentPassword: e.target.value }))} /></Field>
+        <Field label="New password">
+          <input className="input" type={show ? 'text' : 'password'} autoComplete="new-password" value={pw.newPassword} onChange={e => setPw(p => ({ ...p, newPassword: e.target.value }))} />
+          {pw.newPassword && <div style={{display:'flex', gap:4, marginTop:6}}>{[1,2,3,4,5].map(i => <span key={i} style={{flex:1, height:4, borderRadius:3, background: i <= st ? (st <= 2 ? 'var(--red)' : st <= 3 ? 'var(--amber)' : 'var(--green)') : '#E4E7F0'}} />)}</div>}
+        </Field>
+        <Field label="Confirm new password"><input className="input" type={show ? 'text' : 'password'} autoComplete="new-password" value={pw.confirm} onChange={e => setPw(p => ({ ...p, confirm: e.target.value }))} /></Field>
+        <label style={{display:'flex', gap:8, alignItems:'center', fontSize:12.5, marginBottom:14}}><input type="checkbox" checked={show} onChange={e => setShow(e.target.checked)} /> Show passwords</label>
+        <button className="btn btn-gold" disabled={busy === 'pw'} onClick={changePw}>{busy === 'pw' ? 'Changing…' : 'Change password'}</button>
       </div>
     </div>
   );
@@ -5240,7 +5610,7 @@ function PlatformDashboardPage() {
   if (loading || !data) return <Skeleton h={140} />;
   return (
     <div>
-      <PageHeader title="Overview" subtitle="Business360 platform-wide stats" />
+      <PageHeader title="Overview" subtitle="Platform-wide stats" />
       <div className="grid g4">
         <KpiCard label="Total Businesses" value={String(data.totalBusinesses)} />
         <KpiCard label="Active Businesses" value={String(data.activeBusinesses)} accent="var(--green)" />
@@ -5340,12 +5710,45 @@ function RolePermissionsModal({ business, onClose }) {
   );
 }
 
+function PlatformAuditPage() {
+  const [f, setF] = useState({ q: '', module: '', from: '', to: '' });
+  const { data, loading } = usePlatformData('platform.auditLogs', f, [f.q, f.module, f.from, f.to]);
+  const rows = data && data.rows ? data.rows : [];
+  const modules = Array.from(new Set(rows.map(r => r.module).filter(Boolean))).sort();
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }));
+  return (
+    <div>
+      <PageHeader title="Audit log" subtitle="Every change across all businesses, with who made it" />
+      <div style={{display:'flex', gap:8, flexWrap:'wrap', marginBottom:12}}>
+        <input className="input" style={{maxWidth:240}} placeholder="Search person, business or action…" value={f.q} onChange={e => set('q', e.target.value)} />
+        <select className="input" style={{maxWidth:170}} value={f.module} onChange={e => set('module', e.target.value)}>
+          <option value="">All modules</option>{modules.map(m => <option key={m} value={m}>{m}</option>)}
+        </select>
+        <input className="input" type="date" style={{maxWidth:150}} value={f.from} onChange={e => set('from', e.target.value)} />
+        <input className="input" type="date" style={{maxWidth:150}} value={f.to} onChange={e => set('to', e.target.value)} />
+      </div>
+      <DataTable loading={loading} rows={rows} rowKey="logId" emptyIcon="audit" emptyTitle="No activity found."
+        columns={[
+          { key:'timestamp', header:'When', render:r=>fmtDateTime(r.timestamp) },
+          { key:'businessName', header:'Business' },
+          { key:'who', header:'Who', render:r=><WhoCell r={r} /> },
+          { key:'action', header:'Action', render:r=><div style={{fontWeight:600}}>{r.action}</div> },
+          { key:'description', header:'Details' },
+        ]} />
+      {data && data.truncated && <div style={{fontSize:12, color:'var(--muted)', marginTop:8}}>Showing the latest 500 entries.</div>}
+    </div>
+  );
+}
+
 function PlatformBusinessesPage() {
   const toast = useToast();
   const { data: businesses, loading, reload } = usePlatformData('platform.listBusinesses', {}, []);
   const { data: tiers } = usePlatformData('platform.listTiers', {}, []);
   const { data: partnerList } = usePlatformData('platform.listPartners', {}, []);
   const assignPartner = async (b, partnerId) => { const res = await callServer('platform.assignBusiness', { businessId: b.businessId, partnerId }); if (res.success) { toast(partnerId ? 'Mapped to partner.' : 'Partner removed.'); reload(); } else toast(res.message, 'error'); };
+  const { enterBusiness } = useAppTheme();
+  const [entering, setEntering] = useState('');
+  const enter = async (b) => { setEntering(b.businessId); const ok = await enterBusiness(b); setEntering(''); if (ok !== true) toast(ok || 'Could not enter this business.', 'error'); };
   const [purgeTarget, setPurgeTarget] = useState(null);
   const [purging, setPurging] = useState(false);
   const [suspendTarget, setSuspendTarget] = useState(null);
@@ -5395,6 +5798,7 @@ function PlatformBusinessesPage() {
           { key:'status', header:'Status', render:r=><StatusBadge status={r.status} /> },
           { key:'actions', header:'', render:r => (
             <div style={{display:'flex', gap:6, flexWrap:'wrap'}}>
+              <button className="btn btn-primary btn-sm" disabled={entering === r.businessId} onClick={()=>enter(r)}><I name="arrowRight" size={13}/>{entering === r.businessId ? 'Entering…' : 'Enter'}</button>
               <button className="btn btn-outline btn-sm" onClick={()=>setRolesTarget(r)}><I name="users" size={13}/>User Roles</button>
               {r.status==='Active'
                 ? <button className="btn btn-outline btn-sm" onClick={()=>setSuspendTarget(r)}>Suspend</button>
@@ -5508,40 +5912,164 @@ function PlatformTiersPage() {
   );
 }
 
-function PlatformAppearancePage() {
-  const toast = useToast();
-  const { platformTheme, setPlatformTheme } = useAppTheme();
-  const { data, loading, reload } = usePlatformData('platform.getSettings', {}, []);
-  const [form, setForm] = useState(null);
-  const [saving, setSaving] = useState(false);
-  useEffect(() => { if (data && !form) setForm(data); }, [data]);
-  if (loading || !form) return <Skeleton h={200} />;
-  const set = (k,v) => setForm(f=>({...f,[k]:v}));
-  const submit = async () => {
-    setSaving(true);
-    const res = await callServer('platform.updateSettings', form);
-    setSaving(false);
-    if (res.success) { toast('Appearance updated for all users.'); setPlatformTheme(res.data); applyBrandColors_(res.data); reload(); }
-    else toast(res.message, 'error');
-  };
+function ListEditor({ items, setItems, fields, max = 12, addLabel = 'Add item', blank }) {
+  const move = (i, d) => { const a = items.slice(); const j = i + d; if (j < 0 || j >= a.length) return; const x = a[i]; a[i] = a[j]; a[j] = x; setItems(a); };
+  const upd = (i, k, v) => setItems(items.map((it, n) => n === i ? { ...it, [k]: v } : it));
   return (
     <div>
-      <PageHeader title="Appearance" subtitle="Global branding — applies across every business on the platform" />
-      <div className="card" style={{padding:24, maxWidth:560}}>
-        <Field label="App name"><input className="input" value={form.appName} onChange={e=>set('appName', e.target.value)} /></Field>
-        <Field label="Logo URL (leave blank to use the default letter mark)"><input className="input" value={form.logoUrl} onChange={e=>set('logoUrl', e.target.value)} placeholder="https://…" /></Field>
-        <div className="grid g3">
-          <Field label="Primary color"><input className="input" type="color" value={form.primaryColor} onChange={e=>set('primaryColor', e.target.value)} style={{padding:4, height:40}} /></Field>
-          <Field label="Secondary color"><input className="input" type="color" value={form.secondaryColor} onChange={e=>set('secondaryColor', e.target.value)} style={{padding:4, height:40}} /></Field>
-          <Field label="Accent color"><input className="input" type="color" value={form.accentColor} onChange={e=>set('accentColor', e.target.value)} style={{padding:4, height:40}} /></Field>
+      {items.map((it, i) => (
+        <div key={i} style={{display:'grid', gridTemplateColumns:'1fr auto', gap:8, padding:'10px 0', borderBottom:'1px solid var(--line)'}}>
+          <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(160px, 1fr))', gap:8}}>
+            {fields.map(f => f.type === 'icon'
+              ? <select key={f.k} className="input" value={it[f.k] || ''} onChange={e => upd(i, f.k, e.target.value)}>{['', ...Object.keys(ICONS)].map(n => <option key={n} value={n}>{n || 'Icon…'}</option>)}</select>
+              : f.type === 'area'
+                ? <textarea key={f.k} className="input" rows={2} placeholder={f.label} value={it[f.k] || ''} onChange={e => upd(i, f.k, e.target.value)} style={{gridColumn:'1 / -1'}} />
+                : <input key={f.k} className="input" placeholder={f.label} value={it[f.k] || ''} onChange={e => upd(i, f.k, e.target.value)} />)}
+          </div>
+          <div style={{display:'flex', gap:4, alignItems:'flex-start'}}>
+            <button className="icon-btn" title="Move up" onClick={() => move(i, -1)} disabled={i === 0}>↑</button>
+            <button className="icon-btn" title="Move down" onClick={() => move(i, 1)} disabled={i === items.length - 1}>↓</button>
+            <button className="icon-btn" title="Remove" onClick={() => setItems(items.filter((_, n) => n !== i))}><I name="x" size={13} /></button>
+          </div>
         </div>
-        <div style={{display:'flex', gap:10, alignItems:'center', margin:'10px 0 18px'}}>
-          <span style={{fontSize:12, color:'var(--muted)'}}>Live preview:</span>
-          <button className="btn btn-primary btn-sm" style={{background:form.primaryColor}}>Primary</button>
-          <button className="btn btn-primary btn-sm" style={{background:form.secondaryColor}}>Secondary</button>
-          <button className="btn btn-gold btn-sm" style={{background:form.accentColor, color:'#241705'}}>Accent</button>
+      ))}
+      {items.length < max && <button className="btn btn-outline btn-sm" style={{marginTop:10}} onClick={() => setItems(items.concat([blank]))}><I name="plus" size={13} />{addLabel}</button>}
+    </div>
+  );
+}
+
+function PlatformAppearancePage() {
+  const toast = useToast();
+  const { setPlatformTheme } = useAppTheme();
+  const { data, loading, reload } = usePlatformData('platform.getSettings', {}, []);
+  const [form, setForm] = useState(null);
+  const [tab, setTab] = useState('brand');
+  const [saving, setSaving] = useState(false);
+  const [up, setUp] = useState('');
+  useEffect(() => {
+    if (data && !form) {
+      const B = brandFrom_(data);
+      setForm({ ...data, heroTrust: B.heroTrust.map(x => ({ text: typeof x === 'string' ? x : x.text || '' })), stats: B.stats, features: B.features || FEATURES, whyPoints: B.whyPoints || WHY_POINTS });
+    }
+  }, [data]);
+  if (loading || !form) return <Skeleton h={240} />;
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const payload = () => ({ ...form, heroTrust: form.heroTrust.map(x => x.text).filter(Boolean), stats: form.stats.filter(s => s.n || s.l), features: form.features.filter(f => f.title), whyPoints: form.whyPoints.filter(f => f.title) });
+  const submit = async (override) => {
+    setSaving(true);
+    const res = await callServer('platform.updateSettings', override || payload());
+    setSaving(false);
+    if (res.success) { toast('Saved. Everyone sees the new brand and landing page now.'); setPlatformTheme(res.data); applyBrandColors_(res.data); if (override) setForm(null); reload(); }
+    else toast(res.message, 'error');
+  };
+  const resetLanding = async () => {
+    if (!window.confirm('Reset all landing-page text and lists back to the original wording? Your brand name, logo and colours are kept.')) return;
+    const keys = ['tagline','heroBadge','heroTitle','heroHighlight','heroSub','heroTrust','stats','features','whyPoints','featuresTitle','featuresSub','whyTitle','whySub','pricingTitle','pricingSub','ctaTitle','ctaSub','footerNote','loginTitle','loginSub'];
+    const o = {}; keys.forEach(k => { o[k] = ['heroTrust','stats','features','whyPoints'].indexOf(k) !== -1 ? [] : ''; });
+    await submit(o);
+  };
+  const upload = async (kind, e) => {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    setUp(kind);
+    try {
+      const img = await resizeImage(f);
+      const r = await callServer('platform.uploadBrandAsset', { kind, base64: img.base64, mimeType: img.mimeType });
+      if (r.success) { toast(kind === 'logo' ? 'Logo updated.' : 'Icon updated.'); const s = await callServer('platform.getSettings', {}); if (s.success) { setPlatformTheme(s.data); applyBrandColors_(s.data); set(kind === 'logo' ? 'logoUrl' : 'faviconUrl', r.data.url); } }
+      else toast(r.message, 'error');
+    } catch (err) { toast(err.message, 'error'); }
+    setUp(''); e.target.value = '';
+  };
+  const Text = ({ k, label, hint, area }) => <Field label={label} hint={hint}>{area ? <textarea className="input" rows={2} value={form[k] || ''} onChange={e => set(k, e.target.value)} /> : <input className="input" value={form[k] || ''} onChange={e => set(k, e.target.value)} />}</Field>;
+  const tabs = [['brand', 'Brand & colours'], ['hero', 'Landing: top'], ['sections', 'Landing: features & more'], ['contact', 'Contact & footer']];
+  return (
+    <div>
+      <PageHeader title="Website & brand" subtitle="Change the name, logo, colours and landing page for the whole platform" action={
+        <a className="btn btn-outline" href={window.location.pathname + '#/'} target="_blank" rel="noreferrer"><I name="arrowRight" size={14} />Open landing page</a>
+      } />
+      <div style={{display:'flex', gap:8, flexWrap:'wrap', marginBottom:14}}>
+        {tabs.map(([k, l]) => <button key={k} className={'btn btn-sm ' + (tab === k ? 'btn-primary' : 'btn-outline')} onClick={() => setTab(k)}>{l}</button>)}
+      </div>
+      <div className="card" style={{padding:24, maxWidth:760}}>
+        {tab === 'brand' && (
+          <React.Fragment>
+            <div className="grid g2">
+              {Text({k:'appName', label:'App name', hint:'Shown everywhere: landing page, login, sidebar, emails, flyers.'})}
+              {Text({k:'companyName', label:'Company name', hint:'The \'by …\' line and email signatures.'})}
+            </div>
+            {Text({k:'tagline', label:'Tagline (browser tab title)', hint:'e.g. Sales, stock and books in one place'})}
+            <div className="grid g2" style={{marginBottom:12}}>
+              {[['logo', 'Logo', form.logoUrl], ['favicon', 'Browser icon', form.faviconUrl]].map(([kind, label, url]) => (
+                <div key={kind}>
+                  <div style={{fontWeight:700, fontSize:13, marginBottom:6}}>{label}</div>
+                  <div style={{display:'flex', gap:12, alignItems:'center'}}>
+                    <div style={{width:64, height:64, borderRadius:12, border:'1px dashed var(--line)', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden', background:'var(--bg)'}}>
+                      {url ? <img src={url} alt="" style={{width:'100%', height:'100%', objectFit:'cover'}} /> : <BrandMark size={44} fontSize={18} />}
+                    </div>
+                    <div>
+                      <input type="file" accept="image/png,image/jpeg,image/webp" disabled={!!up} onChange={e => upload(kind, e)} style={{fontSize:12.5, maxWidth:200}} />
+                      <div style={{fontSize:11.5, color:'var(--muted)', marginTop:4}}>{up === kind ? 'Uploading…' : 'PNG, JPG or WebP, up to 1.5 MB. Square works best.'}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="grid g3">
+              <Field label="Primary colour"><input className="input" type="color" value={form.primaryColor} onChange={e => set('primaryColor', e.target.value)} style={{padding:4, height:40}} /></Field>
+              <Field label="Secondary colour"><input className="input" type="color" value={form.secondaryColor} onChange={e => set('secondaryColor', e.target.value)} style={{padding:4, height:40}} /></Field>
+              <Field label="Accent colour"><input className="input" type="color" value={form.accentColor} onChange={e => set('accentColor', e.target.value)} style={{padding:4, height:40}} /></Field>
+            </div>
+            <div style={{display:'flex', gap:10, alignItems:'center', margin:'4px 0 6px', flexWrap:'wrap'}}>
+              <span style={{fontSize:12, color:'var(--muted)'}}>Preview:</span>
+              <button className="btn btn-primary btn-sm" style={{background:form.primaryColor}}>Primary</button>
+              <button className="btn btn-primary btn-sm" style={{background:form.secondaryColor}}>Secondary</button>
+              <button className="btn btn-gold btn-sm" style={{background:form.accentColor, color:'#241705'}}>Accent</button>
+            </div>
+            <div className="grid g2" style={{marginTop:12}}>
+              {Text({k:'loginTitle', label:'Login page heading', hint:'Default: Welcome back'})}
+              {Text({k:'loginSub', label:'Login page line', hint:'Default: Sign in to your business workspace.'})}
+            </div>
+          </React.Fragment>
+        )}
+        {tab === 'hero' && (
+          <React.Fragment>
+            {Text({k:'heroBadge', label:'Small badge above the headline'})}
+            <div className="grid g2">
+              {Text({k:'heroTitle', label:'Headline'})}
+              {Text({k:'heroHighlight', label:'Highlighted words (gold)'})}
+            </div>
+            {Text({k:'heroSub', label:'Sub-headline', area:true})}
+            <div style={{fontWeight:700, fontSize:13, margin:'6px 0 2px'}}>Tick-list under the buttons</div>
+            <ListEditor items={form.heroTrust} setItems={v => set('heroTrust', v)} fields={[{ k:'text', label:'e.g. No card required' }]} max={5} addLabel="Add line" blank={{ text: '' }} />
+            <div style={{fontWeight:700, fontSize:13, margin:'18px 0 2px'}}>Numbers strip</div>
+            <ListEditor items={form.stats} setItems={v => set('stats', v)} fields={[{ k:'n', label:'Number, e.g. 22' }, { k:'l', label:'Label, e.g. Business modules' }]} max={6} addLabel="Add number" blank={{ n: '', l: '' }} />
+          </React.Fragment>
+        )}
+        {tab === 'sections' && (
+          <React.Fragment>
+            <div style={{fontWeight:800, fontSize:14, marginBottom:6}}>Features page</div>
+            {Text({k:'featuresTitle', label:'Heading'})}{Text({k:'featuresSub', label:'Sub-heading', area:true})}
+            <ListEditor items={form.features} setItems={v => set('features', v)} fields={[{ k:'icon', type:'icon' }, { k:'title', label:'Title' }, { k:'desc', label:'Description', type:'area' }]} max={12} addLabel="Add feature" blank={{ icon:'check', title:'', desc:'' }} />
+            <div style={{fontWeight:800, fontSize:14, margin:'22px 0 6px'}}>“Why” page</div>
+            {Text({k:'whyTitle', label:'Heading'})}{Text({k:'whySub', label:'Sub-heading', area:true})}
+            <ListEditor items={form.whyPoints} setItems={v => set('whyPoints', v)} fields={[{ k:'icon', type:'icon' }, { k:'title', label:'Title' }, { k:'desc', label:'Description', type:'area' }]} max={12} addLabel="Add point" blank={{ icon:'check', title:'', desc:'' }} />
+            <div style={{fontWeight:800, fontSize:14, margin:'22px 0 6px'}}>Pricing page and call-to-action</div>
+            {Text({k:'pricingTitle', label:'Pricing heading'})}{Text({k:'pricingSub', label:'Pricing sub-heading', area:true})}
+            {Text({k:'ctaTitle', label:'Call-to-action heading'})}{Text({k:'ctaSub', label:'Call-to-action text', area:true})}
+          </React.Fragment>
+        )}
+        {tab === 'contact' && (
+          <React.Fragment>
+            <div className="grid g2">
+              {Text({k:'supportEmail', label:'Support email', hint:'Shown on the site; upgrade requests are sent here.'})}
+              {Text({k:'supportWhatsapp', label:'WhatsApp number', hint:'Digits with country code, e.g. 2348012345678'})}
+            </div>
+            {Text({k:'footerNote', label:'Footer note (optional)', hint:'Short line added to the footer.'})}
+          </React.Fragment>
+        )}
+        <div style={{display:'flex', gap:10, flexWrap:'wrap', marginTop:18, alignItems:'center'}}>
+          <button className="btn btn-primary" disabled={saving} onClick={() => submit()}>{saving ? 'Saving…' : 'Save & publish'}</button>
+          {tab !== 'brand' && tab !== 'contact' && <button className="btn btn-outline" disabled={saving} onClick={resetLanding}>Reset landing text to original</button>}
         </div>
-        <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?'Saving…':'Save & Apply to All Users'}</button>
       </div>
     </div>
   );
@@ -5562,7 +6090,7 @@ function PublicShell({ title, subtitle, logoUrl, children }) {
         </div>
       </div>
       <div style={{maxWidth:980, margin:'0 auto', padding:'18px 16px 90px'}}>{children}</div>
-      <div style={{textAlign:'center', fontSize:11.5, color:'var(--muted)', padding:'0 0 22px'}}>Powered by BPA Business360</div>
+      <div style={{textAlign:'center', fontSize:11.5, color:'var(--muted)', padding:'0 0 22px'}}>Powered by {useBrand().appName}</div>
     </div>
   );
 }
@@ -5585,7 +6113,7 @@ function PublicJoinPage({ kind, token }) {
     if (res.success) setDone(true); else toast(res.message, 'error');
   };
 
-  if (error) return <PublicShell title="Business360"><div className="card" style={{padding:24, textAlign:'center'}}><h3 style={{margin:'0 0 6px'}}>Link not available</h3><p style={{color:'var(--muted)', margin:0}}>{error}</p></div></PublicShell>;
+  if (error) return <PublicShell title={curBrand_().appName}><div className="card" style={{padding:24, textAlign:'center'}}><h3 style={{margin:'0 0 6px'}}>Link not available</h3><p style={{color:'var(--muted)', margin:0}}>{error}</p></div></PublicShell>;
   if (!info) return <PublicShell title="Loading…"><Skeleton h={220} /></PublicShell>;
   return (
     <PublicShell title={info.businessName} subtitle={isSupplier ? 'Supplier registration' : 'Customer registration'} logoUrl={info.logoUrl}>
@@ -5849,11 +6377,37 @@ function PublicStorePage({ slug }) {
 
 function App() {
   const [session, setSession] = useState(null);
-  const [screen, setScreen] = useState(readParam('partner') ? 'partnerLogin' : (readParam('ref') || readParam('signup')) ? 'signup' : 'landing'); // landing | login | signup | platformLogin | partnerLogin
+  const path = useHashPath();
+  // landing | login | signup | platformLogin | partnerLogin  — derived from the address bar (#/pricing, #/login, ...)
+  const SCREEN_PATH = { landing: '', login: 'login', signup: 'signup', partnerLogin: 'partner', platformLogin: 'admin' };
+  const LAND_ROUTES = ['', 'features', 'pricing', 'about'];
+  const screen = LAND_ROUTES.indexOf(path) !== -1 ? 'landing' : path === 'signup' ? 'signup' : (path === 'partner' || path.indexOf('partner/') === 0) ? 'partnerLogin'
+    : (path === 'admin' || path.indexOf('platform/') === 0) ? 'platformLogin' : (path === 'login' || path.indexOf('app/') === 0) ? 'login' : 'landing';
+  const landRoute = LAND_ROUTES.indexOf(path) !== -1 ? path : '';
+  const setScreen = (s) => navigateTo(SCREEN_PATH[s] !== undefined ? SCREEN_PATH[s] : '');
+  useEffect(() => { // shared ?partner= / ?ref= links land on the right page
+    if (hashPath() === '') { if (readParam('partner')) setHashPath('partner', true); else if (readParam('ref') || readParam('signup')) setHashPath('signup', true); }
+  }, []);
   const [partnerSession, setPartnerSession] = useState(null);
   const [platformSession, setPlatformSession] = useState(null);
   const [dark, setDark] = useState(false);
   const [platformTheme, setPlatformTheme] = useState(null);
+  const [support, setSupport] = useState(null);
+  const stash = useRef(null);
+  const enterBusiness = async (b) => {
+    const res = await callServer('platform.enterBusiness', { businessId: b.businessId });
+    if (!res.success) return res.message;
+    stash.current = window.__platformToken;
+    window.__platformToken = null;
+    window.__session = res.data;
+    setSupport(res.data);
+    navigateTo('app/dashboard');
+    return true;
+  };
+  const exitSupport = () => {
+    window.__session = null; window.__platformToken = stash.current; stash.current = null;
+    setSupport(null); navigateTo('platform/businesses');
+  };
 
   useEffect(() => {
     callServer('platform.publicTheme', {}).then(res => {
@@ -5862,16 +6416,17 @@ function App() {
   }, []);
   useEffect(() => { document.body.classList.toggle('theme-dark', dark); }, [dark]);
 
-  const themeValue = { dark, toggleDark: () => setDark(d => !d), platformTheme, setPlatformTheme };
+  const themeValue = { dark, toggleDark: () => setDark(d => !d), platformTheme, setPlatformTheme, enterBusiness };
 
   const handleAuthed = (data) => {
     window.__session = data;
     setSession(data);
   };
-  const logout = () => { window.__session = null; setSession(null); setScreen('landing'); };
-  const platformLogout = () => { window.__platformToken = null; setPlatformSession(null); setScreen('landing'); };
+  const logout = () => { window.__session = null; setSession(null); navigateTo(''); };
+  const platformLogout = () => { window.__platformToken = null; setPlatformSession(null); navigateTo(''); };
   const handlePlatformAuthed = (data) => { window.__platformToken = data.token; setPlatformSession(data); };
-  const partnerLogout = () => { window.__partnerToken = null; setPartnerSession(null); setScreen('landing'); };
+  const platformProfileUpdated = (a) => setPlatformSession(s => s ? { ...s, admin: { ...s.admin, ...a } } : s);
+  const partnerLogout = () => { window.__partnerToken = null; setPartnerSession(null); navigateTo(''); };
   const handlePartnerAuthed = (data) => { window.__partnerToken = data.token; setPartnerSession(data); };
 
   // Public, no-login pages opened from shared links: ?join=customer|supplier&b=TOKEN  and  ?store=SLUG
@@ -5898,11 +6453,21 @@ function App() {
     );
   }
 
+  if (platformSession && support) {
+    return (
+      <ThemeCtx.Provider value={themeValue}>
+        <ToastProvider>
+          <Workspace session={support} onLogout={exitSupport} setSession={setSupport} support={{ name: support.impersonator ? support.impersonator.name : '', onExit: exitSupport }} />
+        </ToastProvider>
+      </ThemeCtx.Provider>
+    );
+  }
+
   if (platformSession) {
     return (
       <ThemeCtx.Provider value={themeValue}>
         <ToastProvider>
-          <PlatformAdminWorkspace session={platformSession} onLogout={platformLogout} />
+          <PlatformAdminWorkspace session={platformSession} onLogout={platformLogout} onProfileUpdated={platformProfileUpdated} />
         </ToastProvider>
       </ThemeCtx.Provider>
     );
@@ -5912,7 +6477,7 @@ function App() {
     return (
       <ThemeCtx.Provider value={themeValue}>
         <ToastProvider>
-          {screen === 'landing' && <LandingPage onGotoLogin={() => setScreen('login')} onGotoSignup={() => setScreen('signup')} onGotoPlatformAdmin={() => setScreen('platformLogin')} onGotoPartner={() => setScreen('partnerLogin')} />}
+          {screen === 'landing' && <LandingPage route={landRoute} onGotoLogin={() => setScreen('login')} onGotoSignup={() => setScreen('signup')} onGotoPlatformAdmin={() => setScreen('platformLogin')} onGotoPartner={() => setScreen('partnerLogin')} />}
           {screen === 'login' && <LoginPage onLogin={handleAuthed} onGotoSignup={() => setScreen('signup')} />}
           {screen === 'signup' && <SignupPage onSignup={handleAuthed} onGotoLogin={() => setScreen('login')} referralCode={readParam('ref')} />}
           {screen === 'partnerLogin' && <PartnerLoginPage onLogin={handlePartnerAuthed} onBack={() => setScreen('landing')} />}

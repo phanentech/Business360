@@ -261,6 +261,9 @@ const Icon = ({ path, size=17, strokeWidth=1.9, ...rest }) => (
   </svg>
 );
 const ICONS = {
+  truck: "M1 3h15v13H1zM16 8h4l3 3v5h-7zM5.5 21a2 2 0 100-4 2 2 0 000 4zm13 0a2 2 0 100-4 2 2 0 000 4z",
+  store: "M3 9l1-5h16l1 5M3 9a3 3 0 006 0 3 3 0 006 0 3 3 0 006 0M5 12v8h14v-8",
+  tag: "M20.6 13.4l-7.2 7.2a2 2 0 01-2.8 0L3 13V3h10l7.6 7.6a2 2 0 010 2.8zM7.5 7.5h.01",
   dashboard: "M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z",
   sales: "M3 3h2l.4 2M7 13h10l3-8H5.4M7 13L5.4 5M7 13l-2 8h13M9 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z",
   products: "M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8",
@@ -800,6 +803,7 @@ const NAV = [
     { key:'suppliers', label:'Suppliers', icon:'suppliers' },
     { key:'purchases', label:'Purchasing', icon:'purchases' },
     { key:'returns', label:'Returns', icon:'refund' },
+    { key:'marketing', label:'Marketing', icon:'tag' },
   ]},
   { group: 'Finance', items: [
     { key:'invoices', label:'Invoices', icon:'invoices' },
@@ -818,7 +822,7 @@ const NAV = [
 ];
 const ROLE_PAGES = {
   'Owner': null, 'Administrator': null,
-  'Manager': ['dashboard','sales','orders','scan','products','inventory','customers','suppliers','purchases','returns','invoices','reports'],
+  'Manager': ['dashboard','sales','orders','scan','products','inventory','customers','suppliers','purchases','returns','invoices','reports','marketing'],
   'Sales Staff': ['dashboard','sales','orders','customers','invoices','returns'],
   'Inventory Staff': ['dashboard','products','inventory','scan','purchases'],
   'Accountant': ['dashboard','bookkeeping','expenses','income','invoices','reports'],
@@ -2281,6 +2285,88 @@ function RecordPaymentModal({ sale, onClose, onSaved }) {
 }
 
 // ============================== SALES / POS ==============================
+
+// ---------- v6: shared order helpers (discount, coupon, pickup / delivery) ----------
+function useOrderConfig() {
+  const [cfg, setCfg] = useState(null);
+  useEffect(() => { let on = true; callServer('sales.config', {}).then(r => { if (on && r.success) setCfg(r.data); }); return () => { on = false; }; }, []);
+  return cfg;
+}
+function calcManualDiscount(subtotal, type, value) {
+  const v = Number(value) || 0; if (v <= 0) return 0;
+  const d = type === 'percent' ? subtotal * v / 100 : v;
+  return Math.round(Math.min(Math.max(d, 0), subtotal) * 100) / 100;
+}
+function DiscountFields({ cfg, type, setType, value, setValue, couponCode, setCouponCode, coupon, onApplyCoupon, onClearCoupon, couponBusy, showCoupon = true }) {
+  const cap = cfg && !cfg.canDiscountFreely ? Number(cfg.staffMaxDiscountPercent) : null;
+  return (
+    <div>
+      <div className="grid g2">
+        <Field label="Invoice discount" hint={cap != null ? `Your limit is ${cap}% of the invoice.` : 'Does not change product prices.'}>
+          <div style={{display:'flex', gap:6}}>
+            <select className="input" style={{width:92}} value={type} onChange={e=>setType(e.target.value)}>
+              <option value="percent">%</option><option value="fixed">Amount</option>
+            </select>
+            <input className="input" type="number" min="0" value={value} onChange={e=>setValue(e.target.value)} placeholder="0" />
+          </div>
+        </Field>
+        {showCoupon && <Field label="Coupon code">
+          <div style={{display:'flex', gap:6}}>
+            <input className="input" value={couponCode} disabled={!!coupon} onChange={e=>setCouponCode(e.target.value.toUpperCase())} placeholder="e.g. SAVE10" />
+            {coupon
+              ? <button type="button" className="btn btn-outline" onClick={onClearCoupon}>Remove</button>
+              : <button type="button" className="btn btn-outline" disabled={couponBusy || !couponCode} onClick={onApplyCoupon}>{couponBusy ? '…' : 'Apply'}</button>}
+          </div>
+        </Field>}
+      </div>
+    </div>
+  );
+}
+function FulfilmentFields({ cfg, fulfilment, setFulfilment, zoneId, setZoneId, address, setAddress, customFee, setCustomFee }) {
+  const fmt = useCurrency();
+  if (!cfg) return null;
+  const canPick = cfg.pickupEnabled, canDeliver = cfg.deliveryEnabled;
+  if (!canPick && !canDeliver) return null;
+  return (
+    <div style={{marginTop:4}}>
+      {canPick && canDeliver && (
+        <div style={{display:'flex', gap:8, marginBottom:8}}>
+          {['Pickup','Delivery'].map(f => (
+            <button key={f} type="button" onClick={()=>setFulfilment(f)} className={'btn ' + (fulfilment===f ? 'btn-primary' : 'btn-outline')} style={{flex:1}}>
+              <I name={f==='Pickup' ? 'store' : 'truck'} size={14} />{f === 'Pickup' ? 'Pick up' : 'Delivery'}
+            </button>
+          ))}
+        </div>
+      )}
+      {fulfilment === 'Pickup' && cfg.pickupAddress && <div style={{fontSize:12, color:'var(--muted)'}}>Pick up at: {cfg.pickupAddress}</div>}
+      {fulfilment === 'Delivery' && (
+        <div className="grid g2">
+          <Field label="Delivery location">
+            <select className="input" value={zoneId} onChange={e=>setZoneId(e.target.value)}>
+              <option value="">{cfg.zones.length ? 'Select location…' : 'Custom fee'}</option>
+              {cfg.zones.map(z => <option key={z.zoneId} value={z.zoneId}>{z.zoneName} — {fmt(z.fee)}</option>)}
+            </select>
+          </Field>
+          {(!cfg.zones.length || (cfg.canDiscountFreely && !zoneId)) ? (
+            <Field label="Delivery fee" hint={cfg.canDiscountFreely ? '' : 'Ask a manager to set up delivery locations.'}>
+              <input className="input" type="number" min="0" value={customFee} disabled={!cfg.canDiscountFreely} onChange={e=>setCustomFee(e.target.value)} placeholder="0" />
+            </Field>
+          ) : <div />}
+          <div style={{gridColumn:'1 / -1'}}>
+            <Field label="Delivery address"><input className="input" value={address} onChange={e=>setAddress(e.target.value)} placeholder="Street, area, landmark" /></Field>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+function deliveryFeeFor(cfg, fulfilment, zoneId, customFee) {
+  if (fulfilment !== 'Delivery' || !cfg) return 0;
+  const z = (cfg.zones || []).find(x => x.zoneId === zoneId);
+  if (z) return Number(z.fee) || 0;
+  return cfg.canDiscountFreely ? (Number(customFee) || 0) : 0;
+}
+
 function POSModal({ onClose, onSaved, products, customers, locations }) {
   const fmt = useCurrency();
   const toast = useToast();
@@ -2291,12 +2377,23 @@ function POSModal({ onClose, onSaved, products, customers, locations }) {
   const [locationId, setLocationId] = useState(locations[0] ? locations[0].locationId : '');
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [amountPaid, setAmountPaid] = useState('');
-  const [discount, setDiscount] = useState(0);
   const [applyVat, setApplyVat] = useState(true);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState(null);
   const [pdfBusy, setPdfBusy] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
+  const cfg = useOrderConfig();
+  const [saleType, setSaleType] = useState('Retail');
+  const [discType, setDiscType] = useState('percent');
+  const [discValue, setDiscValue] = useState('');
+  const [couponCode, setCouponCode] = useState('');
+  const [coupon, setCoupon] = useState(null);
+  const [couponBusy, setCouponBusy] = useState(false);
+  const [fulfilment, setFulfilment] = useState('Pickup');
+  const [zoneId, setZoneId] = useState('');
+  const [address, setAddress] = useState('');
+  const [customFee, setCustomFee] = useState('');
+  useEffect(() => { if (cfg && !cfg.pickupEnabled && cfg.deliveryEnabled) setFulfilment('Delivery'); }, [cfg]);
 
   // locations often arrive after this modal's first render (async fetch) — sync the default once they load
   useEffect(() => { if (!locationId && locations.length) setLocationId(locations[0].locationId); }, [locations]);
@@ -2307,7 +2404,7 @@ function POSModal({ onClose, onSaved, products, customers, locations }) {
     setCart(c => {
       const existing = c.find(i => i.productId === p.productId);
       if (existing) return c.map(i => i.productId===p.productId ? {...i, quantity:i.quantity+1} : i);
-      return [...c, { productId:p.productId, productName:p.productName, unitPrice:Number(p.sellingPrice), quantity:1, discount:0 }];
+      return [...c, { productId:p.productId, productName:p.productName, retailPrice:Number(p.sellingPrice), wholesalePrice:Number(p.wholesalePrice)||0, quantity:1, discount:0 }];
     });
   };
   const updateQty = (pid, qty) => setCart(c => c.map(i => i.productId===pid ? {...i, quantity: Math.max(1, qty)} : i));
@@ -2315,17 +2412,42 @@ function POSModal({ onClose, onSaved, products, customers, locations }) {
 
   const vatRate = Number((business && business.vatRate) || 7.5);
   function round2Local(n){ return Math.round(n*100)/100; }
-  const subtotal = cart.reduce((s,i) => s + i.quantity*i.unitPrice - (i.discount||0), 0);
-  const vatEstimate = applyVat ? round2Local(subtotal * (vatRate/100)) : 0;
-  const total = subtotal + vatEstimate;
+  const priceOf = (i) => (saleType === 'Wholesale' && i.wholesalePrice > 0) ? i.wholesalePrice : i.retailPrice;
+  const subtotal = cart.reduce((s,i) => s + i.quantity*priceOf(i) - (i.discount||0), 0);
+  const manualDisc = calcManualDiscount(subtotal, discType, discValue);
+  const couponDisc = coupon ? coupon.discount : 0;
+  const discount = Math.min(subtotal, round2Local(manualDisc + couponDisc));
+  const deliveryFee = deliveryFeeFor(cfg, fulfilment, zoneId, customFee);
+  const vatEstimate = applyVat ? round2Local((subtotal - discount) * (vatRate/100)) : 0;
+  const total = round2Local(subtotal - discount + vatEstimate + deliveryFee);
+
+  const applyCoupon = async () => {
+    setCouponBusy(true);
+    const r = await callServer('sales.validateCoupon', { code: couponCode, subtotal: Math.max(0, subtotal - manualDisc), customerId });
+    setCouponBusy(false);
+    if (r.success) { setCoupon(r.data); setCouponCode(r.data.code); toast('Coupon applied.'); } else toast(r.message, 'error');
+  };
+  // keep the coupon amount in step with the cart
+  useEffect(() => {
+    if (!coupon) return;
+    let on = true;
+    callServer('sales.validateCoupon', { code: coupon.code, subtotal: Math.max(0, subtotal - manualDisc), customerId }).then(r => {
+      if (!on) return; if (r.success) setCoupon(r.data); else { setCoupon(null); toast(r.message, 'error'); }
+    });
+    return () => { on = false; };
+  }, [subtotal, manualDisc, customerId]);
 
   const submit = async () => {
     if (!cart.length) { toast('Add at least one product to the cart.', 'error'); return; }
     if (!locationId) { toast('Select a location.', 'error'); return; }
+    if (fulfilment === 'Delivery' && cfg && cfg.zones.length && !zoneId && !(cfg.canDiscountFreely && Number(customFee) > 0)) { toast('Choose a delivery location.', 'error'); return; }
     setSaving(true);
     const res = await callServer('sales.create', {
-      customerId, locationId, items: cart.map(i => ({ productId:i.productId, quantity:i.quantity, unitPrice:i.unitPrice, discount:i.discount||0 })),
-      discount: Number(discount||0), paymentMethod, amountPaid: amountPaid==='' ? 0 : Number(amountPaid), applyVat
+      customerId, locationId, items: cart.map(i => ({ productId:i.productId, quantity:i.quantity, discount:i.discount||0 })),
+      saleType, discountType: manualDisc > 0 ? discType : '', discountValue: manualDisc > 0 ? Number(discValue) : 0, couponCode: coupon ? coupon.code : '',
+      fulfilment: cfg && (cfg.pickupEnabled || cfg.deliveryEnabled) ? fulfilment : '', deliveryZoneId: zoneId, deliveryAddress: address,
+      deliveryFee: !zoneId && fulfilment === 'Delivery' ? Number(customFee||0) : 0,
+      paymentMethod, amountPaid: amountPaid==='' ? 0 : Number(amountPaid), applyVat
     });
     setSaving(false);
     if (res.success) { setResult(res.data); toast('Sale recorded.'); onSaved(); }
@@ -2367,11 +2489,14 @@ function POSModal({ onClose, onSaved, products, customers, locations }) {
     </React.Fragment>}>
       <div className="grid g2" style={{alignItems:'start'}}>
         <div>
+          <div style={{display:'flex', gap:8, marginBottom:10}}>
+            {['Retail','Wholesale'].map(s => <button key={s} type="button" className={'btn ' + (saleType===s ? 'btn-primary' : 'btn-outline')} style={{flex:1}} onClick={()=>setSaleType(s)}>{s}</button>)}
+          </div>
           <input className="input" placeholder="Search product or SKU…" value={search} onChange={e=>setSearch(e.target.value)} style={{marginBottom:10}} />
           <div style={{maxHeight:280, overflowY:'auto', border:'1px solid var(--line)', borderRadius:9}}>
             {filteredProducts.slice(0,40).map(p => (
               <div key={p.productId} onClick={()=>addToCart(p)} style={{display:'flex', justifyContent:'space-between', padding:'9px 12px', borderBottom:'1px solid #EEF0F5', cursor:'pointer', fontSize:13}}>
-                <span>{p.productName}</span><span style={{color:'var(--muted)'}}>{fmt(p.sellingPrice)}</span>
+                <span>{p.productName}</span><span style={{color:'var(--muted)'}}>{fmt(saleType==='Wholesale' && Number(p.wholesalePrice)>0 ? p.wholesalePrice : p.sellingPrice)}</span>
               </div>
             ))}
             {filteredProducts.length===0 && <div style={{padding:16, fontSize:13, color:'var(--muted)'}}>No products found.</div>}
@@ -2385,7 +2510,7 @@ function POSModal({ onClose, onSaved, products, customers, locations }) {
               <div key={i.productId} style={{display:'flex', alignItems:'center', gap:8, padding:'7px 0', borderBottom:'1px solid #EEF0F5'}}>
                 <div style={{flex:1, fontSize:12.5}}>{i.productName}</div>
                 <input className="input" type="number" min="1" value={i.quantity} onChange={e=>updateQty(i.productId, Number(e.target.value))} style={{width:56, padding:'5px 7px', fontSize:12.5}} />
-                <div style={{width:70, fontSize:12.5, textAlign:'right'}}>{fmt(i.quantity*i.unitPrice)}</div>
+                <div style={{width:70, fontSize:12.5, textAlign:'right'}}>{fmt(i.quantity*priceOf(i))}</div>
                 <button className="icon-btn" style={{width:26, height:26}} onClick={()=>removeItem(i.productId)}><I name="x" size={12} /></button>
               </div>
             ))}
@@ -2417,9 +2542,13 @@ function POSModal({ onClose, onSaved, products, customers, locations }) {
               </div>
             </Field>
           </div>
+          <DiscountFields cfg={cfg} type={discType} setType={setDiscType} value={discValue} setValue={setDiscValue}
+            couponCode={couponCode} setCouponCode={setCouponCode} coupon={coupon} couponBusy={couponBusy} onApplyCoupon={applyCoupon} onClearCoupon={()=>{ setCoupon(null); setCouponCode(''); }} />
+          <FulfilmentFields cfg={cfg} fulfilment={fulfilment} setFulfilment={setFulfilment} zoneId={zoneId} setZoneId={setZoneId} address={address} setAddress={setAddress} customFee={customFee} setCustomFee={setCustomFee} />
           <div className="divider" />
           <div style={{fontSize:13}}>
             <div style={{display:'flex', justifyContent:'space-between', padding:'3px 0'}}><span style={{color:'var(--muted)'}}>Subtotal</span><span>{fmt(subtotal)}</span></div>
+            {discount > 0 && <div style={{display:'flex', justifyContent:'space-between', padding:'3px 0', color:'var(--green)'}}><span>Discount{coupon ? ' (' + coupon.code + ')' : ''}</span><span>−{fmt(discount)}</span></div>}
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'5px 0'}}>
               <button type="button" onClick={()=>setApplyVat(v=>!v)}
                 style={{display:'flex', alignItems:'center', gap:7, background:'none', border:'none', padding:0, cursor:'pointer', color:'var(--muted)'}}>
@@ -2430,6 +2559,7 @@ function POSModal({ onClose, onSaved, products, customers, locations }) {
               </button>
               <span>{fmt(vatEstimate)}</span>
             </div>
+            {deliveryFee > 0 && <div style={{display:'flex', justifyContent:'space-between', padding:'3px 0'}}><span style={{color:'var(--muted)'}}>Delivery</span><span>{fmt(deliveryFee)}</span></div>}
             <div style={{display:'flex', justifyContent:'space-between', padding:'6px 0', fontWeight:800, fontSize:15}}><span>Total</span><span>{fmt(total)}</span></div>
           </div>
         </div>
@@ -2469,6 +2599,85 @@ function SalesPage({ command, clearCommand }) {
   );
 }
 
+
+function LinkedExpensesPanel({ linkedType, linkedId, cfg, income = 0, grossProfit = null, onChanged, title = 'Expenses on this ' }) {
+  const fmt = useCurrency();
+  const toast = useToast();
+  const { data, loading, reload } = useApiData('expenses.linked', { linkedType, linkedId }, [linkedType, linkedId]);
+  const [form, setForm] = useState({ category: '', description: '', amount: '', paymentMethod: 'Cash' });
+  const [busy, setBusy] = useState(false);
+  const cats = (cfg && cfg.expenseCategories) || ['Transport','Fuel','Other'];
+  const list = data || [];
+  const total = list.reduce((s, e) => s + Number(e.amount || 0), 0);
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const add = async () => {
+    if (!form.category) { toast('Choose a category (e.g. Transport).', 'error'); return; }
+    if (!(Number(form.amount) > 0)) { toast('Enter the amount spent.', 'error'); return; }
+    setBusy(true);
+    const r = await callServer('expenses.linkedCreate', { ...form, amount: Number(form.amount), linkedType, linkedId, expenseDate: new Date().toISOString() });
+    setBusy(false);
+    if (r.success) { toast('Expense attached.'); setForm({ category: '', description: '', amount: '', paymentMethod: form.paymentMethod }); reload(); onChanged && onChanged(); }
+    else toast(r.message, 'error');
+  };
+  const remove = async (e) => {
+    if (!window.confirm('Remove this expense from the ' + linkedType.toLowerCase() + '?')) return;
+    const r = await callServer('expenses.linkedDelete', { id: e.expenseId });
+    if (r.success) { toast('Expense removed.'); reload(); onChanged && onChanged(); } else toast(r.message, 'error');
+  };
+  return (
+    <div>
+      <div style={{fontWeight:700, fontSize:13, marginBottom:4}}>{title}{linkedType === 'Sale' ? 'invoice' : 'order'}</div>
+      <p style={{fontSize:12, color:'var(--muted)', margin:'0 0 10px'}}>Transport, fuel, packaging &mdash; anything you spend to fulfil this {linkedType === 'Sale' ? 'invoice' : 'order'}. It also shows in Expenses and the cash book.</p>
+      {loading ? <Skeleton h={40} /> : list.length > 0 && (
+        <table style={{marginBottom:8}}><thead><tr><th>Category</th><th>Note</th><th>Amount</th><th></th></tr></thead>
+          <tbody>{list.map(e => (
+            <tr key={e.expenseId}><td>{e.category}</td><td>{e.description || '—'}</td><td>{fmt(e.amount)}</td>
+              <td><button className="icon-btn" style={{width:26, height:26}} title="Remove" onClick={() => remove(e)}><I name="x" size={12} /></button></td></tr>
+          ))}</tbody></table>
+      )}
+      <div style={{display:'grid', gridTemplateColumns:'1.1fr 1.4fr .8fr auto', gap:6, alignItems:'center'}}>
+        <select className="input" value={form.category} onChange={e => set('category', e.target.value)}>
+          <option value="">Category…</option>{cats.map(c => <option key={c}>{c}</option>)}
+        </select>
+        <input className="input" placeholder="Note (optional)" value={form.description} onChange={e => set('description', e.target.value)} />
+        <input className="input" type="number" min="0" placeholder="Amount" value={form.amount} onChange={e => set('amount', e.target.value)} />
+        <button className="btn btn-outline" disabled={busy} onClick={add}>{busy ? '…' : 'Attach'}</button>
+      </div>
+      {list.length > 0 && (
+        <div style={{textAlign:'right', fontSize:12.5, marginTop:8}}>
+          <div>Expenses attached: <b>{fmt(total)}</b></div>
+          {grossProfit != null && <div style={{color: grossProfit + income - total >= 0 ? 'var(--green)' : 'var(--red)', fontWeight:700}}>Profit after expenses: {fmt(grossProfit + income - total)}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ApplyDiscountModal({ sale, cfg, onClose, onSaved }) {
+  const fmt = useCurrency();
+  const toast = useToast();
+  const [type, setType] = useState(sale.discountType === 'fixed' ? 'fixed' : 'percent');
+  const [value, setValue] = useState(sale.discountValue ? String(sale.discountValue) : '');
+  const [code, setCode] = useState(sale.couponCode || '');
+  const [busy, setBusy] = useState(false);
+  const submit = async () => {
+    setBusy(true);
+    const r = await callServer('sales.applyDiscount', { saleId: sale.saleId, discountType: Number(value) > 0 ? type : '', discountValue: Number(value) || 0, couponCode: code });
+    setBusy(false);
+    if (r.success) { toast('Invoice updated.'); onSaved(); onClose(); } else toast(r.message, 'error');
+  };
+  return (
+    <Modal title={'Discount — ' + sale.invoiceNumber} onClose={onClose} footer={<React.Fragment>
+      <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+      <button className="btn btn-gold" disabled={busy} onClick={submit}>{busy ? 'Saving…' : 'Update invoice'}</button>
+    </React.Fragment>}>
+      <p style={{fontSize:12.5, color:'var(--muted)', marginTop:0}}>Current total {fmt(sale.total)}. Product prices are not changed &mdash; the discount is applied to this invoice only, and VAT is recalculated. Leave both blank to remove the discount.</p>
+      <DiscountFields cfg={cfg} type={type} setType={setType} value={value} setValue={setValue} couponCode={code} setCouponCode={setCode} coupon={null} onApplyCoupon={()=>{}} onClearCoupon={()=>{}} couponBusy={false} />
+      <p style={{fontSize:11.5, color:'var(--muted)', marginBottom:0}}>The coupon is checked when you save.</p>
+    </Modal>
+  );
+}
+
 function SaleDetailModal({ id, onClose, onChanged }) {
   const fmt = useCurrency();
   const toast = useToast();
@@ -2478,6 +2687,8 @@ function SaleDetailModal({ id, onClose, onChanged }) {
   const [emailInput, setEmailInput] = useState('');
   const [payOpen, setPayOpen] = useState(false);
   const [rcptBusy, setRcptBusy] = useState('');
+  const [discOpen, setDiscOpen] = useState(false);
+  const cfg = useOrderConfig();
 
   const downloadPdf = async () => {
     setPdfBusy(true);
@@ -2530,6 +2741,7 @@ function SaleDetailModal({ id, onClose, onChanged }) {
               <I name="invoices" size={14} />{emailBusy ? 'Sending…' : 'Email Invoice'}
             </button>
           )}
+          <button className="btn btn-outline" onClick={() => setDiscOpen(true)}><I name="tag" size={14} />Discount / coupon</button>
           {owing && <button className="btn btn-gold" onClick={() => setPayOpen(true)}><I name="wallet" size={14} />Record Payment</button>}
         </React.Fragment>
       )
@@ -2544,10 +2756,19 @@ function SaleDetailModal({ id, onClose, onChanged }) {
           <tbody>{data.items.map(i=><tr key={i.saleItemId}><td>{i.productName}</td><td>{i.quantity}</td><td>{fmt(i.unitPrice)}</td><td>{fmt(i.vat)}</td><td>{fmt(i.total)}</td></tr>)}</tbody></table>
           <div className="divider" />
           <div style={{textAlign:'right', fontSize:13}}>
-            <div>Subtotal: {fmt(data.sale.subtotal)}</div><div>VAT: {fmt(data.sale.vat)}</div>
+            <div>Subtotal: {fmt(data.sale.subtotal)}</div>
+            {Number(data.sale.discount) > 0 && <div style={{color:'var(--green)'}}>Discount{data.sale.couponCode ? ' (' + data.sale.couponCode + ')' : ''}: −{fmt(data.sale.discount)}</div>}
+            <div>VAT: {fmt(data.sale.vat)}</div>
+            {Number(data.sale.deliveryFee) > 0 && <div>Delivery{data.sale.deliveryZone ? ' (' + data.sale.deliveryZone + ')' : ''}: {fmt(data.sale.deliveryFee)}</div>}
             <div style={{fontWeight:800, fontSize:15}}>Total: {fmt(data.sale.total)}</div>
             <div style={{color:'var(--muted)'}}>Paid: {fmt(data.sale.amountPaid)} &middot; <span style={{color: owing ? 'var(--red)' : 'inherit', fontWeight: owing ? 700 : 400}}>Balance: {fmt(data.sale.balance)}</span></div>
           </div>
+          {data.sale.fulfilment && <div style={{fontSize:12.5, color:'var(--muted)', textAlign:'right', marginTop:4}}>
+            {data.sale.saleType || 'Retail'} &middot; {data.sale.fulfilment === 'Delivery' ? 'Delivery' + (data.sale.deliveryAddress ? ' to ' + data.sale.deliveryAddress : '') : 'Pick up'}
+          </div>}
+          <div className="divider" />
+          <LinkedExpensesPanel linkedType="Sale" linkedId={id} cfg={cfg} income={Number(data.sale.deliveryFee) || 0}
+            grossProfit={data.items.reduce((s, i) => s + Number(i.profit || 0), 0)} />
           <div className="divider" />
           <div style={{fontWeight:700, fontSize:13, marginBottom:8}}>Payments &amp; receipts</div>
           {(data.payments || []).length === 0 ? <p style={{fontSize:12.5, color:'var(--muted)', margin:0}}>No payment recorded yet. This invoice stays unpaid until you record one.</p> : (
@@ -2579,6 +2800,7 @@ function SaleDetailModal({ id, onClose, onChanged }) {
       )}
     </Modal>
     {payOpen && saleForPay && <RecordPaymentModal sale={saleForPay} onClose={() => setPayOpen(false)} onSaved={() => { reload(); onChanged && onChanged(); }} />}
+    {discOpen && data && <ApplyDiscountModal sale={data.sale} cfg={cfg} onClose={() => setDiscOpen(false)} onSaved={() => { reload(); onChanged && onChanged(); }} />}
     </React.Fragment>
   );
 }
@@ -3158,6 +3380,239 @@ function ReportsPage() {
 }
 
 // ============================== SETTINGS ==============================
+// ============================== MARKETING (business customer coupons) ==============================
+function drawStoreFlyer(canvas, f) {
+  const W = 1080, H = 1350; canvas.width = W; canvas.height = H;
+  const g = canvas.getContext('2d'); if (!g) return;
+  const th = FLYER_THEMES[f.theme] || FLYER_THEMES.emerald;
+  const grad = g.createLinearGradient(0, 0, W, H); grad.addColorStop(0, th.bg1); grad.addColorStop(1, th.bg2);
+  g.fillStyle = grad; g.fillRect(0, 0, W, H);
+  g.globalAlpha = .08; g.fillStyle = '#fff'; g.beginPath(); g.arc(W - 90, 120, 320, 0, 7); g.fill(); g.beginPath(); g.arc(80, H - 260, 260, 0, 7); g.fill(); g.globalAlpha = 1;
+  g.textAlign = 'center'; const cx = W / 2; const F = 'Manrope, "Segoe UI", Arial, sans-serif';
+  let nf = 52; g.font = '800 ' + nf + 'px ' + F; while (nf > 28 && g.measureText((f.businessName || '').toUpperCase()).width > 940) { nf -= 2; g.font = '800 ' + nf + 'px ' + F; }
+  g.fillStyle = th.accent; g.fillText((f.businessName || 'Our store').toUpperCase(), cx, 110);
+  g.fillStyle = th.text; g.font = '800 74px ' + F; let y = wrapText(g, (f.headline || 'Special offer').toUpperCase(), cx, 260, 920, 86, 3);
+  const offer = f.discountType === 'fixed' ? f.symbol + Number(f.discountValue).toLocaleString() + ' OFF' : Number(f.discountValue) + '% OFF';
+  g.fillStyle = th.accent; g.font = '800 ' + (offer.length > 9 ? 150 : 200) + 'px ' + F; g.fillText(offer, cx, y + 160);
+  g.fillStyle = th.text; g.font = '600 34px ' + F; g.fillText('your order' + (Number(f.minOrder) > 0 ? ' of ' + f.symbol + Number(f.minOrder).toLocaleString() + '+' : ''), cx, y + 230);
+  const by = Math.max(y + 300, 700);
+  g.fillStyle = th.accent; const bw = 760, bh = 190, bx = cx - bw / 2; g.beginPath(); if (g.roundRect) g.roundRect(bx, by, bw, bh, 28); else g.rect(bx, by, bw, bh); g.fill();
+  g.fillStyle = th.ink; g.font = '700 30px ' + F; g.fillText('USE COUPON CODE AT CHECKOUT', cx, by + 52);
+  let cf = 96; g.font = '800 ' + cf + 'px "Courier New", monospace'; while (cf > 40 && g.measureText(f.code || 'CODE').width > bw - 60) { cf -= 4; g.font = '800 ' + cf + 'px "Courier New", monospace'; }
+  g.fillText(f.code || 'CODE', cx, by + 148);
+  g.fillStyle = th.sub; g.font = '600 30px ' + F;
+  g.fillText(f.expiresAt ? 'Valid until ' + new Date(f.expiresAt).toLocaleDateString(undefined, { day:'numeric', month:'long', year:'numeric' }) : 'Limited time offer', cx, by + bh + 52);
+  if (f.url) { try { drawQr(g, f.url, 70, H - 300, 240); } catch (e) {} }
+  g.textAlign = 'left'; const tx = 350;
+  g.fillStyle = th.text; g.font = '800 44px ' + F; g.fillText('Scan to shop online', tx, H - 215);
+  g.fillStyle = th.accent; let uf = 34; const shortUrl = String(f.url || '').replace('https://', ''); g.font = '800 ' + uf + 'px ' + F; while (uf > 20 && g.measureText(shortUrl).width > 690) { uf -= 2; g.font = '800 ' + uf + 'px ' + F; } g.fillText(shortUrl, tx, H - 160);
+  g.fillStyle = th.sub; g.font = '500 26px ' + F; g.fillText(f.contact || '', tx, H - 110);
+  g.textAlign = 'center';
+}
+
+function StoreCouponModal({ coupon, customers, onClose, onSaved }) {
+  const toast = useToast();
+  const isNew = !coupon;
+  const [f, setF] = useState(coupon ? { ...coupon, startsAt: (coupon.startsAt || '').slice(0, 10), expiresAt: (coupon.expiresAt || '').slice(0, 10) }
+    : { code: '', description: '', discountType: 'percent', discountValue: '', minOrder: '', maxUses: '', startsAt: '', expiresAt: '', status: 'Active', customerId: '' });
+  const [busy, setBusy] = useState(false);
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }));
+  const submit = async () => {
+    setBusy(true);
+    const r = await callServer('storecoupons.save', { ...f, discountValue: Number(f.discountValue), minOrder: Number(f.minOrder) || 0, maxUses: Number(f.maxUses) || 0,
+      startsAt: f.startsAt ? new Date(f.startsAt).toISOString() : '', expiresAt: f.expiresAt ? new Date(f.expiresAt + 'T23:59:59').toISOString() : '' });
+    setBusy(false);
+    if (r.success) { toast('Coupon saved.'); onSaved(r.data); onClose(); } else toast(r.message, 'error');
+  };
+  return (
+    <Modal title={isNew ? 'New coupon' : 'Edit coupon'} onClose={onClose} footer={<React.Fragment>
+      <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+      <button className="btn btn-gold" disabled={busy} onClick={submit}>{busy ? 'Saving…' : 'Save coupon'}</button>
+    </React.Fragment>}>
+      <div className="grid g2">
+        <Field label="Coupon code *" hint="Letters and numbers, e.g. WELCOME10"><input className="input" value={f.code} onChange={e => set('code', e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''))} /></Field>
+        <Field label="Status"><select className="input" value={f.status} onChange={e => set('status', e.target.value)}><option>Active</option><option>Paused</option></select></Field>
+      </div>
+      <Field label="Description (shown to you only)"><input className="input" value={f.description} onChange={e => set('description', e.target.value)} placeholder="e.g. December promo" /></Field>
+      <div className="grid g2">
+        <Field label="Discount type"><select className="input" value={f.discountType} onChange={e => set('discountType', e.target.value)}><option value="percent">Percentage (%)</option><option value="fixed">Fixed amount</option></select></Field>
+        <Field label={f.discountType === 'percent' ? 'Percent off *' : 'Amount off *'}><input className="input" type="number" min="0" value={f.discountValue} onChange={e => set('discountValue', e.target.value)} /></Field>
+        <Field label="Minimum order (optional)"><input className="input" type="number" min="0" value={f.minOrder} onChange={e => set('minOrder', e.target.value)} /></Field>
+        <Field label="Max uses (blank = unlimited)"><input className="input" type="number" min="0" value={f.maxUses} onChange={e => set('maxUses', e.target.value)} /></Field>
+        <Field label="Starts (optional)"><input className="input" type="date" value={f.startsAt} onChange={e => set('startsAt', e.target.value)} /></Field>
+        <Field label="Expires (optional)"><input className="input" type="date" value={f.expiresAt} onChange={e => set('expiresAt', e.target.value)} /></Field>
+      </div>
+      <Field label="Reserve for one customer (optional)" hint="Only this customer can use the code.">
+        <select className="input" value={f.customerId} onChange={e => set('customerId', e.target.value)}>
+          <option value="">Anyone</option>{(customers || []).map(c => <option key={c.customerId} value={c.customerId}>{c.customerName}</option>)}
+        </select>
+      </Field>
+    </Modal>
+  );
+}
+
+function MarketingPage() {
+  const fmt = useCurrency();
+  const toast = useToast();
+  const { business } = useApp();
+  const { data, loading, reload } = useApiData('storecoupons.list', {}, []);
+  const { data: customers } = useApiData('customers.list', {}, []);
+  const { data: links } = useApiData('links.get', {}, []);
+  const [edit, setEdit] = useState(null); // null | 'new' | coupon
+  const [flyer, setFlyer] = useState(null);
+  const [theme, setTheme] = useState('emerald');
+  const list = data || [];
+  const active = list.filter(c => c.status === 'Active');
+  const uses = list.reduce((s, c) => s + Number(c.usedCount || 0), 0);
+  const storeUrl = links && links.storeLink ? PUBLIC_APP_URL + '/' + String(links.storeLink).substring(String(links.storeLink).indexOf('?')) : '';
+  const flyerData = flyer ? { businessName: business.businessName, headline: flyer.description || 'Special offer', code: flyer.code, discountType: flyer.discountType, discountValue: flyer.discountValue,
+    minOrder: flyer.minOrder, expiresAt: flyer.expiresAt, symbol: business.currencySymbol || '', url: storeUrl, contact: [business.phone, business.email].filter(Boolean).join(' • '), theme } : null;
+  const canvasRef = useRef(null);
+  useEffect(() => { if (flyerData && canvasRef.current) { try { drawStoreFlyer(canvasRef.current, flyerData); } catch (e) {} } }, [flyer, theme, storeUrl]);
+  const toggle = async (c) => {
+    const r = await callServer('storecoupons.save', { ...c, status: c.status === 'Active' ? 'Paused' : 'Active' });
+    if (r.success) reload(); else toast(r.message, 'error');
+  };
+  const remove = async (c) => {
+    if (!window.confirm('Delete coupon ' + c.code + '?')) return;
+    const r = await callServer('storecoupons.delete', { id: c.couponId });
+    if (r.success) { toast('Coupon deleted.'); reload(); } else toast(r.message, 'error');
+  };
+  const offer = (c) => c.discountType === 'fixed' ? fmt(c.discountValue) + ' off' : Number(c.discountValue) + '% off';
+  const state = (c) => { const now = Date.now(); if (c.status !== 'Active') return 'Paused'; if (c.expiresAt && new Date(c.expiresAt).getTime() < now) return 'Expired'; if (c.startsAt && new Date(c.startsAt).getTime() > now) return 'Scheduled'; if (Number(c.maxUses) > 0 && Number(c.usedCount) >= Number(c.maxUses)) return 'Used up'; return 'Live'; };
+  return (
+    <div>
+      <PageHeader title="Marketing" subtitle="Coupons your customers can use on the online store and at the till" action={
+        <button className="btn btn-gold" onClick={() => setEdit('new')}><I name="plus" size={15} />New coupon</button>
+      } />
+      <div className="grid g3" style={{marginBottom:14}}>
+        <KpiCard label="Live coupons" value={active.length} accent="var(--green)" />
+        <KpiCard label="Times used" value={uses} />
+        <KpiCard label="All coupons" value={list.length} />
+      </div>
+      <DataTable loading={loading} rows={list} rowKey="couponId"
+        emptyIcon="tag" emptyTitle="No coupons yet." emptySubtitle="Create a code such as WELCOME10 and share it in your ads."
+        emptyAction={<button className="btn btn-gold" onClick={() => setEdit('new')}><I name="plus" size={14} />New coupon</button>}
+        columns={[
+          { key:'code', header:'Code', render:c => <div><span className="mono" style={{fontWeight:700}}>{c.code}</span>{c.description && <div style={{fontSize:11.5, color:'var(--muted)'}}>{c.description}</div>}</div> },
+          { key:'discountValue', header:'Offer', render:c => <span>{offer(c)}{Number(c.minOrder) > 0 && <div style={{fontSize:11.5, color:'var(--muted)'}}>min {fmt(c.minOrder)}</div>}</span> },
+          { key:'usedCount', header:'Used', render:c => Number(c.usedCount || 0) + (Number(c.maxUses) > 0 ? ' / ' + c.maxUses : '') },
+          { key:'expiresAt', header:'Expires', render:c => c.expiresAt ? fmtDate(c.expiresAt) : 'No expiry' },
+          { key:'status', header:'Status', render:c => { const s = state(c); return <span className={'badge ' + (s === 'Live' ? 'badge-green' : s === 'Paused' || s === 'Scheduled' ? 'badge-amber' : 'badge-red')}>{s}</span>; } },
+          { key:'actions', header:'', render:c => (
+            <div style={{display:'flex', gap:6, flexWrap:'wrap'}} onClick={e => e.stopPropagation()}>
+              <button className="btn btn-outline btn-sm" onClick={() => setFlyer(c)}>Flyer</button>
+              <button className="btn btn-outline btn-sm" onClick={() => setEdit(c)}>Edit</button>
+              <button className="btn btn-outline btn-sm" onClick={() => toggle(c)}>{c.status === 'Active' ? 'Pause' : 'Resume'}</button>
+              <button className="icon-btn" style={{width:28, height:28}} title="Delete" onClick={() => remove(c)}><I name="trash" size={13} /></button>
+            </div>) },
+        ]}
+      />
+      <div className="card" style={{padding:18, marginTop:16, maxWidth:700}}>
+        <div style={{fontWeight:700, fontSize:13.5, marginBottom:4}}>Where customers use a coupon</div>
+        <p style={{fontSize:12.5, color:'var(--muted)', margin:0}}>On your online store checkout, and when you or your staff make a sale (Sales &rarr; New Sale). You can also give a one-off discount on any invoice without a code. Staff discount limits and delivery locations are set up in <b>Settings &rarr; Orders, delivery &amp; discounts</b>.</p>
+      </div>
+      {edit && <StoreCouponModal coupon={edit === 'new' ? null : edit} customers={customers} onClose={() => setEdit(null)} onSaved={reload} />}
+      {flyer && (
+        <Modal title={'Flyer — ' + flyer.code} onClose={() => setFlyer(null)} footer={<React.Fragment>
+          <button className="btn btn-outline" onClick={() => setFlyer(null)}>Close</button>
+          <button className="btn btn-gold" onClick={() => { const c = document.createElement('canvas'); drawStoreFlyer(c, flyerData); downloadDataUrl(flyer.code + '-flyer.png', c.toDataURL('image/png')); }}><I name="download" size={14} />Download PNG</button>
+        </React.Fragment>}>
+          {!storeUrl && <p style={{fontSize:12.5, color:'var(--amber)'}}>Your store link is not ready yet — open Online Orders → Get store link first.</p>}
+          <div style={{display:'flex', gap:6, flexWrap:'wrap', marginBottom:10}}>
+            {Object.keys(FLYER_THEMES).map(k => <button key={k} className={'btn btn-sm ' + (theme === k ? 'btn-primary' : 'btn-outline')} onClick={() => setTheme(k)}>{FLYER_THEMES[k].label}</button>)}
+          </div>
+          <canvas ref={canvasRef} style={{width:'100%', maxWidth:340, borderRadius:10, display:'block', margin:'0 auto'}} />
+          <p style={{fontSize:11.5, color:'var(--muted)', textAlign:'center', marginBottom:0}}>The headline is the coupon description. The QR code opens your online store.</p>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ============================== SETTINGS: orders, delivery & discounts ==============================
+function OrderSetupPanel() {
+  const toast = useToast();
+  const fmt = useCurrency();
+  const cfg = useApiData('sales.config', {}, []);
+  const zones = useApiData('delivery.list', {}, []);
+  const [f, setF] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [zf, setZf] = useState({ zoneId: '', zoneName: '', fee: '' });
+  const [zbusy, setZbusy] = useState(false);
+  useEffect(() => { if (cfg.data && !f) setF({ pickupEnabled: cfg.data.pickupEnabled, deliveryEnabled: cfg.data.deliveryEnabled, pickupAddress: cfg.data.pickupAddress || '', staffMaxDiscountPercent: cfg.data.staffMaxDiscountPercent, cats: (cfg.data.expenseCategories || []).join(', ') }); }, [cfg.data]);
+  if (!f) return <Skeleton h={160} />;
+  const set = (k, v) => setF(x => ({ ...x, [k]: v }));
+  const save = async () => {
+    const pct = Number(f.staffMaxDiscountPercent);
+    if (!(pct >= 0 && pct <= 100)) { toast('Staff discount limit must be between 0 and 100.', 'error'); return; }
+    setSaving(true);
+    const r = await callServer('settings.update', { pickupEnabled: String(!!f.pickupEnabled), deliveryEnabled: String(!!f.deliveryEnabled), pickupAddress: f.pickupAddress, staffMaxDiscountPercent: String(pct), orderExpenseCategories: f.cats.split(',').map(s => s.trim()).filter(Boolean).join(',') });
+    setSaving(false);
+    if (r.success) { toast('Order settings saved.'); cfg.reload && cfg.reload(); } else toast(r.message, 'error');
+  };
+  const saveZone = async () => {
+    if (!zf.zoneName.trim()) { toast('Enter the location name.', 'error'); return; }
+    if (zf.fee === '' || !(Number(zf.fee) >= 0)) { toast('Enter the delivery fee (0 for free).', 'error'); return; }
+    setZbusy(true);
+    const r = await callServer('delivery.save', { zoneId: zf.zoneId, zoneName: zf.zoneName, fee: Number(zf.fee), status: zf.status || 'Active' });
+    setZbusy(false);
+    if (r.success) { setZf({ zoneId: '', zoneName: '', fee: '' }); zones.reload(); cfg.reload && cfg.reload(); } else toast(r.message, 'error');
+  };
+  const delZone = async (z) => {
+    if (!window.confirm('Remove delivery location ' + z.zoneName + '? Existing orders keep their fee.')) return;
+    const r = await callServer('delivery.delete', { id: z.zoneId });
+    if (r.success) { zones.reload(); cfg.reload && cfg.reload(); } else toast(r.message, 'error');
+  };
+  const Toggle = ({ k, label, hint }) => (
+    <label style={{display:'flex', gap:10, alignItems:'flex-start', fontSize:13, margin:'0 0 10px', cursor:'pointer'}}>
+      <input type="checkbox" style={{marginTop:3}} checked={!!f[k]} onChange={e => set(k, e.target.checked)} />
+      <span><b>{label}</b><div style={{fontSize:12, color:'var(--muted)'}}>{hint}</div></span>
+    </label>
+  );
+  return (
+    <div>
+      <div className="card" style={{padding:24, maxWidth:600, marginBottom:16}}>
+        <h3 style={{margin:'0 0 4px', fontSize:14.5}}>Pick up &amp; delivery</h3>
+        <p style={{fontSize:12.5, color:'var(--muted)', margin:'0 0 14px'}}>What customers can choose when they order online, and what your staff can choose at the till.</p>
+        <Toggle k="pickupEnabled" label="Allow pick up" hint="Customer collects from you." />
+        {f.pickupEnabled && <Field label="Pick-up address (shown to customers)"><input className="input" value={f.pickupAddress} onChange={e => set('pickupAddress', e.target.value)} placeholder="e.g. Shop 12, Computer Village, Ikeja" /></Field>}
+        <Toggle k="deliveryEnabled" label="Allow delivery" hint="Customer picks a delivery location; its fee is added to the total." />
+      </div>
+      <div className="card" style={{padding:24, maxWidth:600, marginBottom:16}}>
+        <h3 style={{margin:'0 0 4px', fontSize:14.5}}>Delivery locations &amp; fees</h3>
+        <p style={{fontSize:12.5, color:'var(--muted)', margin:'0 0 12px'}}>These appear in the drop-down on your store and at the till. Fees are fixed by you &mdash; customers cannot change them.</p>
+        {(zones.data || []).length > 0 && (
+          <table style={{marginBottom:12}}><thead><tr><th>Location</th><th>Fee</th><th></th></tr></thead>
+            <tbody>{zones.data.map(z => (
+              <tr key={z.zoneId}><td>{z.zoneName}</td><td>{fmt(z.fee)}</td>
+                <td style={{whiteSpace:'nowrap'}}><button className="btn btn-outline btn-sm" onClick={() => setZf({ zoneId: z.zoneId, zoneName: z.zoneName, fee: String(z.fee), status: z.status })}>Edit</button>{' '}
+                  <button className="icon-btn" style={{width:28, height:28}} title="Remove" onClick={() => delZone(z)}><I name="trash" size={13} /></button></td></tr>
+            ))}</tbody></table>
+        )}
+        <div style={{display:'grid', gridTemplateColumns:'1.6fr 1fr auto', gap:8, alignItems:'end'}}>
+          <Field label={zf.zoneId ? 'Edit location' : 'New location'}><input className="input" value={zf.zoneName} onChange={e => setZf(x => ({ ...x, zoneName: e.target.value }))} placeholder="e.g. Lekki Phase 1" /></Field>
+          <Field label="Fee"><input className="input" type="number" min="0" value={zf.fee} onChange={e => setZf(x => ({ ...x, fee: e.target.value }))} placeholder="0" /></Field>
+          <div style={{marginBottom:14, display:'flex', gap:6}}>
+            <button className="btn btn-primary" disabled={zbusy} onClick={saveZone}>{zf.zoneId ? 'Update' : 'Add'}</button>
+            {zf.zoneId && <button className="btn btn-outline" onClick={() => setZf({ zoneId: '', zoneName: '', fee: '' })}>Cancel</button>}
+          </div>
+        </div>
+      </div>
+      <div className="card" style={{padding:24, maxWidth:600}}>
+        <h3 style={{margin:'0 0 4px', fontSize:14.5}}>Discounts &amp; order expenses</h3>
+        <Field label="Maximum discount your sales staff can give (%)" hint="Owners, administrators and managers can always give more. Applies to invoice discounts and coupons stacked together.">
+          <input className="input" type="number" min="0" max="100" value={f.staffMaxDiscountPercent} onChange={e => set('staffMaxDiscountPercent', e.target.value)} />
+        </Field>
+        <Field label="Expense categories for orders &amp; invoices" hint="Comma-separated. These fill the drop-down when you attach transport, fuel, packaging etc. to an order.">
+          <textarea className="input" rows={2} value={f.cats} onChange={e => set('cats', e.target.value)} />
+        </Field>
+        <button className="btn btn-primary" disabled={saving} onClick={save}>{saving ? 'Saving…' : 'Save order settings'}</button>
+      </div>
+    </div>
+  );
+}
+
 function SettingsPage() {
   const { business, setBusiness, user } = useApp();
   const toast = useToast();
@@ -3165,6 +3620,7 @@ function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const set = (k,v) => setForm(f=>({...f,[k]:v}));
   const canEdit = user.role === 'Owner' || user.role === 'Administrator';
+  const [tab, setTab] = useState('general');
   const submit = async () => {
     setSaving(true);
     const res = await callServer('settings.update', form);
@@ -3173,7 +3629,18 @@ function SettingsPage() {
   };
   return (
     <div>
-      <PageHeader title="Business Settings" subtitle="Branding, currency and tax configuration" />
+      <PageHeader title="Business Settings" subtitle="Branding, tax, orders, delivery and payments" />
+      {canEdit && (
+        <div style={{display:'flex', gap:8, flexWrap:'wrap', marginBottom:16}}>
+          {[['general','General'],['orders','Orders, delivery & discounts'],['payments','Online payments'],['lists','Categories & locations']].map(([k, l]) => (
+            <button key={k} className={'btn btn-sm ' + (tab === k ? 'btn-primary' : 'btn-outline')} onClick={() => setTab(k)}>{l}</button>
+          ))}
+        </div>
+      )}
+      {canEdit && tab === 'orders' && <OrderSetupPanel />}
+      {canEdit && tab === 'payments' && <OnlinePaymentsPanel />}
+      {canEdit && tab === 'lists' && <CategoriesLocationsPanel />}
+      {(!canEdit || tab === 'general') && <React.Fragment>
       <div className="card" style={{padding:'14px 24px', maxWidth:600, marginBottom:16, background:'var(--paper)'}}>
         <div style={{fontSize:11.5, color:'var(--muted)', fontWeight:600, textTransform:'uppercase', letterSpacing:'.03em'}}>Business ID (for cross-checking against the spreadsheet)</div>
         <div className="mono" style={{fontSize:13, marginTop:3, userSelect:'all'}}>{business.businessId}</div>
@@ -3205,8 +3672,7 @@ function SettingsPage() {
           <SeedDemoButton />
         </div>
       )}
-      {canEdit && <OnlinePaymentsPanel />}
-      {canEdit && <CategoriesLocationsPanel />}
+      </React.Fragment>}
     </div>
   );
 }
@@ -3483,6 +3949,7 @@ function OrderDetailModal({ order, onClose, onChanged }) {
   const [busy, setBusy] = useState('');
   useEffect(() => { if (!locationId && locations && locations.length) setLocationId(locations[0].locationId); }, [locations]);
   const open = order.status === 'New' || order.status === 'Confirmed';
+  const cfg = useOrderConfig();
 
   const setStatus = async (status) => {
     setBusy(status);
@@ -3510,7 +3977,7 @@ function OrderDetailModal({ order, onClose, onChanged }) {
       <React.Fragment>
         <button className="btn btn-outline" disabled={!!busy} onClick={() => setStatus('Cancelled')}>Cancel order</button>
         {order.status === 'New' && <button className="btn btn-outline" disabled={!!busy} onClick={() => setStatus('Confirmed')}>{busy === 'Confirmed' ? '…' : 'Confirm order'}</button>}
-        <button className="btn btn-gold" disabled={!!busy} onClick={convert}>{busy === 'convert' ? 'Creating…' : 'Convert to invoice'}</button>
+        <button className="btn btn-gold" disabled={!!busy || !locationId} onClick={convert}>{busy === 'convert' ? 'Creating…' : 'Convert to invoice'}</button>
       </React.Fragment>
     ) : null}>
       <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12}}>
@@ -3523,14 +3990,25 @@ function OrderDetailModal({ order, onClose, onChanged }) {
         <div><span style={{color:'var(--muted)'}}>Phone: </span>{order.phone} {wa && <a href={'https://wa.me/' + wa} target="_blank" rel="noreferrer" style={{marginLeft:6, color:'var(--brand-2)', fontWeight:700}}>WhatsApp</a>}</div>
         <div><span style={{color:'var(--muted)'}}>Email: </span>{order.email || '—'}</div>
         <div><span style={{color:'var(--muted)'}}>Address: </span>{order.address || '—'}</div>
+        <div><span style={{color:'var(--muted)'}}>Fulfilment: </span><b>{order.fulfilment === 'Delivery' ? 'Delivery' + (order.deliveryZone ? ' — ' + order.deliveryZone : '') : order.fulfilment === 'Pickup' ? 'Pick up' : '—'}</b></div>
+        {order.couponCode && <div><span style={{color:'var(--muted)'}}>Coupon: </span><b>{order.couponCode}</b></div>}
         {order.notes && <div style={{gridColumn:'1 / -1'}}><span style={{color:'var(--muted)'}}>Note: </span>{order.notes}</div>}
       </div>
       <table><thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead>
         <tbody>{(order.items || []).map(i => <tr key={i.orderItemId}><td>{i.productName}</td><td>{i.quantity}</td><td>{fmt(i.unitPrice)}</td><td>{fmt(i.total)}</td></tr>)}</tbody></table>
       <div style={{textAlign:'right', fontSize:13, marginTop:10}}>
-        <div>Subtotal: {fmt(order.subtotal)}</div><div>VAT: {fmt(order.vat)}</div>
+        <div>Subtotal: {fmt(order.subtotal)}</div>
+        {Number(order.discount) > 0 && <div style={{color:'var(--green)'}}>Discount{order.couponCode ? ' (' + order.couponCode + ')' : ''}: −{fmt(order.discount)}</div>}
+        <div>VAT: {fmt(order.vat)}</div>
+        {Number(order.deliveryFee) > 0 && <div>Delivery{order.deliveryZone ? ' (' + order.deliveryZone + ')' : ''}: {fmt(order.deliveryFee)}</div>}
         <div style={{fontWeight:800, fontSize:15}}>Total: {fmt(order.total)}</div>
       </div>
+      {order.status !== 'Cancelled' && (
+        <React.Fragment>
+          <div className="divider" />
+          <LinkedExpensesPanel linkedType={order.saleId ? 'Sale' : 'Order'} linkedId={order.saleId || order.orderId} cfg={cfg} />
+        </React.Fragment>
+      )}
       {open && (
         <div style={{marginTop:14}}>
           <Field label="Take stock from">
@@ -3575,6 +4053,7 @@ function OrdersPage() {
           { key:'createdAt', header:'Date', render:r => fmtDateTime(r.createdAt) },
           { key:'customerName', header:'Customer', render:r => <div><div style={{fontWeight:600}}>{r.customerName}</div><div style={{fontSize:11.5, color:'var(--muted)'}}>{r.phone}</div></div> },
           { key:'items', header:'Items', render:r => (r.items || []).map(i => i.quantity + '× ' + i.productName).join(', ') },
+          { key:'fulfilment', header:'Pick up / Delivery', render:r => r.fulfilment === 'Delivery' ? <span><I name="truck" size={12} /> {r.deliveryZone || 'Delivery'}</span> : r.fulfilment === 'Pickup' ? <span><I name="store" size={12} /> Pick up</span> : <span style={{color:'var(--muted)'}}>—</span> },
           { key:'total', header:'Total', render:r => fmt(r.total) },
           { key:'paymentStatus', header:'Payment', render:r => r.paymentStatus === 'Paid' ? <span className="badge badge-green">Paid online</span> : r.paymentStatus === 'Pending' ? <span className="badge badge-amber">Awaiting</span> : <span style={{color:'var(--muted)', fontSize:12}}>Unpaid</span> },
           { key:'status', header:'Status', render:r => <StatusBadge status={r.status === 'Fulfilled' ? 'Completed' : r.status === 'New' ? 'Pending' : r.status === 'Confirmed' ? 'Ordered' : 'Voided'} /> },
@@ -4493,7 +4972,7 @@ function PartnerWorkspace({ session, onLogout }) {
 
 const PAGES = {
   dashboard: DashboardPage, sales: SalesPage, orders: OrdersPage, scan: ScanPage, products: ProductsPage, inventory: InventoryPage,
-  customers: CustomersPage, suppliers: SuppliersPage, purchases: PurchasesPage, returns: ReturnsPage,
+  customers: CustomersPage, suppliers: SuppliersPage, purchases: PurchasesPage, returns: ReturnsPage, marketing: MarketingPage,
   invoices: InvoicesPage, expenses: ExpensesPage, income: IncomePage, bookkeeping: BookkeepingPage,
   reports: ReportsPage, users: UsersPage, audit: AuditLogPage, settings: SettingsPage, recyclebin: RecycleBinPage, billing: BillingPage,
 };
@@ -5157,6 +5636,11 @@ function PublicStorePage({ slug }) {
   const [placed, setPlaced] = useState(null);
   const [form, setForm] = useState({ name:'', phone:'', email:'', address:'', notes:'', website:'' });
   const [saving, setSaving] = useState(false);
+  const [fulfilment, setFulfilment] = useState('');
+  const [zoneId, setZoneId] = useState('');
+  const [cpnCode, setCpnCode] = useState('');
+  const [cpn, setCpn] = useState(null);
+  const [cpnBusy, setCpnBusy] = useState(false);
   const retOrder = (() => { try { return new URLSearchParams(window.location.search).get('order') || ''; } catch (e) { return ''; } })();
   const [ret, setRet] = useState(retOrder ? { state: 'checking' } : null);
   const verifyReturn = async () => {
@@ -5179,8 +5663,20 @@ function PublicStorePage({ slug }) {
   const itemCount = lines.reduce((s, l) => s + l.qty, 0);
   const subtotal = lines.reduce((s, l) => s + l.qty * l.p.price, 0);
   const vat = lines.reduce((s, l) => s + Math.round(l.qty * l.p.price * (l.p.vatRate / 100) * 100) / 100, 0);
-  const total = subtotal + vat;
-  const setQty = (p, qty) => setCart(c => ({ ...c, [p.productId]: Math.max(0, Math.min(p.available, qty)) }));
+  const dlv = store.delivery || { pickupEnabled: false, deliveryEnabled: false, zones: [] };
+  const mode = fulfilment || (dlv.pickupEnabled ? 'Pickup' : dlv.deliveryEnabled ? 'Delivery' : '');
+  const zone = (dlv.zones || []).find(z => z.zoneId === zoneId);
+  const deliveryFee = mode === 'Delivery' && zone ? Number(zone.fee) : 0;
+  const discount = cpn ? Math.min(subtotal, Number(cpn.discount) || 0) : 0;
+  const vatAfter = subtotal > 0 ? Math.round(vat * ((subtotal - discount) / subtotal) * 100) / 100 : 0;
+  const total = Math.round((subtotal - discount + vatAfter + deliveryFee) * 100) / 100;
+  const applyCpn = async () => {
+    setCpnBusy(true);
+    const r = await callServer('public.checkCoupon', { slug, code: cpnCode, subtotal });
+    setCpnBusy(false);
+    if (r.success) { setCpn(r.data); setCpnCode(r.data.code); toast('Coupon applied.'); } else toast(r.message, 'error');
+  };
+  const setQty = (p, qty) => { setCpn(null); setCart(c => ({ ...c, [p.productId]: Math.max(0, Math.min(p.available, qty)) })); };
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const startPay = async (orderId, email) => {
@@ -5191,8 +5687,10 @@ function PublicStorePage({ slug }) {
   const place = async (payNow) => {
     if (!form.name.trim() || !form.phone.trim()) { toast('Please enter your name and phone number.', 'error'); return; }
     if (payNow && !/^\S+@\S+\.\S+$/.test(form.email.trim())) { toast('Enter your email address to pay online.', 'error'); return; }
+    if (mode === 'Delivery' && !form.address.trim()) { toast('Enter your delivery address.', 'error'); return; }
+    if (mode === 'Delivery' && dlv.zones.length && !zoneId) { toast('Choose your delivery location.', 'error'); return; }
     setSaving(true);
-    const res = await callServer('public.placeOrder', { slug, customer: { name: form.name, phone: form.phone, email: form.email, address: form.address }, notes: form.notes, website: form.website, items: lines.map(l => ({ productId: l.p.productId, quantity: l.qty })) });
+    const res = await callServer('public.placeOrder', { slug, customer: { name: form.name, phone: form.phone, email: form.email, address: form.address }, notes: form.notes, website: form.website, items: lines.map(l => ({ productId: l.p.productId, quantity: l.qty })), fulfilment: mode, deliveryZoneId: mode === 'Delivery' ? zoneId : '', couponCode: cpn ? cpn.code : '' });
     if (res.success && payNow) {
       const out = await startPay(res.data.orderId, form.email.trim());
       if (out === true) return; // redirecting to the gateway
@@ -5302,15 +5800,44 @@ function PublicStorePage({ slug }) {
             {lines.map(l => <div key={l.p.productId} style={{display:'flex', justifyContent:'space-between', fontSize:13, padding:'4px 0'}}><span>{l.qty} × {l.p.productName}</span><span>{money(l.qty * l.p.price)}</span></div>)}
             <div className="divider" />
             <div style={{display:'flex', justifyContent:'space-between', fontSize:12.5, color:'var(--muted)'}}><span>Subtotal</span><span>{money(subtotal)}</span></div>
-            <div style={{display:'flex', justifyContent:'space-between', fontSize:12.5, color:'var(--muted)'}}><span>VAT</span><span>{money(vat)}</span></div>
+            {discount > 0 && <div style={{display:'flex', justifyContent:'space-between', fontSize:12.5, color:'var(--green)'}}><span>Discount ({cpn.code})</span><span>−{money(discount)}</span></div>}
+            <div style={{display:'flex', justifyContent:'space-between', fontSize:12.5, color:'var(--muted)'}}><span>VAT</span><span>{money(vatAfter)}</span></div>
+            {mode === 'Delivery' && <div style={{display:'flex', justifyContent:'space-between', fontSize:12.5, color:'var(--muted)'}}><span>Delivery{zone ? ' (' + zone.zoneName + ')' : ''}</span><span>{zone ? money(deliveryFee) : 'Choose location'}</span></div>}
             <div style={{display:'flex', justifyContent:'space-between', fontWeight:800}}><span>Total</span><span>{money(total)}</span></div>
           </div>
+          {store.hasCoupons && (
+            <div style={{display:'flex', gap:6, marginBottom:12}}>
+              <input className="input" placeholder="Coupon code" value={cpnCode} disabled={!!cpn} onChange={e => setCpnCode(e.target.value.toUpperCase())} />
+              {cpn ? <button className="btn btn-outline" onClick={() => { setCpn(null); setCpnCode(''); }}>Remove</button>
+                   : <button className="btn btn-outline" disabled={cpnBusy || !cpnCode} onClick={applyCpn}>{cpnBusy ? '…' : 'Apply'}</button>}
+            </div>
+          )}
+          {(dlv.pickupEnabled || dlv.deliveryEnabled) && (
+            <div style={{marginBottom:12}}>
+              {dlv.pickupEnabled && dlv.deliveryEnabled && (
+                <div style={{display:'flex', gap:8, marginBottom:8}}>
+                  {[['Pickup','I will pick up'],['Delivery','Deliver to me']].map(([k, l]) => (
+                    <button key={k} type="button" className={'btn ' + (mode === k ? 'btn-primary' : 'btn-outline')} style={{flex:1, justifyContent:'center'}} onClick={() => setFulfilment(k)}>{l}</button>
+                  ))}
+                </div>
+              )}
+              {mode === 'Pickup' && dlv.pickupAddress && <div style={{fontSize:12.5, color:'var(--muted)'}}>Pick up at: <b>{dlv.pickupAddress}</b></div>}
+              {mode === 'Delivery' && dlv.zones.length > 0 && (
+                <Field label="Delivery location *">
+                  <select className="input" value={zoneId} onChange={e => setZoneId(e.target.value)}>
+                    <option value="">Select your area…</option>
+                    {dlv.zones.map(z => <option key={z.zoneId} value={z.zoneId}>{z.zoneName} — {money(z.fee)}</option>)}
+                  </select>
+                </Field>
+              )}
+            </div>
+          )}
           <div className="grid g2">
             <Field label="Your name *"><input className="input" value={form.name} onChange={e => setF('name', e.target.value)} /></Field>
             <Field label="Phone number *"><input className="input" type="tel" value={form.phone} onChange={e => setF('phone', e.target.value)} /></Field>
           </div>
           <Field label={store.payment ? 'Email * (needed for online payment & receipt)' : 'Email (for your confirmation)'}><input className="input" type="email" value={form.email} onChange={e => setF('email', e.target.value)} /></Field>
-          <Field label="Delivery address"><input className="input" value={form.address} onChange={e => setF('address', e.target.value)} /></Field>
+          <Field label={mode === 'Delivery' ? 'Delivery address *' : 'Address (optional)'}><input className="input" value={form.address} onChange={e => setF('address', e.target.value)} /></Field>
           <Field label="Note (optional)"><input className="input" value={form.notes} onChange={e => setF('notes', e.target.value)} /></Field>
           <input type="text" tabIndex={-1} autoComplete="off" aria-hidden="true" value={form.website} onChange={e => setF('website', e.target.value)} style={{position:'absolute', left:'-9999px', width:1, height:1, opacity:0}} />
           <p style={{fontSize:11.5, color:'var(--muted)', margin:0}}>{store.payment ? 'Pay securely online with card, bank transfer or USSD via ' + (store.payment.provider === 'paystack' ? 'Paystack' : 'Flutterwave') + '.' : 'No payment is taken now. ' + store.businessName + ' will confirm your order and share payment details.'}</p>
